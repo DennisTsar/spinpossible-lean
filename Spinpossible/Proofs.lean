@@ -1,4 +1,5 @@
 import Spinpossible.Definitions
+import Mathlib.Data.Zmod.Basic
 
 def is_spin_about {m n : PosNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
   s = createRectangleSpin R
@@ -10,8 +11,65 @@ variable {m n : PosNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : is_spin_about s1 R1) (h_s2 : is_spin_about s2 R2)
 
 -- proposition 1
-theorem spin_is_own_inverse : (s1 * s1).action_on_board b = b := by
+-- theorem spin_is_own_inverse : (s1 * s1).action_on_board b = b := by
+--   funext i j
+--   let initTile := b i j
+--   let movedTile := s1.action_on_board (s1.action_on_board b) i j
+--   sorry
+  -- in case either of these are useful
+  -- have a : ∀ (x : Fin (m.val * n.val)), s1.α.symm (s1.α.symm⁻¹ x) = x := Equiv.Perm.apply_inv_self s1.α.symm
+  -- have b : ∀ (x : Fin (m.val * n.val)), s1.α.symm⁻¹ (s1.α.symm x) = x := Equiv.Perm.apply_inv_self s1.α.symm⁻¹
+
+def orientation.other (o : orientation) : orientation :=
+  match o with
+  | orientation.positive  => orientation.negative
+  | orientation.negative  => orientation.positive
+
+lemma orientation.other_self (o : orientation) : o.other.other = o :=
+  match o with
+  | orientation.positive => rfl
+  | orientation.negative => rfl
+
+lemma spin_does_not_change_orientation_outside (h : ¬isInsideRectangle ⟨i, j⟩ r) :
+  ((performSpin r b) i j).orient = (b i j).orient := by
   sorry
+
+lemma spin_changes_orientation_inside (h : isInsideRectangle ⟨i, j⟩ r) :
+  ((performSpin r b) i j).orient = (b i j).orient.other := by
+  sorry
+
+lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
+  (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
+  by_cases h : isInsideRectangle ⟨i, j⟩ r
+  case _ := by
+    rw [spin_changes_orientation_inside h, spin_changes_orientation_inside h, orientation.other_self]
+  case _ := by
+    rw [spin_does_not_change_orientation_outside h, spin_does_not_change_orientation_outside h]
+
+lemma spin_does_not_change_id_outside (h : ¬isInsideRectangle ⟨i, j⟩ r) :
+  ((performSpin r b) i j).id = (b i j).id := by
+  sorry
+
+lemma spin_double_does_not_change_id  (r : Rectangle m n) :
+  (performSpin r (performSpin r b) i j).id = (b i j).id := by
+  by_cases h : isInsideRectangle ⟨i, j⟩ r
+  case _ := by
+    sorry
+  case _ := by rw [spin_does_not_change_id_outside h, spin_does_not_change_id_outside h]
+
+-- or (s1 * s1).action_on_board b = b
+-- or s1.action_on_board (s1.action_on_board b) = b
+theorem spin_is_own_inverse : performSpin R1 (performSpin R1 b) = b := by
+  funext i j -- Consider each tile individually
+  let initTile := b i j -- Initial state of the tile
+  let movedTile := performSpin R1 (performSpin R1 b) i j
+
+  have a : initTile = movedTile := calc
+    initTile = ⟨initTile.id, initTile.orient⟩   := by rfl
+    _        = ⟨movedTile.id, initTile.orient⟩  := by rw [spin_double_does_not_change_id]
+    _        = ⟨movedTile.id, movedTile.orient⟩ := by rw [spin_double_does_not_change_orientation]
+
+  exact id a.symm
 
 -- proposition 2
 
