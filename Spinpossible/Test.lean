@@ -1,4 +1,4 @@
-import Spinpossible.Formal
+import Spinpossible.Definitions
 
 def board_3_by_3 := (standard_board (PosNat.mk 3) (PosNat.mk 3))
 

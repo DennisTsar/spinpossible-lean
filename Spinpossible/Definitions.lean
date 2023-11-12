@@ -66,8 +66,12 @@ def board (m n : PosNat) := Matrix (Fin m) (Fin n) tile
 
 -- Step 2: Action of Spin m x n on board
 
+structure Point (m n : Nat) where
+  row : Fin m
+  col : Fin n
+
 -- Convert 2D coordinates to 1D (flattened)
-def to_1d {m n : Nat} (pos : Fin m × Fin n) : Fin (m * n) := by
+def to_1d {m n : Nat} (pos : Point m n) : Fin (m * n) := by
   apply Fin.mk
   calc
     pos.1.val * n + pos.2.val < pos.1.val * n + n := add_lt_add_left (Fin.is_lt pos.2) _
@@ -75,12 +79,12 @@ def to_1d {m n : Nat} (pos : Fin m × Fin n) : Fin (m * n) := by
     _ ≤ m * n := Nat.mul_le_mul_right n pos.1.is_lt
 
 -- Convert 1D coordinates (flattened) to 2D
-def to_2d {m n : PosNat} (pos : Fin (m * n)) : Fin m × Fin n :=
-  (⟨pos.val / n, Nat.div_lt_of_lt_mul (Nat.mul_comm m n ▸ pos.isLt)⟩,
-  ⟨pos.val % n, Nat.mod_lt pos n.isPos⟩)
+def to_2d {m n : PosNat} (pos : Fin (m * n)) : Point m n :=
+  ⟨⟨pos.val / n, Nat.div_lt_of_lt_mul (Nat.mul_comm m n ▸ pos.isLt)⟩,
+  ⟨pos.val % n, Nat.mod_lt pos n.isPos⟩⟩
 
 def standard_board (m n : PosNat) : board m n :=
-  fun i j => {id := to_1d (i, j) + 1, orient := orientation.positive}
+  fun i j => {id := to_1d ⟨i, j⟩ + 1, orient := orientation.positive}
 
 -- Action of a permutation on VN to match the paper's notation vα
 def action {N : Nat} (v : VN N) (α : perm N) : VN N :=
@@ -89,16 +93,12 @@ def action {N : Nat} (v : VN N) (α : perm N) : VN N :=
 -- Action of Spin(m x n) on a board
 def Spin.action_on_board {m n : PosNat} (s : Spin m n) (b : board m n) : board m n :=
   fun i j =>
-    let newPos := s.α.symm (to_1d (i, j))
-    let (newI, newJ) := to_2d newPos
+    let newPos := s.α.symm (to_1d ⟨i, j⟩)
+    let ⟨newI, newJ⟩ := to_2d newPos
     let tile := b newI newJ
     if s.u newPos = 1 then
       { tile with orient := if tile.orient = orientation.positive then orientation.negative else orientation.positive }
     else tile
-
-structure Point (m n : Nat) where
-  row : Fin m
-  col : Fin n
 
 structure Rectangle (m n : Nat) where
   topLeft : Point m n
@@ -106,15 +106,15 @@ structure Rectangle (m n : Nat) where
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
 
-def isInsideRectangle {m n : Nat} (p : Fin m × Fin n) (r : Rectangle m n) :=
+def isInsideRectangle {m n : Nat} (p : Point m n) (r : Rectangle m n) :=
   p.2 ≥ r.topLeft.col && p.2 ≤ r.bottomRight.col &&
   p.1 ≥ r.topLeft.row && p.1 ≤ r.bottomRight.row
 
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
-def rotate180 {m n : Nat} (p : Fin m × Fin n) (r : Rectangle m n) : Fin m × Fin n :=
+def rotate180 {m n : Nat} (p : Point m n) (r : Rectangle m n) : Point m n :=
   let new_col := r.bottomRight.col - (p.2 - r.topLeft.col)
   let new_row := r.bottomRight.row - (p.1 - r.topLeft.row)
-  (new_row, new_col)
+  ⟨new_row, new_col⟩
 
 def flipOrientation (t : tile) : tile :=
   { t with orient := if t.orient = orientation.positive then orientation.negative else orientation.positive }
@@ -145,7 +145,15 @@ def performSpin {m n : PosNat} (r : Rectangle m n) (b : board m n) : board m n :
   (createRectangleSpin r).action_on_board b
 
 -- these seem useful
-def is_lowercase_spin {m n : PosNat} (s : Spin m n) : Prop :=
-  ∃ (r : Rectangle m n), s = createRectangleSpin r
+-- def is_lowercase_spin {m n : PosNat} (s : Spin m n) : Prop :=
+--   ∃ (r : Rectangle m n), s = createRectangleSpin r
 
-def LowercaseSpin {m n : PosNat} := {s : Spin m n // is_lowercase_spin s}
+
+-- -- structure LowercaseSpin (m n : PosNat) where
+-- --   val : Spin m n
+-- --   valid : is_lowercase_spin val
+
+-- -- instance {m n : PosNat} : Coe (LowercaseSpin m n) (Spin m n) := ⟨fun s => s.val⟩
+
+-- def LowercaseSpin (m n : PosNat) := {s : Spin m n // is_lowercase_spin s}
+-- instance {m n : PosNat} : Coe (LowercaseSpin m n) (Spin m n) := ⟨fun s => s.val⟩
