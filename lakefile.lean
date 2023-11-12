@@ -1,8 +1,13 @@
 import Lake
 open Lake DSL
 
+def args := #[
+  "-Dpp.unicode.fun=true", -- pretty-prints `fun a ↦ b`
+  "-DrelaxedAutoImplicit=false" -- helps avoid typo traps
+]
+
 package «spinpossible» {
-  -- add any package configuration options here
+  moreServerArgs := args
 }
 
 require mathlib from git
@@ -10,5 +15,5 @@ require mathlib from git
 
 @[default_target]
 lean_lib «Spinpossible» {
-  -- add any library configuration options here
+  moreLeanArgs := args
 }
