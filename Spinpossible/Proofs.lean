@@ -1,13 +1,13 @@
 import Spinpossible.Definitions
 import Mathlib.Data.Zmod.Basic
 
-def is_spin_about {m n : PosNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
+def is_spin_about {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
   s = createRectangleSpin R
 
-def is_lowercase_spin {m n : PosNat} (s : Spin m n) : Prop :=
+def is_lowercase_spin {m n : PNat} (s : Spin m n) : Prop :=
   ∃ (r : Rectangle m n), is_spin_about s r
 
-variable {m n : PosNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
+variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : is_spin_about s1 R1) (h_s2 : is_spin_about s2 R2)
 
 -- proposition 1
@@ -33,7 +33,7 @@ lemma to_2d_to_1d_inverse (p : Point m n) : to_2d (to_1d p) = p := by
     calc
       (to_1d p).val / n = (row * n + col) / n := rfl
       _ = (col + n * row) / n := by rw [Nat.add_comm, Nat.mul_comm]
-      _ = col / n + row := Nat.add_mul_div_left _ _ n.isPos
+      _ = col / n + row := Nat.add_mul_div_left _ _ n.pos
       _ = row := by rw [Nat.div_eq_of_lt col.isLt, Nat.zero_add]
   have col_eq : (to_1d ⟨row, col⟩).val % n = col := by
     calc
@@ -47,6 +47,10 @@ lemma spin_does_not_change_outside (r : Rectangle m n) (h : ¬isInsideRectangle 
   ((performSpin r b) i j) = (b i j) := by
   unfold performSpin createRectangleSpin Spin.action_on_board
   simp [h, to_2d_to_1d_inverse ⟨i, j⟩]
+
+lemma rotate180_twice_inverse (r : Rectangle m n) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
+  unfold rotate180
+  simp
 
 lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
@@ -76,7 +80,7 @@ theorem spin_is_own_inverse : performSpin R1 (performSpin R1 b) = b := by
 
 -- proposition 2
 
-def moves_tile {m n : PosNat} (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) : Prop :=
+def moves_tile {m n : PNat} (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) : Prop :=
   let newPos := s.α.symm (to_1d (to_2d p))
   newPos ≠ p ∧ isInsideRectangle (to_2d newPos) R
 

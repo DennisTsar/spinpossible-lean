@@ -1,9 +1,9 @@
 import Spinpossible.Definitions
 
-def board_3_by_3 := (standard_board (PosNat.mk 3) (PosNat.mk 3))
+def board_3_by_3 := standard_board 3 3
 
 -- I assume there's something built-in for this, but idk what it is
-def boardsEqual {m n : PosNat} (b1 b2 : board m n) : Bool :=
+def boardsEqual {m n : PNat} (b1 b2 : board m n) : Bool :=
   ∀ i j, b1 i j == b2 i j
 
 namespace TestSpinAction
@@ -14,7 +14,7 @@ namespace TestSpinAction
       (by sorry)
       (by sorry)
 
-  def sample_spin : Spin (PosNat.mk 3) (PosNat.mk 3) :=
+  def sample_spin : Spin (Nat.toPNat 3) (Nat.toPNat 3) :=
     {
       α := sample_perm
       u := fun i => if i = 0 then 1 else 0
@@ -32,13 +32,13 @@ end TestSpinAction
 
 namespace TestRectSpins
 
-  def test_rectangle : Rectangle (PosNat.mk 3) (PosNat.mk 3) :=
+  def test_rectangle : Rectangle (Nat.toPNat 3) (Nat.toPNat 3) :=
     {
       topLeft := {row := 2, col := 0}
       bottomRight := {row := 2, col:= 2}
     }
 
-  def test_rectangle2 : Rectangle (PosNat.mk 3) (PosNat.mk 3) :=
+  def test_rectangle2 : Rectangle (Nat.toPNat 3) (Nat.toPNat 3) :=
     {
       topLeft := {row := 0, col := 0}
       bottomRight := {row := 2, col:= 1}

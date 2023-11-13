@@ -57,12 +57,12 @@ structure tile where
   orient : orientation
   deriving DecidableEq, Repr
 
-structure PosNat := (val : Nat) (isPos : val > 0 := by decide)
--- def PosNat := { val : Nat // val > 0 }
+-- structure PosNat := (val : Nat) (isPos : val > 0 := by decide)
+-- -- def PosNat := { val : Nat // val > 0 }
 
-instance : Coe PosNat Nat := ⟨fun n => n.val⟩
+-- instance : Coe PosNat Nat := ⟨fun n => n.val⟩
 
-def board (m n : PosNat) := Matrix (Fin m) (Fin n) tile
+def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
 
 -- Step 2: Action of Spin m x n on board
 
@@ -79,11 +79,11 @@ def to_1d {m n : Nat} (pos : Point m n) : Fin (m * n) := by
     _ ≤ m * n := Nat.mul_le_mul_right n pos.1.is_lt
 
 -- Convert 1D coordinates (flattened) to 2D
-def to_2d {m n : PosNat} (pos : Fin (m * n)) : Point m n :=
+def to_2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
   ⟨⟨pos.val / n, Nat.div_lt_of_lt_mul (Nat.mul_comm m n ▸ pos.isLt)⟩,
-  ⟨pos.val % n, Nat.mod_lt pos n.isPos⟩⟩
+  ⟨pos.val % n, Nat.mod_lt pos n.pos⟩⟩
 
-def standard_board (m n : PosNat) : board m n :=
+def standard_board (m n : PNat) : board m n :=
   fun i j => {id := to_1d ⟨i, j⟩ + 1, orient := orientation.positive}
 
 -- Action of a permutation on VN to match the paper's notation vα
@@ -96,7 +96,7 @@ def orientation.other (o : orientation) : orientation :=
   | orientation.negative  => orientation.positive
 
 -- Action of Spin(m x n) on a board
-def Spin.action_on_board {m n : PosNat} (s : Spin m n) (b : board m n) : board m n :=
+def Spin.action_on_board {m n : PNat} (s : Spin m n) (b : board m n) : board m n :=
   fun i j =>
     let newPos := s.α.symm (to_1d ⟨i, j⟩)
     let ⟨newI, newJ⟩ := to_2d newPos
@@ -115,12 +115,12 @@ def isInsideRectangle {m n : Nat} (p : Point m n) (r : Rectangle m n) :=
 
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
 def rotate180 {m n : Nat} (p : Point m n) (r : Rectangle m n) : Point m n :=
-  let new_col := r.bottomRight.col - (p.2 - r.topLeft.col)
-  let new_row := r.bottomRight.row - (p.1 - r.topLeft.row)
+  let new_col := r.bottomRight.col + r.topLeft.col - p.2
+  let new_row := r.bottomRight.row + r.topLeft.row - p.1
   ⟨new_row, new_col⟩
 
 -- Define a function to create a Spin element for a rectangle spin
-def createRectangleSpin {m n : PosNat} (r : Rectangle m n) : Spin m n :=
+def createRectangleSpin {m n : PNat} (r : Rectangle m n) : Spin m n :=
   {
     α := Equiv.mk
       (fun pos =>
@@ -141,7 +141,7 @@ def createRectangleSpin {m n : PosNat} (r : Rectangle m n) : Spin m n :=
   }
 
 -- Function to perform a spin on a board using the defined Spin action
-def performSpin {m n : PosNat} (r : Rectangle m n) (b : board m n) : board m n :=
+def performSpin {m n : PNat} (r : Rectangle m n) (b : board m n) : board m n :=
   (createRectangleSpin r).action_on_board b
 
 -- these seem useful
