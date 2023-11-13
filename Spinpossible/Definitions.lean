@@ -90,15 +90,18 @@ def standard_board (m n : PosNat) : board m n :=
 def action {N : Nat} (v : VN N) (α : perm N) : VN N :=
   fun i => v (α.symm i)
 
+def orientation.other (o : orientation) : orientation :=
+  match o with
+  | orientation.positive  => orientation.negative
+  | orientation.negative  => orientation.positive
+
 -- Action of Spin(m x n) on a board
 def Spin.action_on_board {m n : PosNat} (s : Spin m n) (b : board m n) : board m n :=
   fun i j =>
     let newPos := s.α.symm (to_1d ⟨i, j⟩)
     let ⟨newI, newJ⟩ := to_2d newPos
     let tile := b newI newJ
-    if s.u newPos = 1 then
-      { tile with orient := if tile.orient = orientation.positive then orientation.negative else orientation.positive }
-    else tile
+    if s.u newPos = 1 then { tile with orient := tile.orient.other } else tile
 
 structure Rectangle (m n : Nat) where
   topLeft : Point m n
@@ -115,9 +118,6 @@ def rotate180 {m n : Nat} (p : Point m n) (r : Rectangle m n) : Point m n :=
   let new_col := r.bottomRight.col - (p.2 - r.topLeft.col)
   let new_row := r.bottomRight.row - (p.1 - r.topLeft.row)
   ⟨new_row, new_col⟩
-
-def flipOrientation (t : tile) : tile :=
-  { t with orient := if t.orient = orientation.positive then orientation.negative else orientation.positive }
 
 -- Define a function to create a Spin element for a rectangle spin
 def createRectangleSpin {m n : PosNat} (r : Rectangle m n) : Spin m n :=

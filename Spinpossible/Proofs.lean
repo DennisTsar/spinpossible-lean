@@ -20,42 +20,45 @@ variable {m n : PosNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   -- have a : ∀ (x : Fin (m.val * n.val)), s1.α.symm (s1.α.symm⁻¹ x) = x := Equiv.Perm.apply_inv_self s1.α.symm
   -- have b : ∀ (x : Fin (m.val * n.val)), s1.α.symm⁻¹ (s1.α.symm x) = x := Equiv.Perm.apply_inv_self s1.α.symm⁻¹
 
-def orientation.other (o : orientation) : orientation :=
-  match o with
-  | orientation.positive  => orientation.negative
-  | orientation.negative  => orientation.positive
-
 lemma orientation.other_self (o : orientation) : o.other.other = o :=
   match o with
   | orientation.positive => rfl
   | orientation.negative => rfl
 
-lemma spin_does_not_change_orientation_outside (h : ¬isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j).orient = (b i j).orient := by
-  sorry
+lemma to_2d_to_1d_inverse (p : Point m n) : to_2d (to_1d p) = p := by
+  let row := p.row
+  let col := p.col
+  unfold to_1d to_2d
+  have row_eq : (to_1d ⟨row, col⟩).val / n = row.val := by
+    calc
+      (to_1d p).val / n = (row * n + col) / n := rfl
+      _ = (col + n * row) / n := by rw [Nat.add_comm, Nat.mul_comm]
+      _ = col / n + row := Nat.add_mul_div_left _ _ n.isPos
+      _ = row := by rw [Nat.div_eq_of_lt col.isLt, Nat.zero_add]
+  have col_eq : (to_1d ⟨row, col⟩).val % n = col := by
+    calc
+      (to_1d ⟨row, col⟩).val % n = (row * n + col) % n := rfl
+      _ = col % n := Nat.mul_add_mod ..
+      _ = col := Nat.mod_eq_of_lt col.isLt
 
-lemma spin_changes_orientation_inside (h : isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j).orient = (b i j).orient.other := by
-  sorry
+  congr
+
+lemma spin_does_not_change_outside (r : Rectangle m n) (h : ¬isInsideRectangle ⟨i, j⟩ r) :
+  ((performSpin r b) i j) = (b i j) := by
+  unfold performSpin createRectangleSpin Spin.action_on_board
+  simp [h, to_2d_to_1d_inverse ⟨i, j⟩]
 
 lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
   by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by
-    rw [spin_changes_orientation_inside h, spin_changes_orientation_inside h, orientation.other_self]
-  case _ := by
-    rw [spin_does_not_change_orientation_outside h, spin_does_not_change_orientation_outside h]
-
-lemma spin_does_not_change_id_outside (h : ¬isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j).id = (b i j).id := by
-  sorry
+  case _ := by sorry
+  case _ := by repeat rw [spin_does_not_change_outside _ h]
 
 lemma spin_double_does_not_change_id  (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).id = (b i j).id := by
   by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by
-    sorry
-  case _ := by rw [spin_does_not_change_id_outside h, spin_does_not_change_id_outside h]
+  case _ := by sorry
+  case _ := by repeat rw [spin_does_not_change_outside _ h]
 
 -- or (s1 * s1).action_on_board b = b
 -- or s1.action_on_board (s1.action_on_board b) = b
