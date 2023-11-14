@@ -49,25 +49,26 @@ lemma spin_does_not_change_outside (r : Rectangle m n) (h : ¬isInsideRectangle 
   simp [h, to_2d_to_1d_inverse]
 
 -- don't think this is true as stated (needs more conditions)
-lemma rotate_calc_twice_inverse : rotate_calc a (rotate_calc a i c) c = i := by
+lemma rotate_calc_twice_inverse (h1 : i ≥ c) (h2 : a ≥ i) : rotate_calc a (rotate_calc a i c) c = i := by
   unfold rotate_calc
   simp
-  have a0 : a.val - (a.val - (i.val - c.val) - c.val) = a.val - (a.val - ((i.val - c.val) + c.val)) := by
-    rw [Nat.sub_add_eq]
+  congr
+  calc
+    a.val - (a.val - (i.val - c.val) - c.val) = a.val - (a.val - (i.val - c.val) - c.val) := rfl
+    _ = a.val - (a.val - ((i.val - c.val) + c.val)) := by rw [Nat.sub_add_eq]
+    _ = a.val - (a.val - i.val) := by rw [Nat.sub_add_cancel h1]
+    _ = i.val := by exact Nat.sub_sub_self h2
 
-  -- have a1 : a.val - (a.val - (i.val - c.val) - c.val) = a.val - a.val - (i.val - c.val) - c.val := by
-  --   apply?
-
-  have h :  a.val - (a.val - (i.val - c.val) - c.val) = i.val := by
-    calc
-      a.val - (a.val - (i.val - c.val) - c.val) = a.val - (a.val - (i.val - c.val) - c.val) := rfl
-      _ = i.val := by sorry
-
-  exact Fin.ext h
-
-lemma rotate180_twice_inverse (r : Rectangle m n) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
+lemma rotate180_twice_inverse (r : Rectangle m n) (h : isInsideRectangle ⟨i,j⟩ r) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
   unfold rotate180
-  simp [rotate_calc_twice_inverse]
+  simp
+  unfold isInsideRectangle at h
+  simp [And.decidable] at h
+  have h1 : j.val ≥ r.topLeft.col.val := h.left
+  have h2 : j.val ≤ r.bottomRight.col.val := h.right.left
+  have h3 : i.val ≥ r.topLeft.row.val := h.right.right.left
+  have h4 : i.val ≤ r.bottomRight.row.val := h.right.right.right
+  simp [rotate_calc_twice_inverse h1 h2, rotate_calc_twice_inverse h3 h4]
 
 lemma spin_stays_inside (r : Rectangle m n) (h : isInsideRectangle ⟨i, j⟩ r) :
   isInsideRectangle (rotate180 ⟨i, j⟩ r) r := by
@@ -118,12 +119,12 @@ lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
     have h9 : (rotate180 newPos r).row = i := by
       calc
         (rotate180 newPos r).row = (rotate180 (rotate180 ⟨i, j⟩ r) r).row := by simp
-        _ = (Point.mk i j).row := by rw [rotate180_twice_inverse]
+        _ = (Point.mk i j).row := by rw [rotate180_twice_inverse r h]
         _ = i := by simp
     have h10 : (rotate180 newPos r).col = j := by
       calc
         (rotate180 newPos r).col = (rotate180 (rotate180 ⟨i, j⟩ r) r).col := by simp
-        _ = (Point.mk i j).col := by rw [rotate180_twice_inverse]
+        _ = (Point.mk i j).col := by rw [rotate180_twice_inverse r h]
         _ = j := by simp
 
     have h1 : newTile.orient = originalTile.orient.other := by
@@ -141,14 +142,14 @@ lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
     have h7 : newPos2 = ⟨i, j⟩ := by
       calc
         newPos2 = rotate180 (rotate180 ⟨i, j⟩ r) r := by simp
-        _ = ⟨i, j⟩ := by rw [rotate180_twice_inverse]
+        _ = ⟨i, j⟩ := by rw [rotate180_twice_inverse r h]
 
     have h2 : newTile2.orient = newTile.orient.other := by
       calc
         newTile2.orient = (performSpin r firstRotation newPos2.row newPos2.col).orient := by simp
         _ = (firstRotation (rotate180 newPos2 r).row (rotate180 newPos2 r).col).orient.other := spin_effect ((spin_stays_inside r) ((spin_stays_inside r) h))
         _ = (firstRotation (rotate180 (rotate180 newPos r) r).row (rotate180 (rotate180 newPos r) r).col).orient.other := by simp
-        _ = (firstRotation newPos.row newPos.col).orient.other := by rw [rotate180_twice_inverse]
+        _ = (firstRotation newPos.row newPos.col).orient.other := by rw [rotate180_twice_inverse r h]
         _ = (performSpin r b newPos.row newPos.col).orient.other := by simp
         _ = newTile.orient.other := by simp
 
