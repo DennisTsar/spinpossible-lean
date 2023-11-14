@@ -51,61 +51,42 @@ lemma spin_does_not_change_outside (r : Rectangle m n) (h : ¬isInsideRectangle 
 lemma rotate180_twice_inverse (r : Rectangle m n) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
   unfold rotate180
   simp
-
-#check Nat.sub_le_sub_right
+  sorry -- this isn't needed in the old rotate180
 
 lemma spin_stays_inside (r : Rectangle m n) (h : isInsideRectangle ⟨i, j⟩ r) :
   isInsideRectangle (rotate180 ⟨i, j⟩ r) r := by
   unfold isInsideRectangle rotate180
   simp [h]
-  have h1 : j.val ≥ r.topLeft.col.val := sorry--h.left
-  have h2 : j ≤ r.bottomRight.col := sorry--h.right.left
-  have h3 : i.val ≥ r.topLeft.row.val := sorry--h.right.right.left
-  have h4 : i.val ≤ r.bottomRight.row.val := sorry--h.right.right.right
-  -- have col_val : r.topLeft.col.val ≤ r.bottomRight.col.val := r.validCol
-  -- have row_val : r.topLeft.row.val ≤ r.bottomRight.row.val := r.validRow
+  have h1 : j.val ≥ r.topLeft.col.val := h.left
+  have h2 : j.val ≤ r.bottomRight.col.val := h.right.left
 
-  have h5 : r.topLeft.col.val ≤ r.bottomRight.col - (j - r.topLeft.col) := by
-    sorry
+  have hx : r.bottomRight.col.val - j.val + r.topLeft.col.val = r.bottomRight.col.val - (j.val - r.topLeft.col.val) := by
+    exact (tsub_tsub_assoc h2 h1).symm
+
+  have h3 : i.val ≥ r.topLeft.row.val := h.right.right.left
+  have h4 : i.val ≤ r.bottomRight.row.val := h.right.right.right
+
+  have hy : r.bottomRight.row.val - i.val + r.topLeft.row.val = r.bottomRight.row.val - (i.val - r.topLeft.row.val) := by
+    exact (tsub_tsub_assoc h4 h3).symm
+
+  have h5 : r.topLeft.col.val ≤ r.bottomRight.col.val - (j.val - r.topLeft.col.val) := by
+    have h_add6: r.topLeft.col.val ≤ r.bottomRight.col.val - j.val + r.topLeft.col.val := by
+      exact Nat.le_add_left (r.topLeft.col) (r.bottomRight.col - j)
+    simp [hx] at h_add6
+    exact h_add6
   have h7 : r.topLeft.row.val ≤ r.bottomRight.row - (i - r.topLeft.row) := by
-    sorry
+    have h_add6: r.topLeft.row.val ≤ r.bottomRight.row.val - i.val + r.topLeft.row.val := by
+      exact Nat.le_add_left (r.topLeft.row) (r.bottomRight.row - i)
+    simp [hy] at h_add6
+    exact h_add6
 
-  -- simp [h5, h7]
-  sorry
+  simp [h5, h7]
 
-  -- have h5 : r.topLeft.col ≤ r.bottomRight.col + r.topLeft.col - j := by
-  --   have h_add := Nat.add_le_add_left h2 r.topLeft.col
-  --   have h_sub := Nat.sub_le_sub_right h_add j
-  --   rw [Nat.add_sub_self_right, Nat.add_comm] at h_sub
-  --   have a : r.topLeft.col.val ≤ r.bottomRight.col.val + r.topLeft.col.val - j.val := h_sub
-  --   have x : r.topLeft.col.val ≤ (r.bottomRight.col + r.topLeft.col - j).val := by sorry
-  --   exact x
-  -- have h6 : r.bottomRight.col + r.topLeft.col - j ≤ r.bottomRight.col := by
-  --   have h_add := Nat.add_le_add_right h1 r.bottomRight.col.val
-  --   have h_sub := Nat.sub_le_sub_right h_add j
-  --   rw [Nat.add_comm, Nat.add_sub_self_left] at h_sub
-  --   exact h_sub -- ERROR
-  -- have h7 : r.topLeft.row ≤ r.bottomRight.row + r.topLeft.row - i := by
-  --   have h_add := Nat.add_le_add_left h4 r.topLeft.row.val
-  --   have h_sub := Nat.sub_le_sub_right h_add i
-  --   rw [Nat.add_sub_self_right, Nat.add_comm] at h_sub
-  --   exact h_sub -- ERROR
-  -- have h8 : r.bottomRight.row + r.topLeft.row - i ≤ r.bottomRight.row := by
-  --   have h_add := Nat.add_le_add_right h3 r.bottomRight.row.val
-  --   have h_sub := Nat.sub_le_sub_right h_add i
-  --   rw [Nat.add_comm, Nat.add_sub_self_left] at h_sub
-  --   exact h_sub -- ERROR
-  -- simp [h5, h6, h7, h8]
-
-
-    -- have pos_back_to_original : to_2d (to_1d (rotate180 (rotate180 ⟨i, j⟩ r) r)) = ⟨i, j⟩ := by
-    --   calc
-    --     to_2d (to_1d (rotate180 (rotate180 ⟨i, j⟩ r) r)) = to_2d (to_1d ⟨i, j⟩) := by rw [rotate180_twice_inverse]
-    --     _ = ⟨i, j⟩ := to_2d_to_1d_inverse ⟨i, j⟩
 lemma spin_effect  (h : isInsideRectangle ⟨i, j⟩ r) :
   ((performSpin r b) i j).orient = (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col).orient.other := by
   unfold performSpin createRectangleSpin Spin.action_on_board
   simp [h, to_2d_to_1d_inverse, spin_stays_inside]
+  sorry -- this isn't needed if isInsideRectangle is a Bool def (as opposed to a Prop abbrev)
 
 lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
