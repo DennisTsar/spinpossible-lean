@@ -109,9 +109,11 @@ structure Rectangle (m n : Nat) where
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
 
-def isInsideRectangle {m n : Nat} (p : Point m n) (r : Rectangle m n) :=
-  p.2 ≥ r.topLeft.col && p.2 ≤ r.bottomRight.col &&
-  p.1 ≥ r.topLeft.row && p.1 ≤ r.bottomRight.row
+-- make this a Prop and some problems go away while some others appear
+-- same for making it abbrev
+def isInsideRectangle {m n : Nat} (p : Point m n) (r : Rectangle m n) : Bool :=
+  p.2.val ≥ r.topLeft.col.val ∧ p.2.val ≤ r.bottomRight.col.val ∧
+  p.1.val ≥ r.topLeft.row.val ∧ p.1.val ≤ r.bottomRight.row.val
 
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
 def rotate180 {m n : Nat} (p : Point m n) (r : Rectangle m n) : Point m n :=

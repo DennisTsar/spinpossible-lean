@@ -46,16 +46,135 @@ lemma to_2d_to_1d_inverse (p : Point m n) : to_2d (to_1d p) = p := by
 lemma spin_does_not_change_outside (r : Rectangle m n) (h : ¬isInsideRectangle ⟨i, j⟩ r) :
   ((performSpin r b) i j) = (b i j) := by
   unfold performSpin createRectangleSpin Spin.action_on_board
-  simp [h, to_2d_to_1d_inverse ⟨i, j⟩]
+  simp [h, to_2d_to_1d_inverse]
 
 lemma rotate180_twice_inverse (r : Rectangle m n) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
   unfold rotate180
   simp
 
+#check Nat.sub_le_sub_right
+
+lemma spin_stays_inside (r : Rectangle m n) (h : isInsideRectangle ⟨i, j⟩ r) :
+  isInsideRectangle (rotate180 ⟨i, j⟩ r) r := by
+  unfold isInsideRectangle rotate180
+  simp [h]
+  have h1 : j.val ≥ r.topLeft.col.val := sorry--h.left
+  have h2 : j ≤ r.bottomRight.col := sorry--h.right.left
+  have h3 : i.val ≥ r.topLeft.row.val := sorry--h.right.right.left
+  have h4 : i.val ≤ r.bottomRight.row.val := sorry--h.right.right.right
+  -- have col_val : r.topLeft.col.val ≤ r.bottomRight.col.val := r.validCol
+  -- have row_val : r.topLeft.row.val ≤ r.bottomRight.row.val := r.validRow
+
+  have h5 : r.topLeft.col.val ≤ r.bottomRight.col - (j - r.topLeft.col) := by
+    sorry
+  have h7 : r.topLeft.row.val ≤ r.bottomRight.row - (i - r.topLeft.row) := by
+    sorry
+
+  -- simp [h5, h7]
+  sorry
+
+  -- have h5 : r.topLeft.col ≤ r.bottomRight.col + r.topLeft.col - j := by
+  --   have h_add := Nat.add_le_add_left h2 r.topLeft.col
+  --   have h_sub := Nat.sub_le_sub_right h_add j
+  --   rw [Nat.add_sub_self_right, Nat.add_comm] at h_sub
+  --   have a : r.topLeft.col.val ≤ r.bottomRight.col.val + r.topLeft.col.val - j.val := h_sub
+  --   have x : r.topLeft.col.val ≤ (r.bottomRight.col + r.topLeft.col - j).val := by sorry
+  --   exact x
+  -- have h6 : r.bottomRight.col + r.topLeft.col - j ≤ r.bottomRight.col := by
+  --   have h_add := Nat.add_le_add_right h1 r.bottomRight.col.val
+  --   have h_sub := Nat.sub_le_sub_right h_add j
+  --   rw [Nat.add_comm, Nat.add_sub_self_left] at h_sub
+  --   exact h_sub -- ERROR
+  -- have h7 : r.topLeft.row ≤ r.bottomRight.row + r.topLeft.row - i := by
+  --   have h_add := Nat.add_le_add_left h4 r.topLeft.row.val
+  --   have h_sub := Nat.sub_le_sub_right h_add i
+  --   rw [Nat.add_sub_self_right, Nat.add_comm] at h_sub
+  --   exact h_sub -- ERROR
+  -- have h8 : r.bottomRight.row + r.topLeft.row - i ≤ r.bottomRight.row := by
+  --   have h_add := Nat.add_le_add_right h3 r.bottomRight.row.val
+  --   have h_sub := Nat.sub_le_sub_right h_add i
+  --   rw [Nat.add_comm, Nat.add_sub_self_left] at h_sub
+  --   exact h_sub -- ERROR
+  -- simp [h5, h6, h7, h8]
+
+
+    -- have pos_back_to_original : to_2d (to_1d (rotate180 (rotate180 ⟨i, j⟩ r) r)) = ⟨i, j⟩ := by
+    --   calc
+    --     to_2d (to_1d (rotate180 (rotate180 ⟨i, j⟩ r) r)) = to_2d (to_1d ⟨i, j⟩) := by rw [rotate180_twice_inverse]
+    --     _ = ⟨i, j⟩ := to_2d_to_1d_inverse ⟨i, j⟩
+lemma spin_effect  (h : isInsideRectangle ⟨i, j⟩ r) :
+  ((performSpin r b) i j).orient = (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col).orient.other := by
+  unfold performSpin createRectangleSpin Spin.action_on_board
+  simp [h, to_2d_to_1d_inverse, spin_stays_inside]
+
 lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
   by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by sorry
+  case _ := by
+    let originalTile := b i j
+    let firstRotation := performSpin r b
+    let newPos := rotate180 ⟨i, j⟩ r
+    let newTile := firstRotation newPos.row newPos.col
+
+    have h9 : (rotate180 newPos r).row = i := by
+      calc
+        (rotate180 newPos r).row = (rotate180 (rotate180 ⟨i, j⟩ r) r).row := by simp
+        _ = (Point.mk i j).row := by rw [rotate180_twice_inverse]
+        _ = i := by simp
+    have h10 : (rotate180 newPos r).col = j := by
+      calc
+        (rotate180 newPos r).col = (rotate180 (rotate180 ⟨i, j⟩ r) r).col := by simp
+        _ = (Point.mk i j).col := by rw [rotate180_twice_inverse]
+        _ = j := by simp
+
+    have h1 : newTile.orient = originalTile.orient.other := by
+      calc
+        newTile.orient = (performSpin r b newPos.row newPos.col).orient := by simp
+        _ = (b (rotate180 newPos r).row (rotate180 newPos r).col).orient.other := spin_effect ((spin_stays_inside r) h)
+        _ = (b i j).orient.other := by rw [h9, h10]
+        _ = originalTile.orient.other := by simp
+
+    let secondRotation := performSpin r firstRotation
+    let newPos2 := rotate180 newPos r
+
+    let newTile2 := secondRotation newPos2.row newPos2.col
+
+    have h7 : newPos2 = ⟨i, j⟩ := by
+      calc
+        newPos2 = rotate180 (rotate180 ⟨i, j⟩ r) r := by simp
+        _ = ⟨i, j⟩ := by rw [rotate180_twice_inverse]
+
+    have h2 : newTile2.orient = newTile.orient.other := by
+      calc
+        newTile2.orient = (performSpin r firstRotation newPos2.row newPos2.col).orient := by simp
+        _ = (firstRotation (rotate180 newPos2 r).row (rotate180 newPos2 r).col).orient.other := spin_effect ((spin_stays_inside r) ((spin_stays_inside r) h))
+        _ = (firstRotation (rotate180 (rotate180 newPos r) r).row (rotate180 (rotate180 newPos r) r).col).orient.other := by simp
+        _ = (firstRotation newPos.row newPos.col).orient.other := by rw [rotate180_twice_inverse]
+        _ = (performSpin r b newPos.row newPos.col).orient.other := by simp
+        _ = newTile.orient.other := by simp
+
+    have h3 : newTile2.orient = originalTile.orient := by
+      calc
+        newTile2.orient = newTile.orient.other := h2
+        _ = originalTile.orient.other.other := by rw [h1]
+        _ = originalTile.orient := by apply orientation.other_self
+
+    have h8 : originalTile.orient = (secondRotation newPos2.row newPos2.col).orient := by
+      calc
+        originalTile.orient = newTile2.orient := by rw [h3]
+        _ = (secondRotation newPos2.row newPos2.col).orient := by simp
+
+    have h4 : originalTile.orient = (performSpin r (performSpin r b) i j).orient := by
+      calc
+        originalTile.orient = (secondRotation newPos2.row newPos2.col).orient := by rw [h8]
+        _ = (secondRotation i j).orient := by rw [h7]
+        _ = (performSpin r firstRotation i j).orient := by simp
+        _ = (performSpin r (performSpin r b) i j).orient := by simp
+
+
+    have h5 : (performSpin r (performSpin r b) i j).orient = (b i j).orient := by rw [h4]
+
+    exact h5
   case _ := by repeat rw [spin_does_not_change_outside _ h]
 
 lemma spin_double_does_not_change_id  (r : Rectangle m n) :
