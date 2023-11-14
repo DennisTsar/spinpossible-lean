@@ -48,15 +48,34 @@ lemma spin_does_not_change_outside (r : Rectangle m n) (h : ¬isInsideRectangle 
   unfold performSpin createRectangleSpin Spin.action_on_board
   simp [h, to_2d_to_1d_inverse]
 
+-- don't think this is true as stated (needs more conditions)
+lemma rotate_calc_twice_inverse : rotate_calc a (rotate_calc a i c) c = i := by
+  unfold rotate_calc
+  simp
+  have a0 : a.val - (a.val - (i.val - c.val) - c.val) = a.val - (a.val - ((i.val - c.val) + c.val)) := by
+    rw [Nat.sub_add_eq]
+
+  -- have a1 : a.val - (a.val - (i.val - c.val) - c.val) = a.val - a.val - (i.val - c.val) - c.val := by
+  --   apply?
+
+  have h :  a.val - (a.val - (i.val - c.val) - c.val) = i.val := by
+    calc
+      a.val - (a.val - (i.val - c.val) - c.val) = a.val - (a.val - (i.val - c.val) - c.val) := rfl
+      _ = i.val := by sorry
+
+  exact Fin.ext h
+
 lemma rotate180_twice_inverse (r : Rectangle m n) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
   unfold rotate180
-  simp
-  sorry -- this isn't needed in the old rotate180
+  simp [rotate_calc_twice_inverse]
 
 lemma spin_stays_inside (r : Rectangle m n) (h : isInsideRectangle ⟨i, j⟩ r) :
   isInsideRectangle (rotate180 ⟨i, j⟩ r) r := by
-  unfold isInsideRectangle rotate180
-  simp [h]
+  unfold isInsideRectangle rotate180 rotate_calc
+  unfold isInsideRectangle at h
+  simp [And.decidable] at h
+  simp
+
   have h1 : j.val ≥ r.topLeft.col.val := h.left
   have h2 : j.val ≤ r.bottomRight.col.val := h.right.left
 
@@ -80,13 +99,12 @@ lemma spin_stays_inside (r : Rectangle m n) (h : isInsideRectangle ⟨i, j⟩ r)
     simp [hy] at h_add6
     exact h_add6
 
-  simp [h5, h7]
+  exact ⟨h5, h7⟩
 
 lemma spin_effect  (h : isInsideRectangle ⟨i, j⟩ r) :
   ((performSpin r b) i j).orient = (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col).orient.other := by
   unfold performSpin createRectangleSpin Spin.action_on_board
   simp [h, to_2d_to_1d_inverse, spin_stays_inside]
-  sorry -- this isn't needed if isInsideRectangle is a Bool def (as opposed to a Prop abbrev)
 
 lemma spin_double_does_not_change_orientation (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).orient = (b i j).orient := by

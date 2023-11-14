@@ -109,39 +109,22 @@ structure Rectangle (m n : Nat) where
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
 
--- make this a Prop and some problems go away while some others appear
--- same for making it abbrev
-abbrev isInsideRectangle {m n : Nat} (p : Point m n) (r : Rectangle m n) :=
+-- make this a Prop ( & abbrev) and some problems go away while some others appear
+def isInsideRectangle {m n : Nat} (p : Point m n) (r : Rectangle m n) : Bool :=
   p.2.val ≥ r.topLeft.col.val ∧ p.2.val ≤ r.bottomRight.col.val ∧
   p.1.val ≥ r.topLeft.row.val ∧ p.1.val ≤ r.bottomRight.row.val
 
+def rotate_calc (a b c: Fin x) : Fin x :=
+  have b2 : a.val - (b.val - c.val) < x := by
+    calc
+      a.val - (b.val - c.val) ≤ a.val := by
+        exact Nat.sub_le a (b.val - c.val)
+      _ < x := a.isLt
+  ⟨a.val - (b.val - c.val), b2⟩
+
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
--- def rotate180 {m n : Nat} (p : Point m n) (r : Rectangle m n) : Point m n :=
---   -- swapping these also solves some problems but creates others
---   -- let new_col := r.bottomRight.col - (p.2 - r.topLeft.col)
---   -- let new_row := r.bottomRight.row - (p.1 - r.topLeft.row)
---   let new_col := r.bottomRight.col + r.topLeft.col - p.2
---   let new_row := r.bottomRight.row + r.topLeft.row - p.1
---   ⟨new_row, new_col⟩
-
 def rotate180 {m n : Nat} (p : Point m n) (r : Rectangle m n) : Point m n :=
-  let a := p.2.val - r.topLeft.col.val
-  have b : r.bottomRight.col.val - a ≤ r.bottomRight.col.val := by exact Nat.sub_le r.bottomRight.col a
-  have b2 : r.bottomRight.col.val - a < n := by
-    calc
-      r.bottomRight.col.val - a ≤ r.bottomRight.col.val := b
-      _ < n := r.bottomRight.col.isLt
-  let new_col: Fin n := ⟨r.bottomRight.col.val - (p.2.val - r.topLeft.col.val), b2⟩
-
-  let c := p.1.val - r.topLeft.row.val
-  have d : r.bottomRight.row.val - c ≤ r.bottomRight.row.val := by exact Nat.sub_le r.bottomRight.row c
-  have d2 : r.bottomRight.row.val - c < m := by
-    calc
-      r.bottomRight.row.val - c ≤ r.bottomRight.row.val := d
-      _ < m := r.bottomRight.row.isLt
-  let new_row: Fin m := ⟨r.bottomRight.row.val - (p.1.val - r.topLeft.row.val), d2⟩
-
-  ⟨new_row, new_col⟩
+  ⟨rotate_calc r.bottomRight.row p.1 r.topLeft.row, rotate_calc r.bottomRight.col p.2 r.topLeft.col⟩
 
 -- Define a function to create a Spin element for a rectangle spin
 def createRectangleSpin {m n : PNat} (r : Rectangle m n) : Spin m n :=
