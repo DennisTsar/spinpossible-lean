@@ -79,6 +79,11 @@ lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
   unfold performSpin createRectangleSpin Spin.action_on_board
   simp [h, to_2d_to_1d_inverse, spin_stays_inside]
 
+lemma spin_effect2 (h : isInsideRectangle ⟨i, j⟩ r) :
+  ((performSpin r b) i j).id = (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col).id := by
+  unfold performSpin createRectangleSpin Spin.action_on_board
+  simp [h, to_2d_to_1d_inverse, spin_stays_inside]
+
 lemma spin_double_does_not_change_orientation :
   (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
   by_cases h : isInsideRectangle ⟨i, j⟩ r
@@ -86,7 +91,7 @@ lemma spin_double_does_not_change_orientation :
     let originalTile := b i j
     let firstRotation := performSpin r b
     let newPos := rotate180 ⟨i, j⟩ r
-    let secondPos :=(rotate180 newPos r)
+    let secondPos := rotate180 newPos r
     let newTile := firstRotation newPos.row newPos.col
     have h1 : newTile.orient = originalTile.orient.other := by
       calc
@@ -98,7 +103,10 @@ lemma spin_double_does_not_change_orientation :
 lemma spin_double_does_not_change_id  (r : Rectangle m n) :
   (performSpin r (performSpin r b) i j).id = (b i j).id := by
   by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by sorry
+  case _ := by
+    let x := rotate180 ⟨i, j⟩ r
+    have z : isInsideRectangle ⟨x.row, x.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
+    rw [spin_effect2 h, spin_effect2 z, rotate180_twice_inverse h]
   case _ := by repeat rw [spin_does_not_change_outside h]
 
 -- or (s1 * s1).action_on_board b = b
