@@ -37,11 +37,8 @@ lemma to_2d_to_1d_inverse (p : Point m n) : to_2d (to_1d p) = p := by
   have col_eq : (to_1d ⟨row, col⟩).val % n = col := by
     calc
       (to_1d ⟨row, col⟩).val % n = (row * n + col) % n := rfl
-      _ = col:= by rw [Nat.mul_add_mod .., Nat.mod_eq_of_lt col.isLt]
+      _ = col := by rw [Nat.mul_add_mod .., Nat.mod_eq_of_lt col.isLt]
   congr
-
-lemma spin_does_not_change_outside (h : ¬isInsideRectangle ⟨i, j⟩ r) : ((performSpin r b) i j) = (b i j) := by
-  simp [performSpin, createRectangleSpin, Spin.action_on_board, h, to_2d_to_1d_inverse]
 
 lemma rotate_calc_twice_inverse (h1 : i ≥ c) (h2 : a ≥ i) : rotate_calc a (rotate_calc a i c) c = i := by
   simp [rotate_calc, Nat.sub_sub, Nat.sub_add_cancel h1, Nat.sub_sub_self h2]
@@ -59,7 +56,7 @@ lemma rotate180_twice_inverse (h : isInsideRectangle ⟨i,j⟩ r) : rotate180 (r
 
 lemma spin_stays_inside (h : isInsideRectangle ⟨i, j⟩ r) : isInsideRectangle (rotate180 ⟨i, j⟩ r) r := by
   unfold isInsideRectangle rotate180 rotate_calc
-  simp
+  simp only [tsub_le_iff_right, le_add_iff_nonneg_right, zero_le, and_true, true_and, decide_eq_true_eq]
   unfold isInsideRectangle at h
   simp [And.decidable] at h -- TODO: make this unnecessary
   have h1 : j.val ≥ r.topLeft.col.val := h.left
@@ -74,54 +71,25 @@ lemma spin_stays_inside (h : isInsideRectangle ⟨i, j⟩ r) : isInsideRectangle
     rw [(tsub_tsub_assoc h4 h3).symm] at h8
     exact h8
 
+-- Defined just to make spin_effect statement more readable - is there a better way?
+abbrev spin_res_tile (b : board m n) (i : Fin m) (j : Fin n) (r : Rectangle m n) :=
+  (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
+
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j).orient = (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col).orient.other := by
+  ((performSpin r b) i j) =  { id := (spin_res_tile b i j r).id, orient := (spin_res_tile b i j r).orient.other } := by
   unfold performSpin createRectangleSpin Spin.action_on_board
   simp [h, to_2d_to_1d_inverse, spin_stays_inside]
-
-lemma spin_effect2 (h : isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j).id = (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col).id := by
-  unfold performSpin createRectangleSpin Spin.action_on_board
-  simp [h, to_2d_to_1d_inverse, spin_stays_inside]
-
-lemma spin_double_does_not_change_orientation :
-  (performSpin r (performSpin r b) i j).orient = (b i j).orient := by
-  by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by
-    let originalTile := b i j
-    let firstRotation := performSpin r b
-    let newPos := rotate180 ⟨i, j⟩ r
-    let secondPos := rotate180 newPos r
-    let newTile := firstRotation newPos.row newPos.col
-    have h1 : newTile.orient = originalTile.orient.other := by
-      calc
-        newTile.orient = (b secondPos.row secondPos.col).orient.other := spin_effect (spin_stays_inside h)
-        _ = originalTile.orient.other := by simp only [rotate180_twice_inverse h]
-    rw [spin_effect h, h1, orientation.other_self]
-  case _ := by repeat rw [spin_does_not_change_outside h]
-
-lemma spin_double_does_not_change_id  (r : Rectangle m n) :
-  (performSpin r (performSpin r b) i j).id = (b i j).id := by
-  by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by
-    let x := rotate180 ⟨i, j⟩ r
-    have z : isInsideRectangle ⟨x.row, x.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
-    rw [spin_effect2 h, spin_effect2 z, rotate180_twice_inverse h]
-  case _ := by repeat rw [spin_does_not_change_outside h]
 
 -- or (s1 * s1).action_on_board b = b
 -- or s1.action_on_board (s1.action_on_board b) = b
 theorem spin_is_own_inverse : performSpin R1 (performSpin R1 b) = b := by
   funext i j -- Consider each tile individually
-  let initTile := b i j -- Initial state of the tile
-  let movedTile := performSpin R1 (performSpin R1 b) i j
-
-  have a : initTile = movedTile := calc
-    initTile = ⟨initTile.id, initTile.orient⟩   := by rfl
-    _        = ⟨movedTile.id, movedTile.orient⟩ := by
-      rw [spin_double_does_not_change_id, spin_double_does_not_change_orientation]
-
-  exact id a.symm
+  by_cases h : isInsideRectangle ⟨i, j⟩ R1
+  case _ := by
+    let p := rotate180 ⟨i, j⟩ R1
+    have h2 : isInsideRectangle ⟨p.row, p.col⟩ R1 := spin_stays_inside h -- explicitly recreate point to match rotate behavior
+    rw [spin_effect h, spin_res_tile, spin_effect h2, spin_res_tile, rotate180_twice_inverse h, orientation.other_self]
+  case _ := by simp [performSpin, createRectangleSpin, Spin.action_on_board, h, to_2d_to_1d_inverse]
 
 -- proposition 2
 
@@ -140,7 +108,7 @@ lemma s1_eq_s2_of_R1_eq_R2 (h_R1_eq_R2 : R1 = R2) : s1 = s2 := by
   -- it follows that s1 and s2 are both spins about the same rectangle (R1 or R2)
   calc
     s1 = createRectangleSpin R1 := by rw [h_s1]
-    _  = createRectangleSpin R2 := by rw[h_R1_eq_R2]
+    _  = createRectangleSpin R2 := by rw [h_R1_eq_R2]
     _  = s2                     := by rw [h_s2.symm]
 
 -- Assuming that s1 and s2 are spins about R1 and R2, respectively
