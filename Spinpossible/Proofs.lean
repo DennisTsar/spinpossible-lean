@@ -25,21 +25,6 @@ lemma orientation.other_self (o : orientation) : o.other.other = o :=
   | orientation.positive => rfl
   | orientation.negative => rfl
 
-lemma to_2d_to_1d_inverse : to_2d (to_1d p) = p := by
-  simp [to_1d, to_2d, Nat.add_comm, Nat.add_mul_div_right, Nat.div_eq_of_lt, Nat.mod_eq_of_lt]
-
-lemma rotate_calc_twice_inverse (h1 : i ≥ b) (h2 : a ≥ i) : rotate_calc a (rotate_calc a i b) b = i := by
-  simp only [rotate_calc, Nat.sub_sub, Nat.sub_add_cancel h1, Nat.sub_sub_self h2]
-
-lemma rotate180_twice_inverse (h : isInsideRectangle p r) : rotate180 (rotate180 p r) r = p := by
-  simp only [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h  -- TODO: make this unnecessary?
-  simp [h, rotate180, rotate_calc_twice_inverse]
-
-lemma spin_stays_inside (h : isInsideRectangle p r) : isInsideRectangle (rotate180 p r) r := by
-  simp only [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h -- TODO: make this unnecessary?
-  simp only [isInsideRectangle, rotate180, rotate_calc, tsub_le_iff_right]
-  simp [h, tsub_tsub_assoc]
-
 -- Defined just to make spin_effect statement more readable - is there a better way?
 abbrev spin_res_tile (b : board m n) (r : Rectangle m n) (i : Fin m) (j : Fin n)  :=
   (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
