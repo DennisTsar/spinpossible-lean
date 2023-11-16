@@ -25,60 +25,28 @@ lemma orientation.other_self (o : orientation) : o.other.other = o :=
   | orientation.positive => rfl
   | orientation.negative => rfl
 
-lemma to_2d_to_1d_inverse (p : Point m n) : to_2d (to_1d p) = p := by
-  let row := p.row
-  let col := p.col
-  unfold to_1d to_2d
-  have row_eq : (to_1d ⟨row, col⟩).val / n = row.val := by
-    calc
-      (to_1d p).val / n = (row * n + col) / n := rfl
-      _ = (col + n * row) / n := by rw [Nat.add_comm, Nat.mul_comm]
-      _ = row := by rw [Nat.add_mul_div_left _ _ n.pos, Nat.div_eq_of_lt col.isLt, Nat.zero_add]
-  have col_eq : (to_1d ⟨row, col⟩).val % n = col := by
-    calc
-      (to_1d ⟨row, col⟩).val % n = (row * n + col) % n := rfl
-      _ = col := by rw [Nat.mul_add_mod .., Nat.mod_eq_of_lt col.isLt]
-  congr
+lemma to_2d_to_1d_inverse : to_2d (to_1d p) = p := by
+  simp [to_1d, to_2d, Nat.add_comm, Nat.add_mul_div_right, Nat.div_eq_of_lt, Nat.mod_eq_of_lt]
 
-lemma rotate_calc_twice_inverse (h1 : i ≥ c) (h2 : a ≥ i) : rotate_calc a (rotate_calc a i c) c = i := by
-  simp [rotate_calc, Nat.sub_sub, Nat.sub_add_cancel h1, Nat.sub_sub_self h2]
+lemma rotate_calc_twice_inverse (h1 : i ≥ b) (h2 : a ≥ i) : rotate_calc a (rotate_calc a i b) b = i := by
+  simp only [rotate_calc, Nat.sub_sub, Nat.sub_add_cancel h1, Nat.sub_sub_self h2]
 
-lemma rotate180_twice_inverse (h : isInsideRectangle ⟨i,j⟩ r) : rotate180 (rotate180 ⟨i, j⟩ r) r = ⟨i, j⟩ := by
-  unfold rotate180
-  dsimp
-  unfold isInsideRectangle at h
-  simp [And.decidable] at h -- TODO: make this unnecessary
-  have h1 : j.val ≥ r.topLeft.col.val := h.left
-  have h2 : j.val ≤ r.bottomRight.col.val := h.right.left
-  have h3 : i.val ≥ r.topLeft.row.val := h.right.right.left
-  have h4 : i.val ≤ r.bottomRight.row.val := h.right.right.right
-  rw [rotate_calc_twice_inverse h1 h2, rotate_calc_twice_inverse h3 h4]
+lemma rotate180_twice_inverse (h : isInsideRectangle p r) : rotate180 (rotate180 p r) r = p := by
+  simp only [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h  -- TODO: make this unnecessary?
+  simp [h, rotate180, rotate_calc_twice_inverse]
 
-lemma spin_stays_inside (h : isInsideRectangle ⟨i, j⟩ r) : isInsideRectangle (rotate180 ⟨i, j⟩ r) r := by
-  unfold isInsideRectangle rotate180 rotate_calc
-  simp only [tsub_le_iff_right, le_add_iff_nonneg_right, zero_le, and_true, true_and, decide_eq_true_eq]
-  unfold isInsideRectangle at h
-  simp [And.decidable] at h -- TODO: make this unnecessary
-  have h1 : j.val ≥ r.topLeft.col.val := h.left
-  have h2 : j.val ≤ r.bottomRight.col.val := h.right.left
-  have h3 : i.val ≥ r.topLeft.row.val := h.right.right.left
-  have h4 : i.val ≤ r.bottomRight.row.val := h.right.right.right
-  apply And.intro
-  . have h6 := Nat.le_add_left (r.topLeft.col) (r.bottomRight.col - j)
-    rw [(tsub_tsub_assoc h2 h1).symm] at h6
-    exact h6
-  . have h8 := Nat.le_add_left (r.topLeft.row) (r.bottomRight.row - i)
-    rw [(tsub_tsub_assoc h4 h3).symm] at h8
-    exact h8
+lemma spin_stays_inside (h : isInsideRectangle p r) : isInsideRectangle (rotate180 p r) r := by
+  simp only [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h -- TODO: make this unnecessary?
+  simp only [isInsideRectangle, rotate180, rotate_calc, tsub_le_iff_right]
+  simp [h, tsub_tsub_assoc]
 
 -- Defined just to make spin_effect statement more readable - is there a better way?
-abbrev spin_res_tile (b : board m n) (i : Fin m) (j : Fin n) (r : Rectangle m n) :=
+abbrev spin_res_tile (b : board m n) (r : Rectangle m n) (i : Fin m) (j : Fin n)  :=
   (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
 
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j) =  { id := (spin_res_tile b i j r).id, orient := (spin_res_tile b i j r).orient.other } := by
-  unfold performSpin createRectangleSpin Spin.action_on_board
-  simp [h, to_2d_to_1d_inverse, spin_stays_inside]
+  ((performSpin r b) i j) =  { id := (spin_res_tile b r i j ).id, orient := (spin_res_tile b r i j).orient.other } := by
+  simp [h, performSpin, createRectangleSpin, Spin.action_on_board, to_2d_to_1d_inverse, spin_stays_inside]
 
 -- or (s1 * s1).action_on_board b = b
 -- or s1.action_on_board (s1.action_on_board b) = b
