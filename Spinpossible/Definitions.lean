@@ -3,15 +3,7 @@ import Mathlib.Data.Zmod.Basic
 
 universe u
 
-def perm (N : Nat) := Equiv.Perm (Fin N)
-
-namespace perm
-
-  def actionRight {N : Nat} (α β : perm N) : perm N := α.trans β
-
-  instance {N : Nat} : Mul (perm N) := ⟨actionRight⟩
-
-end perm
+abbrev perm (N : Nat) := Equiv.Perm (Fin N)
 
 def VN (N : Nat) := Fin N → ZMod 2
 

@@ -35,7 +35,6 @@ lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
   simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, to2d_to1d_inverse, spin_stays_inside]
 
 -- or (s1 * s1).action_on_board b = b
--- or s1.action_on_board (s1.action_on_board b) = b
 theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   funext i j -- Consider each tile individually
   by_cases h : isInsideRectangle ⟨i, j⟩ r
@@ -44,6 +43,11 @@ theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
     have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
     rw [spin_effect h, spinResTile, spin_effect h2, spinResTile, rotate180_self_inverse h, orientation.other_self]
   case _ := by simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
+
+theorem spin_is_own_inverse' (h : isSpinAbout s r) : s.actionOnBoard (s.actionOnBoard b) = b := by
+  have : Spin.actionOnBoard (createRectangleSpin r) = performSpin r := rfl
+  dsimp only [isSpinAbout] at h
+  rw [h, this, spin_is_own_inverse]
 
 -- proposition 2
 
