@@ -1,28 +1,28 @@
 import Spinpossible.Definitions
 
-def board_3_by_3 := standard_board 3 3
+def board3by3 := standardBoard 3 3
 
 -- I assume there's something built-in for this, but idk what it is
 def boardsEqual {m n : PNat} (b1 b2 : board m n) : Bool :=
   ∀ i j, b1 i j == b2 i j
 
 namespace TestSpinAction
-  def sample_perm : perm (3 * 3) :=
+  def samplePerm : perm (3 * 3) :=
     Equiv.mk
       (fun i => if i = 0 then 1 else if i = 1 then 0 else i)
       (fun i => if i = 0 then 1 else if i = 1 then 0 else i)
       (by sorry)
       (by sorry)
 
-  def sample_spin : Spin (Nat.toPNat 3) (Nat.toPNat 3) :=
+  def sampleSpin : Spin (Nat.toPNat 3) (Nat.toPNat 3) :=
     {
-      α := sample_perm
+      α := samplePerm
       u := fun i => if i = 0 then 1 else 0
     }
 
-  def a := Spin.action_on_board sample_spin (Spin.action_on_board sample_spin board_3_by_3)
-  def b := Spin.action_on_board (sample_spin * sample_spin) board_3_by_3
-  def c := (sample_spin * sample_spin).action_on_board board_3_by_3
+  def a := Spin.actionOnBoard sampleSpin (Spin.actionOnBoard sampleSpin board3by3)
+  def b := Spin.actionOnBoard (sampleSpin * sampleSpin) board3by3
+  def c := (sampleSpin * sampleSpin).actionOnBoard board3by3
 
   #eval a
   #eval b
@@ -44,16 +44,16 @@ namespace TestRectSpins
       bottomRight := {row := 2, col:= 1}
     }
 
-  def first_spin_res := performSpin test_rectangle board_3_by_3
-  def second_spin_res := performSpin test_rectangle2 first_spin_res
+  def firstSpinRes := performSpin test_rectangle board3by3
+  def secondSpinRes := performSpin test_rectangle2 firstSpinRes
 
-  def combined_spin := createRectangleSpin test_rectangle * createRectangleSpin test_rectangle2
-  def combined_spin_res := combined_spin.action_on_board board_3_by_3
+  def combinedSpin := createRectangleSpin test_rectangle * createRectangleSpin test_rectangle2
+  def combinedSpinRes := combinedSpin.actionOnBoard board3by3
 
-  #eval first_spin_res
-  #eval second_spin_res
-  #eval combined_spin_res
+  #eval firstSpinRes
+  #eval secondSpinRes
+  #eval combinedSpinRes
 
-  #guard boardsEqual second_spin_res combined_spin_res
+  #guard boardsEqual secondSpinRes combinedSpinRes
 
 end TestRectSpins

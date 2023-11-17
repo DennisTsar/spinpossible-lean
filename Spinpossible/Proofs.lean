@@ -1,14 +1,14 @@
 import Spinpossible.Definitions
 import Mathlib.Data.Zmod.Basic
 
-def is_spin_about {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
+def isSpinAbout {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
   s = createRectangleSpin R
 
-def is_lowercase_spin {m n : PNat} (s : Spin m n) : Prop :=
-  ∃ (r : Rectangle m n), is_spin_about s r
+def isLowercaseSpin {m n : PNat} (s : Spin m n) : Prop :=
+  ∃ (r : Rectangle m n), isSpinAbout s r
 
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
-  (h_s1 : is_spin_about s1 R1) (h_s2 : is_spin_about s2 R2)
+  (h_s1 : isSpinAbout s1 R1) (h_s2 : isSpinAbout s2 R2)
 
 -- proposition 1
 -- theorem spin_is_own_inverse : (s1 * s1).action_on_board b = b := by
@@ -26,29 +26,30 @@ lemma orientation.other_self (o : orientation) : o.other.other = o :=
   | orientation.negative => rfl
 
 -- Defined just to make spin_effect statement more readable - is there a better way?
-abbrev spin_res_tile (b : board m n) (r : Rectangle m n) (i : Fin m) (j : Fin n)  :=
+abbrev spinResTile (b : board m n) (r : Rectangle m n) (i : Fin m) (j : Fin n) :=
   (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
 
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
-  ((performSpin r b) i j) =  { id := (spin_res_tile b r i j ).id, orient := (spin_res_tile b r i j).orient.other } := by
-  simp [h, performSpin, createRectangleSpin, Spin.action_on_board, to_2d_to_1d_inverse, spin_stays_inside]
+    ((performSpin r b) i j) =
+    { id := (spinResTile b r i j ).id, orient := (spinResTile b r i j).orient.other } := by
+  simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, to2d_to1d_inverse, spin_stays_inside]
 
 -- or (s1 * s1).action_on_board b = b
 -- or s1.action_on_board (s1.action_on_board b) = b
-theorem spin_is_own_inverse : performSpin R1 (performSpin R1 b) = b := by
+theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   funext i j -- Consider each tile individually
-  by_cases h : isInsideRectangle ⟨i, j⟩ R1
+  by_cases h : isInsideRectangle ⟨i, j⟩ r
   case _ := by
-    let p := rotate180 ⟨i, j⟩ R1
-    have h2 : isInsideRectangle ⟨p.row, p.col⟩ R1 := spin_stays_inside h -- explicitly recreate point to match rotate behavior
-    rw [spin_effect h, spin_res_tile, spin_effect h2, spin_res_tile, rotate180_twice_inverse h, orientation.other_self]
-  case _ := by simp [performSpin, createRectangleSpin, Spin.action_on_board, h, to_2d_to_1d_inverse]
+    let p := rotate180 ⟨i, j⟩ r
+    have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
+    rw [spin_effect h, spinResTile, spin_effect h2, spinResTile, rotate180_self_inverse h, orientation.other_self]
+  case _ := by simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
 
 -- proposition 2
 
 def moves_tile {m n : PNat} (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) : Prop :=
-  let newPos := s.α.symm (to_1d (to_2d p))
-  newPos ≠ p ∧ isInsideRectangle (to_2d newPos) R
+  let newPos := s.α.symm (to1d (to2d p))
+  newPos ≠ p ∧ isInsideRectangle (to2d newPos) R
 
 def common_center {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
   -- technically center * 2 but we don't care
@@ -71,7 +72,7 @@ lemma R1_ne_R2_of_s1_ne_s2 (h_s1_ne_s2 : s1 ≠ s2) : R1 ≠ R2 := by
   have h_s1_eq_s2 : s1 = s2 := s1_eq_s2_of_R1_eq_R2 _ _ _ _ h_s1 h_s2 h
   contradiction
 
-theorem s1s2_not_spin : ¬is_lowercase_spin (s1 * s2) := by
+theorem s1s2_not_spin : ¬isLowercaseSpin (s1 * s2) := by
   rintro ⟨R3, h_s1s2_R3⟩
 
   have h_R1_ne_R2 : R1 ≠ R2 := R1_ne_R2_of_s1_ne_s2 _ _ _ _ h_s1 h_s2 sorry
@@ -82,8 +83,8 @@ theorem s1s2_not_spin : ¬is_lowercase_spin (s1 * s2) := by
   obtain ⟨p2, h_p2_in_R2, h_p2_not_in_R1⟩ :
     ∃ p2, isInsideRectangle p2 R2 ∧ ¬isInsideRectangle p2 R1 := by sorry
 
-  have h_s1s2_moves_p1 : moves_tile (s1 * s2) (to_1d p1) R3 := by sorry
-  have h_s1s2_moves_p2 : moves_tile (s1 * s2) (to_1d p2) R3 := by sorry
+  have h_s1s2_moves_p1 : moves_tile (s1 * s2) (to1d p1) R3 := by sorry
+  have h_s1s2_moves_p2 : moves_tile (s1 * s2) (to1d p2) R3 := by sorry
 
   have h_common_center_R1_R3 : common_center R1 R3 := by sorry
   have h_common_center_R2_R3 : common_center R2 R3 := by sorry
@@ -130,7 +131,7 @@ def same_shape {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
   (R1.bottomRight.col - R1.topLeft.col) = (R2.bottomRight.col - R2.topLeft.col)
 
 theorem s1s2s1_is_spin_iff :
-  (∃ R3 : Rectangle m n, is_spin_about (s1 * s2 * s1) R3 ∧ same_shape R3 R2) ↔
+  (∃ R3 : Rectangle m n, isSpinAbout (s1 * s2 * s1) R3 ∧ same_shape R3 R2) ↔
   (s1 * s2 = s2 * s1 ∨ rectangle_contains R1 R2) := by
   apply Iff.intro
 
