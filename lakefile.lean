@@ -1,19 +1,14 @@
 import Lake
 open Lake DSL
 
-def args := #[
-  "-Dpp.unicode.fun=true", -- pretty-prints `fun a ↦ b`
-  "-DrelaxedAutoImplicit=false" -- helps avoid typo traps
-]
-
-package «spinpossible» {
-  moreServerArgs := args
-}
+package spinpossible where
+  leanOptions := #[
+    ⟨`pp.unicode.fun, true⟩, -- pretty-prints `fun a ↦ b`
+    ⟨`relaxedAutoImplicit, false⟩ -- helps avoid typo traps
+  ]
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
 
 @[default_target]
-lean_lib «Spinpossible» {
-  moreLeanArgs := args
-}
+lean_lib Spinpossible
