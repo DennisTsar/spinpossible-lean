@@ -1,13 +1,13 @@
 import Spinpossible.Definitions
 
-def isSpinAbout {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
+def Spin.isSpinAbout {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
   s = createRectangleSpin R
 
 def isLowercaseSpin {m n : PNat} (s : Spin m n) : Prop :=
-  ∃ (r : Rectangle m n), isSpinAbout s r
+  ∃ (r : Rectangle m n), s.isSpinAbout r
 
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
-  (h_s1 : isSpinAbout s1 R1) (h_s2 : isSpinAbout s2 R2)
+  (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
 
 -- proposition 1
 -- theorem spin_is_own_inverse : (s1 * s1).action_on_board b = b := by
@@ -43,9 +43,9 @@ theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
     rw [spin_effect h, spinResTile, spin_effect h2, spinResTile, rotate180_self_inverse h, orientation.other_self]
   case _ := by simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
 
-theorem spin_is_own_inverse' (h : isSpinAbout s r) : s.actionOnBoard (s.actionOnBoard b) = b := by
+theorem spin_is_own_inverse' (s: Spin _ _) (h : s.isSpinAbout r) : s.actionOnBoard (s.actionOnBoard b) = b := by
   have : Spin.actionOnBoard (createRectangleSpin r) = performSpin r := rfl
-  dsimp only [isSpinAbout] at h
+  dsimp only [Spin.isSpinAbout] at h
   rw [h, this, spin_is_own_inverse]
 
 -- proposition 2
@@ -134,7 +134,7 @@ def same_shape {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
   (R1.bottomRight.col - R1.topLeft.col) = (R2.bottomRight.col - R2.topLeft.col)
 
 theorem s1s2s1_is_spin_iff :
-  (∃ R3 : Rectangle m n, isSpinAbout (s1 * s2 * s1) R3 ∧ same_shape R3 R2) ↔
+  (∃ R3 : Rectangle m n, (s1 * s2 * s1).isSpinAbout R3 ∧ same_shape R3 R2) ↔
   (s1 * s2 = s2 * s1 ∨ rectangle_contains R1 R2) := by
   apply Iff.intro
 
