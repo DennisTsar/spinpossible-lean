@@ -1,5 +1,5 @@
-import Mathlib.GroupTheory.Perm.Basic
-import Mathlib.Data.Zmod.Basic
+import Mathlib.Data.ZMod.Basic
+import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
 
 universe u
 

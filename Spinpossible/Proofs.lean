@@ -1,5 +1,4 @@
 import Spinpossible.Definitions
-import Mathlib.Data.Zmod.Basic
 
 def isSpinAbout {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
   s = createRectangleSpin R
