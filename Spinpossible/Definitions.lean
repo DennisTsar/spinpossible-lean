@@ -3,7 +3,15 @@ import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
 
 universe u
 
-abbrev perm (N : Nat) := Equiv.Perm (Fin N)
+def perm (N : Nat) := Equiv.Perm (Fin N)
+
+namespace perm
+
+  def action_right {N : Nat} (α β : perm N) : perm N := α.trans β
+
+  instance {N : Nat} : Mul (perm N) := ⟨action_right⟩
+
+end perm
 
 def VN (N : Nat) := Fin N → ZMod 2
 
