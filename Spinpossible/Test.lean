@@ -6,7 +6,46 @@ def board3by3 := standardBoard 3 3
 def boardsEqual {m n : PNat} (b1 b2 : board m n) : Bool :=
   ∀ i j, b1 i j == b2 i j
 
+namespace Basics
+
+  def perm1 : perm 3 :=
+    Equiv.mk
+      (fun i => if i = 0 then 1 else if i = 1 then 0 else 2)
+      (fun i => if i = 0 then 1 else if i = 1 then 0 else 2)
+      (by
+        apply Function.leftInverse_iff_comp.mpr
+        funext i
+        match i with -- I assume this can be shorter, but idk how
+        | 0 => rfl
+        | 1 => rfl
+        | 2 => rfl
+      )
+      (
+        by
+          apply Function.rightInverse_iff_comp.mpr
+          funext i
+          match i with
+          | 0 => rfl
+          | 1 => rfl
+          | 2 => rfl
+      )
+
+  def perm2 : perm 3 :=
+    Equiv.mk
+      (fun i => i + 1)
+      (fun i => i - 1)
+      (by exact leftInverse_sub_add_left 1)
+      (by exact leftInverse_sub_add_left (-1))
+
+  #guard perm1.toFun = ![1, 0, 2]
+  #guard perm2.toFun = ![1, 2, 0]
+  #guard (perm1 * perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
+  #guard (perm2 * perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
+
+end Basics
+
 namespace TestSpinAction
+
   def samplePerm : perm (3 * 3) :=
     Equiv.mk
       (fun i => if i = 0 then 1 else if i = 1 then 0 else i)
@@ -28,17 +67,18 @@ namespace TestSpinAction
   #eval b
   #eval c
   #guard boardsEqual a b && boardsEqual a c && boardsEqual b c
+
 end TestSpinAction
 
 namespace TestRectSpins
 
-  def test_rectangle : Rectangle (Nat.toPNat 3) (Nat.toPNat 3) :=
+  def test_rectangle : Rectangle (3 : PNat) (3 : PNat) :=
     {
       topLeft := {row := 2, col := 0}
       bottomRight := {row := 2, col:= 2}
     }
 
-  def test_rectangle2 : Rectangle (Nat.toPNat 3) (Nat.toPNat 3) :=
+  def test_rectangle2 : Rectangle (3 : PNat) (3 : PNat) :=
     {
       topLeft := {row := 0, col := 0}
       bottomRight := {row := 2, col:= 1}

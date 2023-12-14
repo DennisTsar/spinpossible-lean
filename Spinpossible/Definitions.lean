@@ -7,23 +7,14 @@ def perm (N : Nat) := Equiv.Perm (Fin N)
 
 namespace perm
 
-  def action_right {N : Nat} (α β : perm N) : perm N := α.trans β
+  -- apply α and then β
+  def action_right (α β : perm N) : perm N := α.trans β
 
-  instance {N : Nat} : Mul (perm N) := ⟨action_right⟩
+  instance : Mul (perm N) := ⟨action_right⟩
 
 end perm
 
 def VN (N : Nat) := Fin N → ZMod 2
-
-namespace VN
-
-  def add {N : Nat} (v w : VN N) : VN N := fun i => v i + w i
-
-  instance {N : Nat} : Add (VN N) := ⟨add⟩
-
-  def action {N : Nat} (v : VN N) (α : perm N) : VN N := fun i => v (α.symm i)
-
-end VN
 
 structure Spin (m n : Nat) where
   α : perm (m * n)
@@ -31,13 +22,13 @@ structure Spin (m n : Nat) where
 
 namespace Spin
 
-  def mul {m n : Nat} (x y : Spin m n) : Spin m n :=
+  def mul (x y : Spin m n) : Spin m n :=
     {
       α := x.α * y.α,
-      u := fun i => x.u i + VN.action y.u x.α i
+      u := fun i => x.u (y.α.invFun i) + y.u i
     }
 
-  instance {m n : Nat} : Mul (Spin m n) := ⟨mul⟩
+  instance : Mul (Spin m n) := ⟨mul⟩
 
 end Spin
 
@@ -84,10 +75,6 @@ lemma to1d_to2d_inverse : (to1d (to2d p)) = p := by
 def standardBoard (m n : PNat) : board m n :=
   fun i j => {id := to1d ⟨i, j⟩ + 1, orient := orientation.positive}
 
--- Action of a permutation on VN to match the paper's notation vα
-def action {N : Nat} (v : VN N) (α : perm N) : VN N :=
-  fun i => v (α.symm i)
-
 def orientation.other (o : orientation) : orientation :=
   match o with
   | orientation.positive  => orientation.negative
@@ -96,10 +83,11 @@ def orientation.other (o : orientation) : orientation :=
 -- Action of Spin(m x n) on a board
 def Spin.actionOnBoard {m n : PNat} (s : Spin m n) (b : board m n) : board m n :=
   fun i j =>
-    let newPos := s.α.symm (to1d ⟨i, j⟩)
+    let origPos := to1d ⟨i, j⟩
+    let newPos := s.α.symm origPos
     let ⟨newI, newJ⟩ := to2d newPos
     let tile := b newI newJ
-    if s.u newPos = 1 then { tile with orient := tile.orient.other } else tile
+    if s.u origPos = 1 then { tile with orient := tile.orient.other } else tile
 
 structure Rectangle (m n : Nat) where
   topLeft : Point m n
