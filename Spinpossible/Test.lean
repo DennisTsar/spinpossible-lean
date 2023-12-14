@@ -3,8 +3,7 @@ import Spinpossible.Definitions
 def board3by3 := standardBoard 3 3
 
 -- I assume there's something built-in for this, but idk what it is
-def boardsEqual {m n : PNat} (b1 b2 : board m n) : Bool :=
-  ∀ i j, b1 i j == b2 i j
+def boardsEqual (b1 b2 : board m n) : Bool := ∀ i j, b1 i j == b2 i j
 
 namespace Basics
 

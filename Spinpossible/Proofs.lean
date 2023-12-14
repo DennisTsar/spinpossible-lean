@@ -24,13 +24,10 @@ lemma orientation.other_self (o : orientation) : o.other.other = o :=
   | orientation.positive => rfl
   | orientation.negative => rfl
 
--- Defined just to make spin_effect statement more readable - is there a better way?
-abbrev spinResTile (b : board m n) (r : Rectangle m n) (i : Fin m) (j : Fin n) :=
-  (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
-
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
+    let spinResTile := (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
     ((performSpin r b) i j) =
-    { id := (spinResTile b r i j ).id, orient := (spinResTile b r i j).orient.other } := by
+    { id := spinResTile.id, orient := spinResTile.orient.other } := by
   simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, to2d_to1d_inverse, spin_stays_inside]
 
 -- or (s1 * s1).action_on_board b = b
@@ -40,7 +37,7 @@ theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   case _ := by
     let p := rotate180 ⟨i, j⟩ r
     have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
-    rw [spin_effect h, spinResTile, spin_effect h2, spinResTile, rotate180_self_inverse h, orientation.other_self]
+    rw [spin_effect h, spin_effect h2, rotate180_self_inverse h, orientation.other_self]
   case _ := by simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
 
 theorem spin_is_own_inverse' (s: Spin _ _) (h : s.isSpinAbout r) : s.actionOnBoard (s.actionOnBoard b) = b := by
