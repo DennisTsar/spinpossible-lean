@@ -51,7 +51,7 @@ def moves_tile {m n : PNat} (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n)
   let newPos := s.α.symm (to1d (to2d p))
   newPos ≠ p ∧ isInsideRectangle (to2d newPos) R
 
-def common_center {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
+def common_center (R1 R2 : Rectangle m n) : Prop :=
   -- technically center * 2 but we don't care
   let center1 := (R1.topLeft.row + R1.bottomRight.row, R1.topLeft.col + R1.bottomRight.col)
   let center2 := (R2.topLeft.row + R2.bottomRight.row, R2.topLeft.col + R2.bottomRight.col)
@@ -92,7 +92,7 @@ theorem s1s2_not_spin : ¬isLowercaseSpin (s1 * s2) := by
   sorry
 
 -- proposition 3
-def rectangles_disjoint {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
+def rectangles_disjoint (R1 R2 : Rectangle m n) : Prop :=
   R1.bottomRight.row < R2.topLeft.row ∨ R1.bottomRight.col < R2.topLeft.col ∨
   R2.bottomRight.row < R1.topLeft.row ∨ R2.bottomRight.col < R1.topLeft.col
 
@@ -123,10 +123,10 @@ theorem s1s2_eq_s2s1_iff : s1 * s2 = s2 * s1 ↔ (rectangles_disjoint R1 R2 ∨ 
 
 -- proposition 4
 
-def rectangle_contains {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
+def rectangle_contains (R1 R2 : Rectangle m n) : Prop :=
   isInsideRectangle R2.topLeft R1 ∧ isInsideRectangle R2.bottomRight R1
 
-def same_shape {m n : Nat} (R1 R2 : Rectangle m n) : Prop :=
+def same_shape (R1 R2 : Rectangle m n) : Prop :=
   (R1.bottomRight.row - R1.topLeft.row) = (R2.bottomRight.row - R2.topLeft.row) ∧
   (R1.bottomRight.col - R1.topLeft.col) = (R2.bottomRight.col - R2.topLeft.col)
 
