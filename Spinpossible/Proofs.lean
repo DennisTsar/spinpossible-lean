@@ -24,28 +24,26 @@ lemma orientation.other_self (o : orientation) : o.other.other = o :=
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
     let spinResTile := (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
     ((performSpin r b) i j) =
-    { id := spinResTile.id, orient := spinResTile.orient.other } := by
+    { spinResTile with orient := spinResTile.orient.other } := by
   simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, to2d_to1d_inverse, spin_stays_inside]
 
 -- or (s1 * s1).action_on_board b = b
 theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   funext i j -- Consider each tile individually
   by_cases h : isInsideRectangle ⟨i, j⟩ r
-  case _ := by
-    let p := rotate180 ⟨i, j⟩ r
+  · let p := rotate180 ⟨i, j⟩ r
     have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
     rw [spin_effect h, spin_effect h2, rotate180_self_inverse h, orientation.other_self]
-  case _ := by simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
+  · simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
 
-theorem spin_is_own_inverse' (s: Spin _ _) (h : s.isSpinAbout r) : s.actionOnBoard (s.actionOnBoard b) = b := by
-  have : Spin.actionOnBoard (createRectangleSpin r) = performSpin r := rfl
-  dsimp only [Spin.isSpinAbout] at h
-  rw [h, this, spin_is_own_inverse]
+theorem spin_is_own_inverse' (h : Spin.isSpinAbout s r) :
+    s.actionOnBoard (s.actionOnBoard b) = b := by
+  rw [h, ←performSpin, ←performSpin, spin_is_own_inverse]
 
 -- proposition 2
 
 lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
-    ∃ p : Fin (m * n), (createRectangleSpin R).u p = 1 := by
+    ∃ p, (createRectangleSpin R).u p = 1 := by
   let p := R.topLeft
   use to1d p
   have h : isInsideRectangle p R := by
@@ -59,8 +57,7 @@ lemma zmod2_eq_zero_or_one {x : ZMod 2} (h : x ≠ 0) : x = 1 := by
   | 0  => exact (h rfl).elim
   | 1  => rfl
 
-lemma spin_mul_no_flips {r : Rectangle m n} (s : Spin m n) (h : s.isSpinAbout r) :
-    (s * s).u = fun _ => 0 := by
+lemma spin_mul_no_flips (h : Spin.isSpinAbout s r) : (s * s).u = fun _ => 0 := by
   funext p
   simp_rw [HMul.hMul, Mul.mul, Spin.mul]
   rw [Spin.isSpinAbout, createRectangleSpin] at h
@@ -69,21 +66,11 @@ lemma spin_mul_no_flips {r : Rectangle m n} (s : Spin m n) (h : s.isSpinAbout r)
   · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1]; decide
   · simp [h1]
 
-theorem same_spin {r : Rectangle m n} {s1 s2 : Spin m n} (h : s1.isSpinAbout r) :
-    (s1 * s2).isSpinAbout R3 → s1 ≠ s2 := by
-  intro h1 x
-  rw [←x] at h1
-  let a := s1 * s1
-  have h2 : ¬∃ r : Rectangle m n, a = createRectangleSpin r := by
-    intro h3
-    obtain ⟨r, h4⟩ := h3
-    have h5 : ∃ p : Fin (m * n), a.u p = 1 := by simp_rw [h4, rectangle_flips_min_one_tile]
-    have h6 : (s1 * s1).u = fun _ => 0 := spin_mul_no_flips s1 h
-    rw [h6] at h5
-    obtain ⟨_, h7⟩ := h5
-    exact zero_ne_one h7
-  rw [not_exists] at h2
-  exact h2 R3 h1
+theorem spin_inverse_is_not_spin2 (h : Spin.isSpinAbout s r) : ¬(s * s).isSpinAbout r2 := by
+  rw [Spin.isSpinAbout]
+  intro h1
+  have h2 : ∃ p, (s * s).u p = 1 := by simp_rw [h1, rectangle_flips_min_one_tile r2]
+  simp_rw [spin_mul_no_flips h, exists_const, zero_ne_one] at h2
 
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
