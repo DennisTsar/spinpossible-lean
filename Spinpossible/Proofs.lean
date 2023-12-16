@@ -47,84 +47,34 @@ theorem spin_is_own_inverse' (s: Spin _ _) (h : s.isSpinAbout r) : s.actionOnBoa
 lemma rectangle_flips_at_least_one_tile {m n : PNat} (R : Rectangle m n) :
     ∃ (p : Fin (m * n)), (createRectangleSpin R).u p = 1 := by
   let p := R.topLeft
+  use to1d p
   have h : isInsideRectangle p R := by
     simp [isInsideRectangle]
     exact ⟨R.validRow, R.validCol⟩
-  use to1d p
-  simp [createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse, spin_stays_inside]
+  simp_rw [createRectangleSpin, to2d_to1d_inverse, h, ite_true]
+
+@[simp]
+lemma zmod2_eq_zero_or_one {x : ZMod 2} (h : x ≠ 0) : x = 1 := by
+  match x with
+  | 0  => exact (h rfl).elim
+  | 1  => simp
+
+set_option trace.aesop true
 
 lemma spin_mul_no_flips {m n : PNat} {r : Rectangle m n} (s : Spin m n) (h : s.isSpinAbout r) :
     (s * s).u = fun _ => 0 := by
   funext p
-  simp [HMul.hMul, Mul.mul]
-  simp [Spin.mul]
-  let a := Spin.u s p
-  have hU : a = 0 ∨ a = 1 := by match a with
-    | 0 => exact eq_zero_or_one_of_sq_eq_self rfl
-    | 1 => exact eq_zero_or_one_of_sq_eq_self rfl
+  simp_rw [HMul.hMul, Mul.mul, Spin.mul]
   let b := Spin.u s (s.α.symm p)
-  have hV : b = 0 ∨ b = 1 := by match b with
-    | 0 => exact eq_zero_or_one_of_sq_eq_self rfl
-    | 1 => exact eq_zero_or_one_of_sq_eq_self rfl
-  cases hU with
-  | inl hU0 => cases hV with
-    | inl hV0 => simp [hU0, hV0]
-    | inr hV1 =>
-      exfalso
-      have h1 : s.u p = 0 := hU0
-      have h2 : s.u (s.α.symm p) = 1 := hV1
-      simp [Spin.isSpinAbout, createRectangleSpin] at h
-      have h3 : s.u = fun pos ↦ if isInsideRectangle (to2d pos) r = true then 1 else 0 := by rw [h]
-      have h5 : isInsideRectangle (to2d p) r ∨ ¬isInsideRectangle (to2d p) r := by
-          exact eq_or_ne (isInsideRectangle (to2d p) r) true
-      have h4 : ¬isInsideRectangle (to2d p) r := by
-        simp [h1]
-        clear h
-        cases h5 with
-        | inl h5 =>
-          exfalso
-          rw [h3] at h1
-          simp_all only [ite_true, one_ne_zero]
-        | inr h5 => exact Bool.eq_false_iff.mpr h5
-      have h6 : isInsideRectangle (to2d p) r := by
-        cases h5 with
-        | inl h5 =>
-          exfalso
-          rw [h3] at h1
-          simp_all only [ite_true, one_ne_zero]
-        | inr h5 => aesop
-      contradiction
-  | inr hU1 => cases hV with
-    | inl hV0 =>
-      exfalso
-      have h1 : s.u p = 1 := hU1
-      have h2 : s.u (s.α.symm p) = 0 := hV0
-      simp [Spin.isSpinAbout, createRectangleSpin] at h
-      have h3 : s.u = fun pos ↦ if isInsideRectangle (to2d pos) r = true then 1 else 0 := by rw [h]
-      have h5 : isInsideRectangle (to2d p) r ∨ ¬isInsideRectangle (to2d p) r := by
-          exact eq_or_ne (isInsideRectangle (to2d p) r) true
-      have h4 : ¬isInsideRectangle (to2d p) r := by
-        simp [h1]
-        cases h5 with
-        | inl h5 =>
-          simp_all only [ite_true, ite_eq_right_iff, one_ne_zero, imp_false, Bool.not_eq_true]
-          aesop
-          simp [to2d_to1d_inverse] at h2
-          have h7 : isInsideRectangle (rotate180 (to2d p) r) r := by
-            apply spin_stays_inside h5
-          have h8 : ¬isInsideRectangle (rotate180 (to2d p) r) r := by
-            simp [h2]
-          contradiction
-        | inr h5 => exact Bool.eq_false_iff.mpr h5
-      have h6 : isInsideRectangle (to2d p) r := by
-        cases h5 with
-        | inl h5 =>
-          exfalso
-          rw [h3] at h1
-          simp_all only [ite_true, one_ne_zero]
-        | inr h5 => aesop
-      contradiction
-    | inr hV1 => simp [hU1, hV1]; rfl
+  by_cases h1 : Spin.u s p = 0
+  . by_cases h2 : b = 0
+    . simp [h1, h2]
+    . dsimp only [Spin.isSpinAbout, createRectangleSpin] at h
+      simp_all
+  . by_cases h2 : b = 0
+    . dsimp only [Spin.isSpinAbout, createRectangleSpin] at h
+      simp_all [to2d_to1d_inverse, spin_stays_inside]
+    . simp [h1, h2]; decide
 
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
