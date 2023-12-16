@@ -44,12 +44,12 @@ theorem spin_is_own_inverse' (s: Spin _ _) (h : s.isSpinAbout r) : s.actionOnBoa
 
 -- proposition 2
 
-lemma rectangle_flips_at_least_one_tile {m n : PNat} (R : Rectangle m n) :
-    ∃ (p : Fin (m * n)), (createRectangleSpin R).u p = 1 := by
+lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
+    ∃ p : Fin (m * n), (createRectangleSpin R).u p = 1 := by
   let p := R.topLeft
   use to1d p
   have h : isInsideRectangle p R := by
-    simp [isInsideRectangle]
+    simp_rw [isInsideRectangle, le_refl, true_and, decide_eq_true_eq]
     exact ⟨R.validRow, R.validCol⟩
   simp_rw [createRectangleSpin, to2d_to1d_inverse, h, ite_true]
 
@@ -57,38 +57,36 @@ lemma rectangle_flips_at_least_one_tile {m n : PNat} (R : Rectangle m n) :
 lemma zmod2_eq_zero_or_one {x : ZMod 2} (h : x ≠ 0) : x = 1 := by
   match x with
   | 0  => exact (h rfl).elim
-  | 1  => simp
+  | 1  => rfl
 
-set_option trace.aesop true
-
-lemma spin_mul_no_flips {m n : PNat} {r : Rectangle m n} (s : Spin m n) (h : s.isSpinAbout r) :
+lemma spin_mul_no_flips {r : Rectangle m n} (s : Spin m n) (h : s.isSpinAbout r) :
     (s * s).u = fun _ => 0 := by
   funext p
   simp_rw [HMul.hMul, Mul.mul, Spin.mul]
-  dsimp only [Spin.isSpinAbout, createRectangleSpin] at h
+  rw [Spin.isSpinAbout, createRectangleSpin] at h
   simp only [h, to2d_to1d_inverse, spin_stays_inside]
   by_cases h1 : isInsideRectangle (to2d p) r
   · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1]; decide
   · simp [h1]
 
+theorem same_spin {r : Rectangle m n} {s1 s2 : Spin m n} (h : s1.isSpinAbout r) :
+    (s1 * s2).isSpinAbout R3 → s1 ≠ s2 := by
+  intro h1 x
+  rw [←x] at h1
+  let a := s1 * s1
+  have h2 : ¬∃ r : Rectangle m n, a = createRectangleSpin r := by
+    intro h3
+    obtain ⟨r, h4⟩ := h3
+    have h5 : ∃ p : Fin (m * n), a.u p = 1 := by simp_rw [h4, rectangle_flips_min_one_tile]
+    have h6 : (s1 * s1).u = fun _ => 0 := spin_mul_no_flips s1 h
+    rw [h6] at h5
+    obtain ⟨_, h7⟩ := h5
+    exact zero_ne_one h7
+  rw [not_exists] at h2
+  exact h2 R3 h1
+
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
-
-theorem same_spin (h1 : s1.isSpinAbout R1) (h2 : s2.isSpinAbout R2) : (s1 * s2).isSpinAbout R3 → s1 ≠ s2 := by
-  intro h x
-  simp_all only [h2]
-  let a := s2 * s2
-  have h8 : (s2 * s2).u = fun _ => 0 := spin_mul_no_flips s2 h2
-  have h9 : ¬∃ (r : Rectangle m n), a = createRectangleSpin r := by
-    intro h10
-    obtain ⟨r, h11⟩ := h10
-    have h12 : ∃ (p : Fin (m.val * n.val)), a.u p = 1 := by
-      have x : ∃ p, (createRectangleSpin r).u p = 1 := rectangle_flips_at_least_one_tile r
-      simp_all only [h11, rectangle_flips_at_least_one_tile]
-    simp_all only [h8, zero_ne_one, exists_const]
-
-  simp only [not_exists] at h9
-  exact h9 R3 h
 
 def moves_tile (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) : Prop :=
   let newPos := s.α.symm (to1d (to2d p))

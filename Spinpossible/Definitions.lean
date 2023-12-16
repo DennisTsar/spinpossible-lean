@@ -64,7 +64,7 @@ def to2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
   ⟨pos.val % n, Nat.mod_lt pos n.pos⟩⟩
 
 lemma to2d_to1d_inverse : to2d (to1d p) = p := by
-  simp only [to1d, to2d]
+  rw [to1d, to2d]
   congr
   · simp [Nat.add_mul_div_right, Nat.div_eq_of_lt]
   · simp [Nat.mod_eq_of_lt]
@@ -106,7 +106,7 @@ def rotateCalc (a b c : Fin n) : Fin n := by
     a.val - (b.val - c.val) ≤ a.val := by apply Nat.sub_le
     _                       < n     := a.isLt
 
-lemma rotate_calc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b)  : rotateCalc a (rotateCalc a i b) b = i := by
+lemma rotate_calc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rotateCalc a i b) b = i := by
   simp only [rotateCalc, Nat.sub_sub, Nat.sub_sub_self h1, Nat.sub_add_cancel h2]
 
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
@@ -114,12 +114,12 @@ def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
   ⟨rotateCalc r.bottomRight.row p.1 r.topLeft.row, rotateCalc r.bottomRight.col p.2 r.topLeft.col⟩
 
 lemma rotate180_self_inverse (h : isInsideRectangle p r) : rotate180 (rotate180 p r) r = p := by
-  simp only [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h
+  simp_rw [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h
   simp [h, rotate180, rotate_calc_self_inverse]
 
 lemma spin_stays_inside (h : isInsideRectangle p r) : isInsideRectangle (rotate180 p r) r := by
-  simp only [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h
-  simp only [isInsideRectangle, rotate180, rotateCalc, tsub_le_iff_right]
+  simp_rw [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h
+  simp_rw [isInsideRectangle, rotate180, rotateCalc, tsub_le_iff_right]
   simp [h, tsub_tsub_assoc]
 
 -- Define a function to create a Spin element for a rectangle spin
