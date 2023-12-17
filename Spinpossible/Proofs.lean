@@ -66,7 +66,7 @@ lemma spin_mul_no_flips (h : Spin.isSpinAbout s r) : (s * s).u = fun _ => 0 := b
   · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1]; decide
   · simp [h1]
 
-theorem spin_inverse_is_not_spin2 (h : Spin.isSpinAbout s r) : ¬(s * s).isSpinAbout r2 := by
+theorem spin_inverse_is_not_spin (h : Spin.isSpinAbout s r) : ¬(s * s).isSpinAbout r2 := by
   rw [Spin.isSpinAbout]
   intro h1
   have h2 : ∃ p, (s * s).u p = 1 := by simp_rw [h1, rectangle_flips_min_one_tile r2]
