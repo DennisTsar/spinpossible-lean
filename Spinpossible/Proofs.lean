@@ -42,6 +42,32 @@ theorem spin_is_own_inverse' (h : Spin.isSpinAbout s r) :
 
 -- proposition 2
 
+theorem yuge : ((createRectangleSpin r1) * (createRectangleSpin r2)).actionOnBoard b =
+    (createRectangleSpin r2).actionOnBoard ((createRectangleSpin r1).actionOnBoard b) := by
+  simp_rw [HMul.hMul, Mul.mul, Spin.mul]
+  simp_rw [HMul.hMul, Mul.mul, perm.action_right]
+  simp [createRectangleSpin]
+  unfold Spin.actionOnBoard
+  funext i j
+  aesop
+  . have q1 : {
+        row := (rotate180 { row := i, col := j } r2).row,
+        col := (rotate180 { row := i, col := j } r2).col }
+        = rotate180 { row := i, col := j } r2 := by simp
+    simp [q1]
+    simp [rotate180, rotateCalc]
+    aesop
+  . have q1 : {
+        row := (rotate180 { row := i, col := j } r2).row,
+        col := (rotate180 { row := i, col := j } r2).col }
+        = rotate180 { row := i, col := j } r2 := by simp
+    simp [q1]
+    simp [rotate180_self_inverse, orientation.other_self]
+    simp [rotate180, rotateCalc]
+    aesop
+  . simp [rotate180_self_inverse, orientation.other_self]
+  . simp [rotate180_self_inverse, orientation.other_self]
+
 lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
     ∃ p, (createRectangleSpin R).u p = 1 := by
   let p := R.topLeft
