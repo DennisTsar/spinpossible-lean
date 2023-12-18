@@ -44,20 +44,17 @@ theorem spin_is_own_inverse' (h : Spin.isSpinAbout s r) :
 
 theorem yuge : ((createRectangleSpin r1) * (createRectangleSpin r2)).actionOnBoard b =
     (createRectangleSpin r2).actionOnBoard ((createRectangleSpin r1).actionOnBoard b) := by
-  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.action_right, createRectangleSpin]
-  unfold Spin.actionOnBoard
-  simp_rw [Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk]
-  simp_all only [ite_eq_left_iff, Bool.not_eq_true, zero_ne_one, imp_false, Bool.not_eq_false]
+  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.action_right]
+  unfold createRectangleSpin Spin.actionOnBoard
   funext i j
-  by_cases h5 : isInsideRectangle ⟨i, j⟩ r2
-  · simp [h5]
-    by_cases h4 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
-    · rw [h4]
-      split <;> simp [rotate180_self_inverse, orientation.other_self]
-    · have h2 : ⟨(rotate180 ⟨i, j⟩ r2).row, (rotate180 ⟨i, j⟩ r2).col⟩ = rotate180 ⟨i, j⟩ r2 := by simp
-      simp only [h4, ite_false, to2d_to1d_inverse, ite_true, h2]
-  · simp [h5]
-    simp_all only [Bool.not_eq_true, ite_true, to2d_to1d_inverse, ite_false]
+  by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
+  · simp [h1]
+    by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
+    · rw [h2]
+      simp_rw [ite_false, ite_true, orientation.other_self]
+    · have h3 : ⟨(rotate180 ⟨i, j⟩ r2).row, (rotate180 ⟨i, j⟩ r2).col⟩ = rotate180 ⟨i, j⟩ r2 := rfl
+      simp only [h2, ite_false, ite_true, h3]
+  · simp [h1]
 
 lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
     ∃ p, (createRectangleSpin R).u p = 1 := by
