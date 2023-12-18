@@ -82,6 +82,11 @@ def orientation.other (o : orientation) : orientation :=
   | orientation.positive  => orientation.negative
   | orientation.negative  => orientation.positive
 
+lemma orientation.other_self (o : orientation) : o.other.other = o :=
+  match o with
+  | orientation.positive => rfl
+  | orientation.negative => rfl
+
 -- Action of Spin(m x n) on a board
 def Spin.actionOnBoard {m n : PNat} (s : Spin m n) (b : board m n) : board m n :=
   fun i j =>

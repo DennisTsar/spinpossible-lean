@@ -16,11 +16,6 @@ def isLowercaseSpin {m n : PNat} (s : Spin m n) : Prop :=
   -- have a : ∀ (x : Fin (m.val * n.val)), s1.α.symm (s1.α.symm⁻¹ x) = x := Equiv.Perm.apply_inv_self s1.α.symm
   -- have b : ∀ (x : Fin (m.val * n.val)), s1.α.symm⁻¹ (s1.α.symm x) = x := Equiv.Perm.apply_inv_self s1.α.symm⁻¹
 
-lemma orientation.other_self (o : orientation) : o.other.other = o :=
-  match o with
-  | orientation.positive => rfl
-  | orientation.negative => rfl
-
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
     let spinResTile := (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
     ((performSpin r b) i j) =
