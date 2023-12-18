@@ -12,7 +12,9 @@ theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpi
   unfold createRectangleSpin Spin.actionOnBoard
   funext i j
   by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
-  · simp [h1]
+  · simp? says simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff,
+      one_ne_zero, imp_false, Bool.not_eq_true, Nat.mul_eq, Equiv.symm_trans_apply,
+      Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one, Bool.not_eq_false]
     by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
     · rw [h2]
       simp_rw [ite_false, ite_true, orientation.other_self]
