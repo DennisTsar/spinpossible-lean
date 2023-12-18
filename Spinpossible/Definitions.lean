@@ -8,9 +8,9 @@ def perm (N : Nat) := Equiv.Perm (Fin N)
 namespace perm
 
   -- apply α and then β
-  def action_right (α β : perm N) : perm N := α.trans β
+  def actionRight (α β : perm N) : perm N := α.trans β
 
-  instance : Mul (perm N) := ⟨action_right⟩
+  instance : Mul (perm N) := ⟨actionRight⟩
 
 end perm
 

@@ -8,7 +8,7 @@ def isLowercaseSpin {m n : PNat} (s : Spin m n) : Prop :=
 
 theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpin r2)).actionOnBoard b =
     (createRectangleSpin r2).actionOnBoard ((createRectangleSpin r1).actionOnBoard b) := by
-  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.action_right]
+  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.actionRight]
   unfold createRectangleSpin Spin.actionOnBoard
   funext i j
   by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
