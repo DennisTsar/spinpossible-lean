@@ -6,15 +6,21 @@ def Spin.isSpinAbout {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
 def isLowercaseSpin {m n : PNat} (s : Spin m n) : Prop :=
   ∃ (r : Rectangle m n), s.isSpinAbout r
 
+theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpin r2)).actionOnBoard b =
+    (createRectangleSpin r2).actionOnBoard ((createRectangleSpin r1).actionOnBoard b) := by
+  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.action_right]
+  unfold createRectangleSpin Spin.actionOnBoard
+  funext i j
+  by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
+  · simp [h1]
+    by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
+    · rw [h2]
+      simp_rw [ite_false, ite_true, orientation.other_self]
+    · have h3 : ⟨(rotate180 ⟨i, j⟩ r2).row, (rotate180 ⟨i, j⟩ r2).col⟩ = rotate180 ⟨i, j⟩ r2 := rfl
+      simp only [h2, ite_false, ite_true, h3]
+  · simp [h1]
+
 -- proposition 1
--- theorem spin_is_own_inverse : (s1 * s1).action_on_board b = b := by
---   funext i j
---   let initTile := b i j
---   let movedTile := s1.action_on_board (s1.action_on_board b) i j
---   sorry
-  -- in case either of these are useful
-  -- have a : ∀ (x : Fin (m.val * n.val)), s1.α.symm (s1.α.symm⁻¹ x) = x := Equiv.Perm.apply_inv_self s1.α.symm
-  -- have b : ∀ (x : Fin (m.val * n.val)), s1.α.symm⁻¹ (s1.α.symm x) = x := Equiv.Perm.apply_inv_self s1.α.symm⁻¹
 
 lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
     let spinResTile := (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
@@ -35,21 +41,12 @@ theorem spin_is_own_inverse' (h : Spin.isSpinAbout s r) :
     s.actionOnBoard (s.actionOnBoard b) = b := by
   rw [h, ←performSpin, ←performSpin, spin_is_own_inverse]
 
--- proposition 2
+theorem spin_is_own_inverse'' (h : Spin.isSpinAbout s r) : (s * s).actionOnBoard b = b := by
+  have h1 : (s * s).actionOnBoard b = s.actionOnBoard (s.actionOnBoard b) := by
+    rw [h, rect_spin_mul_eq_chain]
+  simp only [h1, spin_is_own_inverse' h]
 
-theorem yuge : ((createRectangleSpin r1) * (createRectangleSpin r2)).actionOnBoard b =
-    (createRectangleSpin r2).actionOnBoard ((createRectangleSpin r1).actionOnBoard b) := by
-  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.action_right]
-  unfold createRectangleSpin Spin.actionOnBoard
-  funext i j
-  by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
-  · simp [h1]
-    by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
-    · rw [h2]
-      simp_rw [ite_false, ite_true, orientation.other_self]
-    · have h3 : ⟨(rotate180 ⟨i, j⟩ r2).row, (rotate180 ⟨i, j⟩ r2).col⟩ = rotate180 ⟨i, j⟩ r2 := rfl
-      simp only [h2, ite_false, ite_true, h3]
-  · simp [h1]
+-- proposition 2
 
 lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
     ∃ p, (createRectangleSpin R).u p = 1 := by
