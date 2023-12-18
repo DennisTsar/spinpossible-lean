@@ -63,12 +63,14 @@ def to2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
   ⟨⟨pos.val / n, Nat.div_lt_of_lt_mul (Nat.mul_comm m n ▸ pos.isLt)⟩,
   ⟨pos.val % n, Nat.mod_lt pos n.pos⟩⟩
 
+@[simp]
 lemma to2d_to1d_inverse : to2d (to1d p) = p := by
   rw [to1d, to2d]
   congr
   · simp [Nat.add_mul_div_right, Nat.div_eq_of_lt]
   · simp [Nat.mod_eq_of_lt]
 
+@[simp]
 lemma to1d_to2d_inverse : (to1d (to2d p)) = p := by
   simp only [to1d, to2d, Nat.mod_add_div']
 
@@ -138,14 +140,14 @@ def createRectangleSpin (r : Rectangle m n) : Spin m n :=
         apply Function.leftInverse_iff_comp.mpr
         funext x
         by_cases h : isInsideRectangle (to2d x) r
-        · simp [h, to2d_to1d_inverse, to1d_to2d_inverse, spin_stays_inside, rotate180_self_inverse]
+        · simp [h, spin_stays_inside, rotate180_self_inverse]
         · simp [h]
       )
       (by
         apply Function.leftInverse_iff_comp.mpr
         funext x
         by_cases h : isInsideRectangle (to2d x) r
-        · simp [h, to2d_to1d_inverse, to1d_to2d_inverse, spin_stays_inside, rotate180_self_inverse]
+        · simp [h, spin_stays_inside, rotate180_self_inverse]
         · simp [h]
       ),
     u := fun pos => if isInsideRectangle (to2d pos) r then 1 else 0

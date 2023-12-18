@@ -25,7 +25,7 @@ lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
     let spinResTile := (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
     ((performSpin r b) i j) =
     { spinResTile with orient := spinResTile.orient.other } := by
-  simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, to2d_to1d_inverse, spin_stays_inside]
+  simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, spin_stays_inside]
 
 -- or (s1 * s1).action_on_board b = b
 theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
@@ -34,7 +34,7 @@ theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   · let p := rotate180 ⟨i, j⟩ r
     have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
     rw [spin_effect h, spin_effect h2, rotate180_self_inverse h, orientation.other_self]
-  · simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h, to2d_to1d_inverse]
+  · simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h]
 
 theorem spin_is_own_inverse' (h : Spin.isSpinAbout s r) :
     s.actionOnBoard (s.actionOnBoard b) = b := by
@@ -61,7 +61,7 @@ lemma spin_mul_no_flips (h : Spin.isSpinAbout s r) : (s * s).u = fun _ => 0 := b
   funext p
   simp_rw [HMul.hMul, Mul.mul, Spin.mul]
   rw [Spin.isSpinAbout, createRectangleSpin] at h
-  simp only [h, to2d_to1d_inverse, spin_stays_inside]
+  simp only [h, spin_stays_inside]
   by_cases h1 : isInsideRectangle (to2d p) r
   · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1]; decide
   · simp [h1]
