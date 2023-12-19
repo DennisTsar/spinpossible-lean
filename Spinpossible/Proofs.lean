@@ -30,12 +30,11 @@ lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
     { spinResTile with orient := spinResTile.orient.other } := by
   simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, spin_stays_inside]
 
--- or (s1 * s1).action_on_board b = b
 theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
-  funext i j -- Consider each tile individually
+  funext i j
   by_cases h : isInsideRectangle ⟨i, j⟩ r
   · let p := rotate180 ⟨i, j⟩ r
-    have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h -- explicitly recreate point to match rotate behavior
+    have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h
     rw [spin_effect h, spin_effect h2, rotate180_self_inverse h, orientation.other_self]
   · simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h]
 
