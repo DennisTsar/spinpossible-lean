@@ -48,6 +48,24 @@ theorem spin_is_own_inverse'' (h : Spin.isSpinAbout s r) : (s * s).actionOnBoard
     rw [h, rect_spin_mul_eq_chain]
   simp only [h1, spin_is_own_inverse' h]
 
+theorem spin_is_own_inverse_perm (h : Spin.isSpinAbout s r) : (s * s).α.toFun = id := by
+  simp only [Equiv.toFun_as_coe]
+  rw [h]
+  dsimp [HMul.hMul]
+  dsimp [Mul.mul, Spin.mul]
+  dsimp [HMul.hMul]
+  dsimp [Mul.mul, Spin.mul]
+  unfold createRectangleSpin perm.actionRight
+  aesop
+  funext pos2
+  simp only [Function.comp_apply, id_eq]
+  aesop
+  . aesop
+    rw [rotate180_self_inverse, to1d_to2d_inverse]
+    exact h_1
+  . exfalso
+    simp_all [spin_stays_inside]
+
 -- proposition 2
 
 lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
