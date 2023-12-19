@@ -48,23 +48,23 @@ theorem spin_is_own_inverse'' (h : Spin.isSpinAbout s r) : (s * s).actionOnBoard
     rw [h, rect_spin_mul_eq_chain]
   simp only [h1, spin_is_own_inverse' h]
 
-theorem spin_is_own_inverse_perm (h : Spin.isSpinAbout s r) : (s * s).α.toFun = id := by
-  simp only [Equiv.toFun_as_coe]
+theorem spin_inverse_props (h : Spin.isSpinAbout s r) :
+    (s * s).α.toFun = id ∧ (s * s).u = fun _ => 0 := by
   rw [h]
-  dsimp [HMul.hMul]
-  dsimp [Mul.mul, Spin.mul]
-  dsimp [HMul.hMul]
-  dsimp [Mul.mul, Spin.mul]
+  dsimp only [HMul.hMul, Mul.mul, Spin.mul]
   unfold createRectangleSpin perm.actionRight
-  aesop
-  funext pos2
-  simp only [Function.comp_apply, id_eq]
-  aesop
-  . aesop
-    rw [rotate180_self_inverse, to1d_to2d_inverse]
-    exact h_1
-  . exfalso
-    simp_all [spin_stays_inside]
+  simp_rw [Nat.mul_eq, Equiv.toFun_as_coe, Equiv.coe_trans, Equiv.coe_fn_mk]
+  apply And.intro
+  . funext p
+    by_cases h1 : isInsideRectangle (to2d p) r
+    · simp_rw [Function.comp_apply, h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1, ite_true]
+      simp_all [rotate180_self_inverse]
+    · simp [h1]
+  . funext p
+    by_cases h1 : isInsideRectangle (to2d p) r
+    · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1, ite_true]
+      rfl
+    · simp [h1]
 
 -- proposition 2
 
@@ -77,26 +77,11 @@ lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
     exact ⟨R.validRow, R.validCol⟩
   simp_rw [createRectangleSpin, to2d_to1d_inverse, h, ite_true]
 
-@[simp]
-lemma zmod2_eq_zero_or_one {x : ZMod 2} (h : x ≠ 0) : x = 1 := by
-  match x with
-  | 0  => exact (h rfl).elim
-  | 1  => rfl
-
-lemma spin_mul_no_flips (h : Spin.isSpinAbout s r) : (s * s).u = fun _ => 0 := by
-  funext p
-  simp_rw [HMul.hMul, Mul.mul, Spin.mul]
-  rw [Spin.isSpinAbout, createRectangleSpin] at h
-  simp only [h, spin_stays_inside]
-  by_cases h1 : isInsideRectangle (to2d p) r
-  · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1]; decide
-  · simp [h1]
-
 theorem spin_inverse_is_not_spin (h : Spin.isSpinAbout s r) : ¬(s * s).isSpinAbout r2 := by
   rw [Spin.isSpinAbout]
   intro h1
   have h2 : ∃ p, (s * s).u p = 1 := by simp_rw [h1, rectangle_flips_min_one_tile r2]
-  simp_rw [spin_mul_no_flips h, exists_const, zero_ne_one] at h2
+  simp_rw [spin_inverse_props h, exists_const, zero_ne_one] at h2
 
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
