@@ -1,9 +1,9 @@
 import Spinpossible.Definitions
 
-def Spin.isSpinAbout {m n : PNat} (s : Spin m n) (R : Rectangle m n) : Prop :=
+def Spin.isSpinAbout (s : Spin m n) (R : Rectangle m n) : Prop :=
   s = createRectangleSpin R
 
-def isLowercaseSpin {m n : PNat} (s : Spin m n) : Prop :=
+def isLowercaseSpin (s : Spin m n) : Prop :=
   ∃ (r : Rectangle m n), s.isSpinAbout r
 
 theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpin r2)).actionOnBoard b =
