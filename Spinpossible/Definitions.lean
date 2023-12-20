@@ -50,6 +50,9 @@ structure Point (m n : PNat) where
   row : Fin m
   col : Fin n
 
+@[simp]
+lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
+
 -- Convert 2D coordinates to 1D (flattened)
 def to1d (pos : Point m n) : Fin (m * n) := by
   apply Fin.mk

@@ -12,31 +12,22 @@ theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpi
   unfold createRectangleSpin Spin.actionOnBoard
   funext i j
   by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
-  · simp? says simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff,
-      one_ne_zero, imp_false, Bool.not_eq_true, Nat.mul_eq, Equiv.symm_trans_apply,
+  · simp only [h1, to2d_to1d_inverse, ite_true, add_left_eq_self, ite_eq_right_iff,
+      one_ne_zero, imp_false, Bool.not_eq_true, Equiv.symm_trans_apply,
       Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one, Bool.not_eq_false]
     by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
-    · rw [h2]
-      simp_rw [ite_false, ite_true, orientation.other_self]
-    · have h3 : ⟨(rotate180 ⟨i, j⟩ r2).row, (rotate180 ⟨i, j⟩ r2).col⟩ = rotate180 ⟨i, j⟩ r2 := rfl
-      simp only [h2, ite_false, ite_true, h3]
+    · simp_rw [h2, ite_false, ite_true, point_eq, h2, ite_true, orientation.other_self]
+    · simp_rw [h2, ite_false, ite_true, point_eq, h2, ite_false]
   · simp [h1]
 
 -- proposition 1
 
-lemma spin_effect (h : isInsideRectangle ⟨i, j⟩ r) :
-    let spinResTile := (b (rotate180 ⟨i, j⟩ r).row (rotate180 ⟨i, j⟩ r).col)
-    ((performSpin r b) i j) =
-    { spinResTile with orient := spinResTile.orient.other } := by
-  simp [h, performSpin, createRectangleSpin, Spin.actionOnBoard, spin_stays_inside]
-
 theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   funext i j
+  unfold performSpin createRectangleSpin Spin.actionOnBoard
   by_cases h : isInsideRectangle ⟨i, j⟩ r
-  · let p := rotate180 ⟨i, j⟩ r
-    have h2 : isInsideRectangle ⟨p.row, p.col⟩ r := spin_stays_inside h
-    rw [spin_effect h, spin_effect h2, rotate180_self_inverse h, orientation.other_self]
-  · simp [performSpin, createRectangleSpin, Spin.actionOnBoard, h]
+  · simp [h, spin_stays_inside, rotate180_self_inverse, orientation.other_self]
+  · simp [h]
 
 theorem spin_is_own_inverse' (h : Spin.isSpinAbout s r) :
     s.actionOnBoard (s.actionOnBoard b) = b := by
@@ -56,13 +47,12 @@ theorem spin_inverse_props (h : Spin.isSpinAbout s r) :
   apply And.intro
   . funext p
     by_cases h1 : isInsideRectangle (to2d p) r
-    · simp_rw [Function.comp_apply, h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1, ite_true]
-      simp_all [rotate180_self_inverse]
+    · simp_rw [Function.comp_apply, h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1,
+        ite_true, rotate180_self_inverse h1, to1d_to2d_inverse, id_eq]
     · simp [h1]
   . funext p
     by_cases h1 : isInsideRectangle (to2d p) r
-    · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1, ite_true]
-      rfl
+    · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1, ite_true]; rfl
     · simp [h1]
 
 -- proposition 2
