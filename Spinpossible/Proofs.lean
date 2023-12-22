@@ -177,52 +177,49 @@ def rectangles_disjoint2 (R1 R2 : Rectangle m n) :=
   ∀ p, isInsideRectangle p R1 → ¬isInsideRectangle p R2
 
 lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔ rectangles_disjoint2 r1 r2 := by
+  unfold rectangles_disjoint2 rectangles_disjoint isInsideRectangle
   apply Iff.intro
-  · unfold rectangles_disjoint2 rectangles_disjoint isInsideRectangle
-    intro h p
-    aesop
-    · have h1 : p.row < r2.topLeft.row := by calc
-        p.row ≤ r1.bottomRight.row := left_1
-        _ < r2.topLeft.row := h
+  · intro h p a
+    simp_rw [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and, not_le] at *
+    intro a1 a2 a3
+    rcases h with h1 | h1 | h1 | h1
+    · have h2 := by calc
+        p.row ≤ r1.bottomRight.row := a.right.left
+        _     < r2.topLeft.row     := h1
       exfalso
-      exact (Fin.not_le.mpr h1) a_1
-    · have h1 : p.col < r2.topLeft.col := by calc
-        p.col ≤ r1.bottomRight.col := by exact right
-        _ < r2.topLeft.col := by exact h
+      exact (Fin.not_le.mpr h2) a1
+    · have h2 := by calc
+        p.col ≤ r1.bottomRight.col := a.right.right.right
+        _     < r2.topLeft.col     := h1
       exfalso
-      exact (Fin.not_le.mpr h1) (a_3)
-    · have h1 : p.row < r1.topLeft.row := by calc
-        p.row ≤ r2.bottomRight.row := by exact a_2
-        _ < r1.topLeft.row := by exact h
+      exact (Fin.not_le.mpr h2) a3
+    · have h2:= by calc
+        p.row ≤ r2.bottomRight.row := a2
+        _     < r1.topLeft.row     := h1
       exfalso
-      exact (Fin.not_le.mpr h1) (left)
+      exact (Fin.not_le.mpr h2) a.left
     · calc
-        r2.bottomRight.col < r1.topLeft.col := h
-        _ ≤ p.col := left_2
-  · unfold rectangles_disjoint2 rectangles_disjoint isInsideRectangle
-    have a1 : r1.topLeft.col ≤ r1.bottomRight.col := r1.validCol
-    have a3 : r1.topLeft.row ≤ r1.bottomRight.row := r1.validRow
-    have a4 : r2.topLeft.row ≤ r2.bottomRight.row := r2.validRow
-    have a5 : r2.topLeft.col ≤ r2.bottomRight.col := r2.validCol
-    aesop
+        r2.bottomRight.col < r1.topLeft.col := h1
+        _ ≤ p.col := a.right.right.left
+  · intro a
     contrapose a
-    aesop
     push_neg at a
-    aesop
+    simp only [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and,
+      not_le, and_imp, not_forall, not_lt, exists_prop, exists_and_left] at *
     by_cases h1 : r2.topLeft.row ≤ r1.topLeft.row
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
-      · use (Point.mk r1.topLeft.row r1.topLeft.col)
-      · use (Point.mk r1.topLeft.row r2.topLeft.col)
-        aesop
-        exact le_of_lt h2
+      · use ⟨r1.topLeft.row, r1.topLeft.col⟩
+        simp_rw [le_refl, r1.validRow, r1.validCol, h1, a, h2, and_self]
+      · use ⟨r1.topLeft.row, r2.topLeft.col⟩
+        rw [not_le] at h2
+        simp_rw [le_refl, r1.validRow, a, h1, le_of_lt h2, r2.validCol, true_and]
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
-      · use (Point.mk r2.topLeft.row r1.topLeft.col)
-        aesop
-        exact le_of_lt h1
-      · use (Point.mk r2.topLeft.row r2.topLeft.col)
-        aesop
-        · exact le_of_lt h2
-        · exact le_of_lt h1
+      · use ⟨r2.topLeft.row, r1.topLeft.col⟩
+        rw [not_le] at h1
+        simp_rw [a, le_refl, r1.validCol, h2, le_of_lt h1, r2.validRow, and_true]
+      · use ⟨r2.topLeft.row, r2.topLeft.col⟩
+        rw [not_le] at h1 h2
+        simp_rw [a, le_refl, le_of_lt h1, le_of_lt h2, r2.validRow, r2.validCol, true_and]
 
 lemma rect_common_center_eq : common_center r1 r2 ↔ common_center r2 r1 := by
   unfold common_center
