@@ -12,9 +12,9 @@ theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpi
   unfold createRectangleSpin Spin.actionOnBoard
   funext i j
   by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
-  · simp only [h1, to2d_to1d_inverse, ite_true, add_left_eq_self, ite_eq_right_iff,
-      one_ne_zero, imp_false, Bool.not_eq_true, Equiv.symm_trans_apply,
-      Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one, Bool.not_eq_false]
+  · simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff, one_ne_zero,
+      imp_false, Bool.not_eq_true, Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk, ite_eq_left_iff,
+      zero_ne_one, Bool.not_eq_false]
     by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
     · simp_rw [h2, ite_false, ite_true, point_eq, h2, ite_true, orientation.other_self]
     · simp_rw [h2, ite_false, ite_true, point_eq, h2, ite_false]
@@ -75,11 +75,11 @@ theorem spin_inverse_is_not_spin (h : Spin.isSpinAbout s r) : ¬(s * s).isSpinAb
 variable {m n : PNat} (s1 s2 : Spin m n) (R1 R2 : Rectangle m n)
   (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
 
-def moves_tile (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) : Prop :=
+def moves_tile (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) :=
   let newPos := s.α.symm (to1d (to2d p))
   newPos ≠ p ∧ isInsideRectangle (to2d newPos) R
 
-def common_center (R1 R2 : Rectangle m n) : Prop :=
+def common_center (R1 R2 : Rectangle m n) :=
   -- technically center * 2 but we don't care
   let center1 := (R1.topLeft.row + R1.bottomRight.row, R1.topLeft.col + R1.bottomRight.col)
   let center2 := (R2.topLeft.row + R2.bottomRight.row, R2.topLeft.col + R2.bottomRight.col)

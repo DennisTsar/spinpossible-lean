@@ -59,7 +59,7 @@ def to1d (pos : Point m n) : Fin (m * n) := by
   calc
     pos.2.val + pos.1.val * n < n + pos.1.val * n := by apply Nat.add_lt_add_right pos.2.isLt
     _ = (pos.1.val + 1) * n := by rw [Nat.succ_mul, Nat.add_comm]
-    _ ≤ m * n := Nat.mul_le_mul_right n pos.1.is_lt
+    _ ≤ m * n := Nat.mul_le_mul_right n pos.1.isLt
 
 -- Convert 1D coordinates (flattened) to 2D
 def to2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
