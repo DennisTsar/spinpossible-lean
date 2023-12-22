@@ -183,12 +183,12 @@ lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔ rectangles_disjoint2 r1 r
     simp_rw [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and, not_le] at *
     intro a1 a2 a3
     rcases h with h1 | h1 | h1 | h1
-    · exfalso
-      exact (not_le.mpr h1) (le_trans a1 a.right.left)
-    · exfalso
-      exact (not_le.mpr h1) (le_trans a3 a.right.right.right)
-    · exfalso
-      exact (not_le.mpr h1) (le_trans a.left a2)
+    · absurd h1
+      exact not_lt.mpr (le_trans a1 a.right.left)
+    · absurd h1
+      exact not_lt.mpr (le_trans a3 a.right.right.right)
+    · absurd h1
+      exact not_lt.mpr (le_trans a.left a2)
     · calc
         r2.bottomRight.col < r1.topLeft.col := h1
         _ ≤ p.col := a.right.right.left
