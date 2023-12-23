@@ -169,29 +169,14 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.i
     sorry
 
 -- proposition 3
-def rectangles_disjoint (R1 R2 : Rectangle m n) : Prop :=
-  R1.bottomRight.row < R2.topLeft.row ∨ R1.bottomRight.col < R2.topLeft.col ∨
-  R2.bottomRight.row < R1.topLeft.row ∨ R2.bottomRight.col < R1.topLeft.col
-
-def rectangles_disjoint2 (R1 R2 : Rectangle m n) :=
+def rectangles_disjoint (R1 R2 : Rectangle m n) :=
   ∀ p, isInsideRectangle p R1 → ¬isInsideRectangle p R2
 
-lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔ rectangles_disjoint2 r1 r2 := by
-  unfold rectangles_disjoint2 rectangles_disjoint isInsideRectangle
+lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔
+    (r1.bottomRight.row < r2.topLeft.row ∨ r1.bottomRight.col < r2.topLeft.col ∨
+    r2.bottomRight.row < r1.topLeft.row ∨ r2.bottomRight.col < r1.topLeft.col) := by
+  unfold rectangles_disjoint isInsideRectangle
   apply Iff.intro
-  · intro h p a
-    simp_rw [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and, not_le] at *
-    intro a1 a2 a3
-    rcases h with h1 | h1 | h1 | h1
-    · absurd h1
-      exact not_lt.mpr (le_trans a1 a.right.left)
-    · absurd h1
-      exact not_lt.mpr (le_trans a3 a.right.right.right)
-    · absurd h1
-      exact not_lt.mpr (le_trans a.left a2)
-    · calc
-        r2.bottomRight.col < r1.topLeft.col := h1
-        _ ≤ p.col := a.right.right.left
   · intro a
     contrapose a
     push_neg at a
@@ -211,6 +196,20 @@ lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔ rectangles_disjoint2 r1 r
       · use ⟨r2.topLeft.row, r2.topLeft.col⟩
         rw [not_le] at h1 h2
         simp_rw [a, le_refl, le_of_lt h1, le_of_lt h2, r2.validRow, r2.validCol, true_and]
+  · intro h p a
+    simp_rw [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and, not_le] at *
+    intro a1 a2 a3
+    rcases h with h1 | h1 | h1 | h1
+    · absurd h1
+      exact not_lt.mpr (le_trans a1 a.right.left)
+    · absurd h1
+      exact not_lt.mpr (le_trans a3 a.right.right.right)
+    · absurd h1
+      exact not_lt.mpr (le_trans a.left a2)
+    · calc
+        r2.bottomRight.col < r1.topLeft.col := h1
+        _ ≤ p.col := a.right.right.left
+
 
 lemma rect_common_center_eq : common_center r1 r2 ↔ common_center r2 r1 := by
   unfold common_center
@@ -221,7 +220,7 @@ lemma rect_common_center_eq : common_center r1 r2 ↔ common_center r2 r1 := by
     simp_all only [and_self]
 
 -- BEING USED
-lemma spin_stays_outside2 (h1 : ¬isInsideRectangle p r1) (h2 : rectangles_disjoint2 r1 r2) :
+lemma spin_stays_outside2 (h1 : ¬isInsideRectangle p r1) (h2 : rectangles_disjoint r1 r2) :
     ¬isInsideRectangle (rotate180 p r2) r1 := by
   sorry
 
@@ -241,16 +240,11 @@ lemma spin_stays_inside3 (h1 : isInsideRectangle p r1) (h2 : common_center r1 r2
   · sorry
 
 lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 r1 := by
-  simp [rectangles_disjoint]
+  simp_rw [rect_disjoint_eq]
   aesop
 
-lemma rect_disjoint_comm2 : rectangles_disjoint2 r1 r2 ↔ rectangles_disjoint2 r2 r1 := by
-  have x : rectangles_disjoint2 r1 r2 ↔ rectangles_disjoint r1 r2 := by rw [rect_disjoint_eq]
-  have y : rectangles_disjoint2 r2 r1 ↔ rectangles_disjoint r2 r1 := by rw [rect_disjoint_eq]
-  rw [x, y, rect_disjoint_comm]
-
 theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2) :
-    s1 * s2 = s2 * s1 ↔ (rectangles_disjoint2 R1 R2 ∨ common_center R1 R2) := by
+    s1 * s2 = s2 * s1 ↔ (rectangles_disjoint R1 R2 ∨ common_center R1 R2) := by
   apply Iff.intro
   · intro h
     -- unfold rectangles_disjoint2 common_center at *
@@ -261,7 +255,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
     dsimp only [HMul.hMul, Mul.mul, Spin.mul]
     unfold perm.actionRight
     aesop
-    · unfold rectangles_disjoint2 at h
+    · unfold rectangles_disjoint at h
       -- unfold Spin.isSpinAbout createRectangleSpin at *
       have q : (p : Point m n) → (s1.α.trans s2.α) (to1d p) = (s2.α.trans s1.α) (to1d p) := by
         intro p
@@ -271,7 +265,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
         sorry
       sorry
     · let a := h
-      unfold rectangles_disjoint2 at a
+      unfold rectangles_disjoint at a
       simp_all [Spin.isSpinAbout, createRectangleSpin]
       funext p
       by_cases q4 : isInsideRectangle (to2d p) R1
@@ -280,7 +274,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
           rw [@Bool.eq_iff_iff] at q4
           apply spin_stays_outside2
           . simp [q4]; simp_all only [iff_true]
-          . exact rect_disjoint_comm2.mpr h
+          . exact rect_disjoint_comm.mpr h
         exact Bool.eq_false_iff.mpr q9
       . aesop
         have q1234 : ¬isInsideRectangle (to2d p) R1 = true := by
@@ -290,7 +284,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
         simp [q56]
     · sorry
     · let a := h
-      unfold rectangles_disjoint2 at a
+      unfold rectangles_disjoint at a
       simp_all [Spin.isSpinAbout, createRectangleSpin]
       funext p
       by_cases q4 : isInsideRectangle (to2d p) R1
