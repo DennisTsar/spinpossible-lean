@@ -252,32 +252,45 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
     -- aesop
     sorry
   · intro h
-    dsimp only [HMul.hMul, Mul.mul, Spin.mul]
-    unfold perm.actionRight
-    aesop
-    · unfold rectangles_disjoint at h
-      -- unfold Spin.isSpinAbout createRectangleSpin at *
-      have q : (p : Point m n) → (s1.α.trans s2.α) (to1d p) = (s2.α.trans s1.α) (to1d p) := by
-        intro p
-        have q1 : isInsideRectangle p R1 → ¬isInsideRectangle p R2 := by
-          exact h p
-        unfold Spin.isSpinAbout createRectangleSpin at *
+    dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight]
+    simp_all only [Equiv.invFun_as_coe, Spin.mk.injEq]
+    cases h
+    · apply And.intro
+      · rename_i h
+        unfold rectangles_disjoint at h
+        -- unfold Spin.isSpinAbout createRectangleSpin at *
+        have q : (p : Point m n) → (s1.α.trans s2.α) (to1d p) = (s2.α.trans s1.α) (to1d p) := by
+          intro p
+          have q1 : isInsideRectangle p R1 → ¬isInsideRectangle p R2 := by
+            exact h p
+          unfold Spin.isSpinAbout createRectangleSpin at *
+          sorry
         sorry
-      sorry
-    · dsimp [Spin.isSpinAbout, createRectangleSpin] at h_s1 h_s2
-      funext p
-      by_cases q4 : isInsideRectangle (to2d p) R1 <;>
-      aesop <;> simp_all only [rect_disjoint_comm, spin_stays_outside]
-    · sorry
-    · dsimp only [Spin.isSpinAbout, createRectangleSpin] at h_s1 h_s2
-      funext p
-      by_cases q4 : isInsideRectangle (to2d p) R1
-      · aesop
-        · simp_all only [rect_common_center_eq, spin_stays_inside3]
-        · simp_all only [spin_stays_inside3]
-        · simp_all only [not_false_eq_true, rect_common_center_eq, spin_stays_outside3]
-      · aesop
-        simp_all only [not_false_eq_true, spin_stays_outside3]
+      · funext p
+        simp_all only [Spin.isSpinAbout, createRectangleSpin, Equiv.coe_fn_symm_mk]
+        by_cases h2 : isInsideRectangle (to2d p) R1
+        · split
+          · simp_all only [to2d_to1d_inverse, spin_stays_outside, rect_disjoint_comm]
+          · simp_all only [to2d_to1d_inverse, rect_disjoint_comm, spin_stays_outside]
+            decide
+        · split
+          · simp_all only [to2d_to1d_inverse, spin_stays_outside]
+            decide
+          · rfl
+    · apply And.intro
+      · sorry
+      · funext p
+        simp_all only [Spin.isSpinAbout, createRectangleSpin, Equiv.coe_fn_symm_mk]
+        by_cases h2 : isInsideRectangle (to2d p) R1
+        · simp [h2]
+          split
+          · simp_all only [to2d_to1d_inverse, spin_stays_inside3, rect_common_center_eq]
+          · simp_all only [not_false_eq_true, rect_common_center_eq, spin_stays_outside3]
+            decide
+        · simp [h2]
+          split
+          · simp_all only [to2d_to1d_inverse, not_false_eq_true, spin_stays_outside3]
+          · simp_rw [h2]
 
 -- proposition 4
 
