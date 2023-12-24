@@ -96,8 +96,7 @@ lemma s1_eq_s2_of_R1_eq_R2 (h_s1 : Spin.isSpinAbout s1 r1) (h_s2 : s2.isSpinAbou
     _  = s2                     := by rw [h_s2.symm]
 
 lemma point_outside_unaffected (h1 : s1.isSpinAbout r1) (h2 : s2.isSpinAbout r2)
-    (h3 : Spin.isSpinAbout (s1 * s2) r3)
-    (h4 : isInsideRectangle p r1 ∧ ¬isInsideRectangle p r2) :
+    (h3 : Spin.isSpinAbout (s1 * s2) r3) (h4 : ¬isInsideRectangle p r2) :
     (performSpin r1 b) p.row p.col = (performSpin r3 b) p.row p.col := by
   let a := performSpin r1 b
   have x : (performSpin r3 b) p.row p.col = (performSpin r2 a) p.row p.col := by
@@ -110,7 +109,7 @@ lemma point_outside_unaffected (h1 : s1.isSpinAbout r1) (h2 : s2.isSpinAbout r2)
     simp only [x2, x3]
   have y : (performSpin r2 a) p.row p.col = a p.row p.col := by
     dsimp only [performSpin, createRectangleSpin, Spin.actionOnBoard]
-    simp [h4.right, to2d_to1d_inverse]
+    simp [h4, to2d_to1d_inverse]
   rw [x, y]
 
 lemma point_outside_rect_unchanged (h : ¬isInsideRectangle p r) :
@@ -139,7 +138,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.i
     obtain ⟨p2, h_p2_R2, h_p2_not_R1⟩ := h_exists_p1_p2.right
     have a1 : (b : board m n) → (performSpin R1 b) p1.row p1.col = (performSpin R3 b) p1.row p1.col := by
       intro b
-      exact point_outside_unaffected h_s1 h_s2 h_s1s2_R3 ⟨h_p1_R1, h_p1_not_R2⟩
+      exact point_outside_unaffected h_s1 h_s2 h_s1s2_R3 h_p1_not_R2
     have a2 : (b : board m n) → (performSpin R1 b) p2.row p2.col = b p2.row p2.col := by
       intro b
       exact point_outside_rect_unchanged h_p2_not_R1
