@@ -277,7 +277,27 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
             decide
           · rfl
     · apply And.intro
-      · sorry
+      ·
+        unfold Spin.isSpinAbout createRectangleSpin at *
+        have q : (p : Fin (m * n)) → (s1.α.trans s2.α) p = (s2.α.trans s1.α) p := by
+          intro p
+          by_cases h1 : isInsideRectangle (to2d p) R1
+          · by_cases h2 : isInsideRectangle (to2d p) R2
+            · aesop
+              · simp_all [rect_common_center_eq, spin_stays_outside3, spin_stays_inside3, spin_stays_inside];
+                have h3 : isInsideRectangle (rotate180 (to2d p) R1) R1 := by simp_all [spin_stays_inside]
+                have h4 : isInsideRectangle (rotate180 (to2d p) R2) R2 := by simp_all [spin_stays_inside]
+                unfold common_center at *
+                aesop
+              · simp_all [spin_stays_inside3]
+              · simp_all [rect_common_center_eq, spin_stays_inside3]
+              · simp_all [spin_stays_inside3]
+            · simp_all [rect_common_center_eq, spin_stays_outside3]
+          · by_cases h2 : isInsideRectangle (to2d p) R2
+            · aesop
+              simp_all [rect_common_center_eq, spin_stays_outside3]
+            · simp_all only [and_imp, Equiv.trans_apply, Equiv.coe_fn_mk, to2d_to1d_inverse, ite_false]
+        exact Equiv.ext q
       · funext p
         simp_all only [Spin.isSpinAbout, createRectangleSpin, Equiv.coe_fn_symm_mk]
         by_cases h2 : isInsideRectangle (to2d p) R1
