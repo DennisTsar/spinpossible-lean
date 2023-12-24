@@ -77,10 +77,11 @@ def moves_tile (s : Spin m n) (p : Fin (m * n)) (R : Rectangle m n) :=
   newPos ≠ p ∧ isInsideRectangle (to2d newPos) R
 
 def common_center (R1 R2 : Rectangle m n) :=
+  ∀ p, (isInsideRectangle p R1 ∧ isInsideRectangle p R2) → (rotate180 p R2 = rotate180 p R1)
   -- technically center * 2 but we don't care
-  let center1 := (R1.topLeft.row + R1.bottomRight.row, R1.topLeft.col + R1.bottomRight.col)
-  let center2 := (R2.topLeft.row + R2.bottomRight.row, R2.topLeft.col + R2.bottomRight.col)
-  center1 = center2
+  -- let center1 := (R1.topLeft.row + R1.bottomRight.row, R1.topLeft.col + R1.bottomRight.col)
+  -- let center2 := (R2.topLeft.row + R2.bottomRight.row, R2.topLeft.col + R2.bottomRight.col)
+  -- center1 = center2
 
 def rectangle_contains (R1 R2 : Rectangle m n) :=
   ∀ p, isInsideRectangle p R1 → isInsideRectangle p R2
@@ -212,11 +213,7 @@ lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔
 
 lemma rect_common_center_eq : common_center r1 r2 ↔ common_center r2 r1 := by
   unfold common_center
-  apply Iff.intro
-  · intro a
-    simp_all only [and_self]
-  · intro a
-    simp_all only [and_self]
+  aesop
 
 lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 r1 := by
   simp_rw [rect_disjoint_eq]
@@ -228,20 +225,33 @@ lemma spin_stays_outside (h1 : isInsideRectangle p r2) (h2 : rectangles_disjoint
   simp [rect_disjoint_comm] at h2
   exact h2 (rotate180 p r2) x
 
--- BEING USED
-lemma spin_stays_outside3 (h1 : ¬isInsideRectangle p r1) (h2 : common_center r1 r2) :
+lemma spin_stays_outside3 (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
     ¬isInsideRectangle (rotate180 p r2) r1 := by
-  sorry
-
--- BEING USED
-lemma spin_stays_inside3 (h1 : isInsideRectangle p r1) (h2 : common_center r1 r2) :
-    isInsideRectangle (rotate180 p r2) r1 := by
-  unfold common_center isInsideRectangle rotate180 rotateCalc at *
+  have x : common_center r2 r1 := by
+    rw [rect_common_center_eq]
+    exact h1
+  unfold common_center at x
+  contrapose x
+  have y : isInsideRectangle (rotate180 p r2) r1 := by simp_all only [Bool.not_eq_true, ne_eq, Bool.not_eq_false]
+  push_neg
+  use (rotate180 p r2)
   aesop
-  · sorry
-  · sorry
-  · sorry
-  · sorry
+  · simp [spin_stays_inside h3]
+  · have z : rotate180 (rotate180 p r2) r1 = p := by
+      rw [rotate180_self_inverse] at a
+      exact a
+      exact h3
+    let q := rotate180 p r2
+    have q1 : isInsideRectangle q r1 := by simp [q, y]
+    have q2 : isInsideRectangle (rotate180 q r1) r1 := by simp [spin_stays_inside q1]
+    have q3 : isInsideRectangle (rotate180 (rotate180 p r2) r1) r1 := by rw [q2]
+    rw [z] at q3
+    simp_all only
+
+lemma spin_stays_inside3 (h1 : common_center r1 r2) (h2 : isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
+    isInsideRectangle (rotate180 p r2) r1 := by
+  unfold common_center at h1
+  simp_all only [and_imp, spin_stays_inside, h2, h3]
 
 theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2) :
     s1 * s2 = s2 * s1 ↔ (rectangles_disjoint R1 R2 ∨ common_center R1 R2) := by
