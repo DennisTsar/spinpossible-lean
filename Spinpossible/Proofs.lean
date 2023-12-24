@@ -219,10 +219,15 @@ lemma rect_common_center_eq : common_center r1 r2 ↔ common_center r2 r1 := by
   · intro a
     simp_all only [and_self]
 
--- BEING USED
-lemma spin_stays_outside2 (h1 : ¬isInsideRectangle p r1) (h2 : rectangles_disjoint r1 r2) :
+lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 r1 := by
+  simp_rw [rect_disjoint_eq]
+  aesop
+
+lemma spin_stays_outside (h1 : isInsideRectangle p r2) (h2 : rectangles_disjoint r1 r2) :
     ¬isInsideRectangle (rotate180 p r2) r1 := by
-  sorry
+  have x : isInsideRectangle (rotate180 p r2) r2 := by simp [spin_stays_inside h1]
+  simp [rect_disjoint_comm] at h2
+  exact h2 (rotate180 p r2) x
 
 -- BEING USED
 lemma spin_stays_outside3 (h1 : ¬isInsideRectangle p r1) (h2 : common_center r1 r2) :
@@ -238,10 +243,6 @@ lemma spin_stays_inside3 (h1 : isInsideRectangle p r1) (h2 : common_center r1 r2
   · sorry
   · sorry
   · sorry
-
-lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 r1 := by
-  simp_rw [rect_disjoint_eq]
-  aesop
 
 theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2) :
     s1 * s2 = s2 * s1 ↔ (rectangles_disjoint R1 R2 ∨ common_center R1 R2) := by
@@ -271,16 +272,15 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
       by_cases q4 : isInsideRectangle (to2d p) R1
       . aesop
         have q9 : ¬isInsideRectangle (rotate180 (to2d p) R1) R2 := by
-          rw [@Bool.eq_iff_iff] at q4
-          apply spin_stays_outside2
-          . simp [q4]; simp_all only [iff_true]
+          -- rw [Bool.eq_iff_iff] at q4
+          apply spin_stays_outside
+          . simp [q4]
           . exact rect_disjoint_comm.mpr h
         exact Bool.eq_false_iff.mpr q9
       . aesop
-        have q1234 : ¬isInsideRectangle (to2d p) R1 = true := by
-          simp [q4]
+        rename_i w1
         have q56 : ¬isInsideRectangle (rotate180 (to2d p) R2) R1 := by
-          simp_rw [spin_stays_outside2 q1234 h, not_false_eq_true]
+          simp_rw [spin_stays_outside w1 h, not_false_eq_true]
         simp [q56]
     · sorry
     · let a := h
@@ -290,20 +290,15 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
       by_cases q4 : isInsideRectangle (to2d p) R1
       · aesop
         · rename_i a1 a2 a3
-          have x : common_center R2 R1 := by
-            simp [rect_common_center_eq.mpr h]
-          have y : isInsideRectangle (rotate180 (to2d p) R1) R2 := by
-            exact spin_stays_inside3 a1 x
+          have x : common_center R2 R1 := rect_common_center_eq.mpr h
+          have y : isInsideRectangle (rotate180 (to2d p) R1) R2 := spin_stays_inside3 a1 x
           simp_all only
-        · rename_i a1 a2 a3
-          have y : isInsideRectangle (rotate180 (to2d p) R2) R1 := by
-            exact spin_stays_inside3 q4 h
+        · have x : isInsideRectangle (rotate180 (to2d p) R2) R1 := spin_stays_inside3 q4 h
           simp_all only
         · rename_i a1
           have x : ¬isInsideRectangle (to2d p) R2 := Bool.eq_false_iff.mp a1
           simp [spin_stays_outside3 x (rect_common_center_eq.mpr h)]
       · aesop
-        rename_i a1
         have x : ¬isInsideRectangle (to2d p) R1 := by simp [q4]
         simp [spin_stays_outside3 x h]
 
