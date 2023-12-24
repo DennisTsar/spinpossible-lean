@@ -227,25 +227,19 @@ lemma spin_stays_outside (h1 : isInsideRectangle p r2) (h2 : rectangles_disjoint
 
 lemma spin_stays_outside3 (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
     ¬isInsideRectangle (rotate180 p r2) r1 := by
-  have x : common_center r2 r1 := by
-    rw [rect_common_center_eq]
-    exact h1
-  unfold common_center at x
-  contrapose x
-  have y : isInsideRectangle (rotate180 p r2) r1 := by simp_all only [Bool.not_eq_true, ne_eq, Bool.not_eq_false]
+  unfold common_center at h1
+  contrapose h1
   push_neg
   use (rotate180 p r2)
-  aesop
+  simp_all only [Bool.not_eq_true, Bool.not_eq_false, true_and, ne_eq]
+  apply And.intro
   · simp [spin_stays_inside h3]
-  · have z : rotate180 (rotate180 p r2) r1 = p := by
-      rw [rotate180_self_inverse] at a
-      exact a
-      exact h3
-    let q := rotate180 p r2
-    have q1 : isInsideRectangle q r1 := by simp [q, y]
-    have q2 : isInsideRectangle (rotate180 q r1) r1 := by simp [spin_stays_inside q1]
-    have q3 : isInsideRectangle (rotate180 (rotate180 p r2) r1) r1 := by rw [q2]
-    rw [z] at q3
+  · intro a
+    have y : isInsideRectangle (rotate180 p r2) r1 := by simp_all only
+    let p2 := rotate180 p r2
+    have q1 : isInsideRectangle p2 r1 := by rw [y]
+    have q2 : isInsideRectangle (rotate180 p2 r1) r1 := by rw [spin_stays_inside q1]
+    rw [←a, rotate180_self_inverse h3] at q2
     simp_all only
 
 lemma spin_stays_inside3 (h1 : common_center r1 r2) (h2 : isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
