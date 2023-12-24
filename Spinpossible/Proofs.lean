@@ -232,12 +232,10 @@ lemma spin_stays_outside3 (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p
   apply And.intro
   · simp [spin_stays_inside h3]
   · intro a
-    have y : isInsideRectangle (rotate180 p r2) r1 := by simp_all only
-    let p2 := rotate180 p r2
-    have q1 : isInsideRectangle p2 r1 := by rw [y]
-    have q2 : isInsideRectangle (rotate180 p2 r1) r1 := by rw [spin_stays_inside q1]
-    rw [←a, rotate180_self_inverse h3] at q2
-    simp_all only
+    absurd h2
+    rw [rotate180_self_inverse h3] at a
+    rw [a]
+    simp_rw [spin_stays_inside h1]
 
 lemma spin_stays_inside3 (h1 : common_center r1 r2) (h2 : isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
     isInsideRectangle (rotate180 p r2) r1 := by
