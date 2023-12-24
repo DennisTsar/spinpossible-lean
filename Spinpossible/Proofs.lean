@@ -13,11 +13,10 @@ theorem rect_spin_mul_eq_chain : ((createRectangleSpin r1) * (createRectangleSpi
   funext i j
   by_cases h1 : isInsideRectangle ⟨i, j⟩ r2
   · simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff, one_ne_zero,
-      imp_false, Bool.not_eq_true, Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk, ite_eq_left_iff,
-      zero_ne_one, Bool.not_eq_false]
+      imp_false, Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one]
     by_cases h2 : isInsideRectangle (rotate180 ⟨i, j⟩ r2) r1
-    · simp_rw [h2, ite_false, ite_true, point_eq, h2, ite_true, orientation.other_self]
-    · simp_rw [h2, ite_false, ite_true, point_eq, h2, ite_false]
+    · simp_rw [h2, not_true_eq_false, ite_false, point_eq, h2, not_not, ite_true, orientation.other_self]
+    · simp_rw [h2, not_false_eq_true, not_not, ite_true, point_eq, h2, ite_false]
   · simp [h1]
 
 -- proposition 1
@@ -62,7 +61,7 @@ lemma rectangle_flips_min_one_tile (R : Rectangle m n) :
   let p := R.topLeft
   use to1d p
   have h : isInsideRectangle p R := by
-    simp_rw [isInsideRectangle, le_refl, true_and, decide_eq_true_eq]
+    simp_rw [isInsideRectangle, le_refl, true_and]
     exact ⟨R.validRow, R.validCol⟩
   simp_rw [createRectangleSpin, to2d_to1d_inverse, h, ite_true]
 
@@ -148,15 +147,14 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.i
         rw [h_s1s2_R3]
       have a3_4 : (createRectangleSpin R2).α.toFun (to1d p2) = (s1 * s2).α.toFun (to1d p2) := by
         have a3_3 : (createRectangleSpin R1).α.toFun (to1d p2) = to1d p2 := by
-          simp only [Equiv.toFun_as_coe, createRectangleSpin]
-          simp_all only [ne_eq, Bool.not_eq_true, Equiv.toFun_as_coe, Equiv.coe_fn_mk, to2d_to1d_inverse, ite_false]
-        rw [Equiv.toFun_as_coe, h_s1, h_s2]
+          simp_all only [createRectangleSpin, to2d_to1d_inverse, ite_false]
+        rw [h_s1, h_s2]
         dsimp only [HMul.hMul, Mul.mul, Spin.mul]
         exact congrArg ((createRectangleSpin R2).α.toFun) (id a3_3.symm)
-      simp only [a3_2, a3_4, Equiv.toFun_as_coe]
+      simp only [a3_2, a3_4]
 
     have a4 : isInsideRectangle p1 R3 := by
-      simp [isInsideRectangle, le_refl, true_and, decide_eq_true_eq]
+      simp only [isInsideRectangle, Fin.val_fin_le]
       sorry
 
     have q1 : ∃ p, isInsideRectangle p R1 ∧ isInsideRectangle p R2 ∧ isInsideRectangle p R3 := by
@@ -180,8 +178,7 @@ lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔
   · intro a
     contrapose a
     push_neg at a
-    simp only [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and,
-      not_le, and_imp, not_forall, not_lt, exists_prop, exists_and_left] at *
+    simp only [Fin.val_fin_le, not_not, and_imp, not_forall, exists_prop] at *
     by_cases h1 : r2.topLeft.row ≤ r1.topLeft.row
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
       · use ⟨r1.topLeft.row, r1.topLeft.col⟩
@@ -197,7 +194,7 @@ lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔
         rw [not_le] at h1 h2
         simp_rw [a, le_refl, le_of_lt h1, le_of_lt h2, r2.validRow, r2.validCol, true_and]
   · intro h p a
-    simp_rw [Fin.val_fin_le, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, not_and, not_le] at *
+    simp_rw [Fin.val_fin_le, not_and, not_le] at *
     intro a1 a2 a3
     rcases h with h1 | h1 | h1 | h1
     · absurd h1
@@ -231,7 +228,7 @@ lemma spin_stays_outside3 (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p
   contrapose h1
   push_neg
   use (rotate180 p r2)
-  simp_all only [Bool.not_eq_true, Bool.not_eq_false, true_and, ne_eq]
+  simp_all only [not_not]
   apply And.intro
   · simp [spin_stays_inside h3]
   · intro a
@@ -294,7 +291,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
         · simp [h2]
           split
           · simp_all only [to2d_to1d_inverse, not_false_eq_true, spin_stays_outside3]
-          · simp_rw [h2]
+          · exact h2
 
 -- proposition 4
 

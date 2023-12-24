@@ -105,10 +105,13 @@ structure Rectangle (m n : PNat) where
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
 
--- make this a Prop ( & abbrev) and some problems go away while some others appear
-def isInsideRectangle (p : Point m n) (r : Rectangle m n) : Bool :=
+-- make this a Prop ( & abbrev) and some problems go away while some others appear'
+def isInsideRectangle (p : Point m n) (r : Rectangle m n) : Prop :=
   r.topLeft.row.val ≤ p.1.val ∧ p.1.val ≤ r.bottomRight.row.val ∧
   r.topLeft.col.val ≤ p.2.val ∧ p.2.val ≤ r.bottomRight.col.val
+
+-- don't know if there is a better way to do this
+instance : Decidable (isInsideRectangle p r) := And.decidable
 
 def rotateCalc (a b c : Fin n) : Fin n := by
   apply Fin.mk
@@ -124,11 +127,11 @@ def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
   ⟨rotateCalc r.bottomRight.row p.1 r.topLeft.row, rotateCalc r.bottomRight.col p.2 r.topLeft.col⟩
 
 lemma rotate180_self_inverse (h : isInsideRectangle p r) : rotate180 (rotate180 p r) r = p := by
-  simp_rw [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h
+  simp_rw [isInsideRectangle, Fin.val_fin_le] at h
   simp [h, rotate180, rotate_calc_self_inverse]
 
 lemma spin_stays_inside (h : isInsideRectangle p r) : isInsideRectangle (rotate180 p r) r := by
-  simp_rw [isInsideRectangle, Fin.val_fin_le, decide_eq_true_eq] at h
+  simp_rw [isInsideRectangle, Fin.val_fin_le] at h
   simp_rw [isInsideRectangle, rotate180, rotateCalc, tsub_le_iff_right]
   simp [h, tsub_tsub_assoc]
 
