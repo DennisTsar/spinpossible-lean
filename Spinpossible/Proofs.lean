@@ -264,42 +264,20 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
         unfold Spin.isSpinAbout createRectangleSpin at *
         sorry
       sorry
-    · let a := h
-      unfold rectangles_disjoint at a
-      simp_all [Spin.isSpinAbout, createRectangleSpin]
+    · dsimp [Spin.isSpinAbout, createRectangleSpin] at h_s1 h_s2
       funext p
-      by_cases q4 : isInsideRectangle (to2d p) R1
-      . aesop
-        have q9 : ¬isInsideRectangle (rotate180 (to2d p) R1) R2 := by
-          -- rw [Bool.eq_iff_iff] at q4
-          apply spin_stays_outside
-          . simp [q4]
-          . exact rect_disjoint_comm.mpr h
-        exact Bool.eq_false_iff.mpr q9
-      . aesop
-        rename_i w1
-        have q56 : ¬isInsideRectangle (rotate180 (to2d p) R2) R1 := by
-          simp_rw [spin_stays_outside w1 h, not_false_eq_true]
-        simp [q56]
+      by_cases q4 : isInsideRectangle (to2d p) R1 <;>
+      aesop <;> simp_all only [rect_disjoint_comm, spin_stays_outside]
     · sorry
-    · let a := h
-      unfold rectangles_disjoint at a
-      simp_all [Spin.isSpinAbout, createRectangleSpin]
+    · dsimp only [Spin.isSpinAbout, createRectangleSpin] at h_s1 h_s2
       funext p
       by_cases q4 : isInsideRectangle (to2d p) R1
       · aesop
-        · rename_i a1 a2 a3
-          have x : common_center R2 R1 := rect_common_center_eq.mpr h
-          have y : isInsideRectangle (rotate180 (to2d p) R1) R2 := spin_stays_inside3 a1 x
-          simp_all only
-        · have x : isInsideRectangle (rotate180 (to2d p) R2) R1 := spin_stays_inside3 q4 h
-          simp_all only
-        · rename_i a1
-          have x : ¬isInsideRectangle (to2d p) R2 := Bool.eq_false_iff.mp a1
-          simp [spin_stays_outside3 x (rect_common_center_eq.mpr h)]
+        · simp_all only [rect_common_center_eq, spin_stays_inside3]
+        · simp_all only [spin_stays_inside3]
+        · simp_all only [not_false_eq_true, rect_common_center_eq, spin_stays_outside3]
       · aesop
-        have x : ¬isInsideRectangle (to2d p) R1 := by simp [q4]
-        simp [spin_stays_outside3 x h]
+        simp_all only [not_false_eq_true, spin_stays_outside3]
 
 -- proposition 4
 
