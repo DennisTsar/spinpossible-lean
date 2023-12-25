@@ -216,19 +216,19 @@ lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 
   simp_rw [rect_disjoint_eq]
   aesop
 
-lemma spin_stays_outside (h1 : isInsideRectangle p r2) (h2 : rectangles_disjoint r1 r2) :
+lemma spin_stays_outside_disj (h1 : isInsideRectangle p r2) (h2 : rectangles_disjoint r1 r2) :
     ¬isInsideRectangle (rotate180 p r2) r1 := by
   have x : isInsideRectangle (rotate180 p r2) r2 := by simp [spin_stays_inside h1]
   simp [rect_disjoint_comm] at h2
   exact h2 (rotate180 p r2) x
 
-lemma spin_stays_outside3 (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
-    ¬isInsideRectangle (rotate180 p r2) r1 := by
+lemma spin_stays_outside_cent (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p r1)
+    (h3 : isInsideRectangle p r2) : ¬isInsideRectangle (rotate180 p r2) r1 := by
   unfold common_center at h1
   contrapose h1
   push_neg
   use (rotate180 p r2)
-  simp_all only [not_not]
+  simp_all only [not_not, spin_stays_inside]
   apply And.intro
   · simp [spin_stays_inside h3]
   · intro a
@@ -237,8 +237,8 @@ lemma spin_stays_outside3 (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p
     rw [a]
     simp_rw [spin_stays_inside h1]
 
-lemma spin_stays_inside3 (h1 : common_center r1 r2) (h2 : isInsideRectangle p r1) (h3 : isInsideRectangle p r2) :
-    isInsideRectangle (rotate180 p r2) r1 := by
+lemma spin_stays_inside_cent (h1 : common_center r1 r2) (h2 : isInsideRectangle p r1)
+    (h3 : isInsideRectangle p r2) : isInsideRectangle (rotate180 p r2) r1 := by
   unfold common_center at h1
   simp_all only [and_imp, spin_stays_inside, h2, h3]
 
@@ -262,19 +262,19 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
         by_cases h1 : isInsideRectangle (to2d p) R1
         · by_cases h2 : isInsideRectangle (to2d p) R2
           · simp_all only [ite_true, to2d_to1d_inverse, rectangles_disjoint]
-          · simp_all [rect_disjoint_comm, spin_stays_outside]
+          · simp_all [rect_disjoint_comm, spin_stays_outside_disj]
         · by_cases h2 : isInsideRectangle (to2d p) R2
-          · simp_all only [ite_false, ite_true, to2d_to1d_inverse, spin_stays_outside]
+          · simp_all only [ite_false, ite_true, to2d_to1d_inverse, spin_stays_outside_disj]
           · simp_all only [ite_false]
       · funext p
         simp_all only [Spin.isSpinAbout, createRectangleSpin, Equiv.coe_fn_symm_mk]
         by_cases h2 : isInsideRectangle (to2d p) R1
         · split
-          · simp_all only [to2d_to1d_inverse, spin_stays_outside, rect_disjoint_comm]
-          · simp_all only [to2d_to1d_inverse, rect_disjoint_comm, spin_stays_outside]
+          · simp_all only [to2d_to1d_inverse, spin_stays_outside_disj, rect_disjoint_comm]
+          · simp_all only [to2d_to1d_inverse, rect_disjoint_comm, spin_stays_outside_disj]
             decide
         · split
-          · simp_all only [to2d_to1d_inverse, spin_stays_outside]
+          · simp_all only [to2d_to1d_inverse, spin_stays_outside_disj]
             decide
           · rfl
     · apply And.intro
@@ -287,22 +287,22 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
           · simp_all only [ite_true, to2d_to1d_inverse]
             split
             · simp_all only [common_center, and_imp, spin_stays_inside, ite_true]
-            · simp_all only [rect_common_center_eq, spin_stays_inside3, not_true_eq_false]
-          · simp_all [rect_common_center_eq, spin_stays_outside3]
+            · simp_all only [rect_common_center_eq, spin_stays_inside_cent, not_true_eq_false]
+          · simp_all [rect_common_center_eq, spin_stays_outside_cent]
         · by_cases h2 : isInsideRectangle (to2d p) R2
-          · simp_all only [ite_false, ite_true, to2d_to1d_inverse, not_false_eq_true, spin_stays_outside3]
+          · simp_all only [ite_false, ite_true, to2d_to1d_inverse, not_false_eq_true, spin_stays_outside_cent]
           · simp_all only [ite_false]
       · funext p
         simp_all only [Spin.isSpinAbout, createRectangleSpin, Equiv.coe_fn_symm_mk]
         by_cases h2 : isInsideRectangle (to2d p) R1
         · simp [h2]
           split
-          · simp_all only [to2d_to1d_inverse, spin_stays_inside3, rect_common_center_eq]
-          · simp_all only [not_false_eq_true, rect_common_center_eq, spin_stays_outside3]
+          · simp_all only [to2d_to1d_inverse, spin_stays_inside_cent, rect_common_center_eq]
+          · simp_all only [not_false_eq_true, rect_common_center_eq, spin_stays_outside_cent]
             decide
         · simp [h2]
           split
-          · simp_all only [to2d_to1d_inverse, not_false_eq_true, spin_stays_outside3]
+          · simp_all only [to2d_to1d_inverse, not_false_eq_true, spin_stays_outside_cent]
           · exact h2
 
 -- proposition 4
