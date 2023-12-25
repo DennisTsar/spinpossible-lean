@@ -277,21 +277,20 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
             decide
           · rfl
     · apply And.intro
-      · unfold Spin.isSpinAbout createRectangleSpin at *
-        have q : (p : Fin (m * n)) → (s1.α.trans s2.α) p = (s2.α.trans s1.α) p := by
-          intro p
-          by_cases h1 : isInsideRectangle (to2d p) R1
-          · by_cases h2 : isInsideRectangle (to2d p) R2
-            · simp_all only [Equiv.trans_apply, Equiv.coe_fn_mk, ite_true, to2d_to1d_inverse, spin_stays_inside3]
-              split
-              · simp_all only [common_center, and_imp, spin_stays_inside]
-              · simp_all only [rect_common_center_eq, spin_stays_inside3, not_true_eq_false]
-            · simp_all [rect_common_center_eq, spin_stays_outside3]
-          · by_cases h2 : isInsideRectangle (to2d p) R2
-            · simp_all only [Equiv.trans_apply, Equiv.coe_fn_mk, ite_false, ite_true, to2d_to1d_inverse,
-                not_false_eq_true, spin_stays_outside3]
-            · simp_all only [and_imp, Equiv.trans_apply, Equiv.coe_fn_mk, to2d_to1d_inverse, ite_false]
-        exact Equiv.ext q
+      · apply Equiv.ext
+        intro p
+        unfold Spin.isSpinAbout createRectangleSpin at *
+        simp_all only [Equiv.trans_apply, Equiv.coe_fn_mk, Nat.mul_eq]
+        by_cases h1 : isInsideRectangle (to2d p) R1
+        · by_cases h2 : isInsideRectangle (to2d p) R2
+          · simp_all only [ite_true, to2d_to1d_inverse]
+            split
+            · simp_all only [common_center, and_imp, spin_stays_inside, ite_true]
+            · simp_all only [rect_common_center_eq, spin_stays_inside3, not_true_eq_false]
+          · simp_all [rect_common_center_eq, spin_stays_outside3]
+        · by_cases h2 : isInsideRectangle (to2d p) R2
+          · simp_all only [ite_false, ite_true, to2d_to1d_inverse, not_false_eq_true, spin_stays_outside3]
+          · simp_all only [ite_false]
       · funext p
         simp_all only [Spin.isSpinAbout, createRectangleSpin, Equiv.coe_fn_symm_mk]
         by_cases h2 : isInsideRectangle (to2d p) R1
