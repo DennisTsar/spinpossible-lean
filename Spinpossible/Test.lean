@@ -96,3 +96,8 @@ namespace TestRectSpins
   #guard boardsEqual secondSpinRes combinedSpinRes
 
 end TestRectSpins
+
+-- trick to see what partially successful aesop does
+-- @[aesop 1% unsafe apply]
+-- def sorryeh (A) : A := sorry
+-- set_option trace.aesop true
