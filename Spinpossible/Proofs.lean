@@ -121,13 +121,11 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.i
   intro ⟨R3, h_s1s2_R3⟩
 
   have h_R1_ne_R2 : R1 ≠ R2 := by -- feels like there should be a simpler way to do this
-    intro h
-    have := s1_eq_s2_of_R1_eq_R2 h_s1 h_s2 h
-    have s1_ne_s2 : s1 ≠ s2 := by
-      intro h
-      rw [h] at h_s1s2_R3
-      exact spin_inverse_is_not_spin h_s2 h_s1s2_R3
-    contradiction
+    intro h1
+    absurd (s1_eq_s2_of_R1_eq_R2 h_s1 h_s2 h1)
+    intro h2
+    rw [h2] at h_s1s2_R3
+    exact spin_inverse_is_not_spin h_s2 h_s1s2_R3
 
   let exists_p1_p2 :=
     (∃ p1, isInsideRectangle p1 R1 ∧ ¬isInsideRectangle p1 R2) ∧
@@ -177,38 +175,33 @@ lemma rect_disjoint_eq : rectangles_disjoint r1 r2 ↔
   apply Iff.intro
   · intro a
     contrapose! a
-    simp only [Fin.val_fin_le, not_not, and_imp, not_forall, exists_prop] at *
+    simp_rw [Fin.val_fin_le]
     by_cases h1 : r2.topLeft.row ≤ r1.topLeft.row
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
       · use ⟨r1.topLeft.row, r1.topLeft.col⟩
         simp_rw [le_refl, r1.validRow, r1.validCol, h1, a, h2, and_self]
       · use ⟨r1.topLeft.row, r2.topLeft.col⟩
-        rw [not_le] at h2
-        simp_rw [le_refl, r1.validRow, a, h1, le_of_lt h2, r2.validCol, true_and]
+        simp_rw [le_refl, r1.validRow, a, h1, le_of_not_le h2, r2.validCol, true_and]
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
       · use ⟨r2.topLeft.row, r1.topLeft.col⟩
-        rw [not_le] at h1
-        simp_rw [a, le_refl, r1.validCol, h2, le_of_lt h1, r2.validRow, and_true]
+        simp_rw [a, le_refl, le_of_not_le h1, r1.validCol, h2, r2.validRow, and_true]
       · use ⟨r2.topLeft.row, r2.topLeft.col⟩
-        rw [not_le] at h1 h2
-        simp_rw [a, le_refl, le_of_lt h1, le_of_lt h2, r2.validRow, r2.validCol, true_and]
+        simp_rw [a, le_refl, le_of_not_le h1, le_of_not_le h2, r2.validRow, r2.validCol, true_and]
   · intro h p a
-    simp_rw [Fin.val_fin_le, not_and, not_le] at *
+    simp_rw [Fin.val_fin_le]
+    push_neg
     intro a1 a2 a3
     rcases h with h1 | h1 | h1 | h1
-    · absurd h1
-      exact not_lt.mpr (le_trans a1 a.right.left)
-    · absurd h1
-      exact not_lt.mpr (le_trans a3 a.right.right.right)
-    · absurd h1
-      exact not_lt.mpr (le_trans a.left a2)
+    · absurd h1; exact not_lt.mpr (le_trans a1 a.right.left)
+    · absurd h1; exact not_lt.mpr (le_trans a3 a.right.right.right)
+    · absurd h1; exact not_lt.mpr (le_trans a.left a2)
     · calc
         r2.bottomRight.col < r1.topLeft.col := h1
         _ ≤ p.col := a.right.right.left
 
 
 lemma rect_common_center_eq : common_center r1 r2 ↔ common_center r2 r1 := by
-  unfold common_center
+  simp_rw [common_center]
   aesop
 
 lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 r1 := by
@@ -218,7 +211,7 @@ lemma rect_disjoint_comm : rectangles_disjoint r1 r2 ↔ rectangles_disjoint r2 
 lemma spin_stays_outside_disj (h1 : isInsideRectangle p r2) (h2 : rectangles_disjoint r1 r2) :
     ¬isInsideRectangle (rotate180 p r2) r1 := by
   rw [rect_disjoint_comm] at h2
-  exact h2 (rotate180 p r2) (by simp_rw [spin_stays_inside h1])
+  exact h2 _ (spin_stays_inside h1)
 
 lemma spin_stays_outside_cent (h1 : common_center r1 r2) (h2 : ¬isInsideRectangle p r1)
     (h3 : isInsideRectangle p r2) : ¬isInsideRectangle (rotate180 p r2) r1 := by
@@ -236,8 +229,8 @@ lemma spin_stays_outside_cent (h1 : common_center r1 r2) (h2 : ¬isInsideRectang
 
 lemma spin_stays_inside_cent (h1 : common_center r1 r2) (h2 : isInsideRectangle p r1)
     (h3 : isInsideRectangle p r2) : isInsideRectangle (rotate180 p r2) r1 := by
-  unfold common_center at h1
-  simp_all only [and_imp, spin_stays_inside, h2, h3]
+  rw [h1 _ ⟨h2, h3⟩]
+  exact spin_stays_inside h2
 
 lemma calc_for_rotate {a b c d e : Nat} (h : d - (b - (e - a) - c) = b - (d - (e - c) - a))
     (_ : a ≤ e) (_ : c ≤ e) (_ : e ≤ b) (_ : e ≤ d) : d - (e - c) = b - (e - a) := by omega
@@ -256,9 +249,8 @@ lemma spin_not_comm_if_outside (h_s1 : Spin.isSpinAbout s1 r1) (h_s2 : Spin.isSp
     (h3 : isInsideRectangle p r1) (h4 : isInsideRectangle p r2)
     (h6 : ¬isInsideRectangle (rotate180 p r2) r1) :
     (fun i ↦ s1.u (s2.α.symm i) + s2.u i) ≠ (fun i ↦ s2.u (s1.α.symm i) + s1.u i) := by
-  rw [h_s1, h_s2]
   by_contra a
-  rw [Function.funext_iff] at a
+  rw [h_s1, h_s2, Function.funext_iff] at a
   specialize a (to1d (rotate180 p r2))
   unfold createRectangleSpin at a
   simp_rw [Equiv.coe_fn_symm_mk, to2d_to1d_inverse, rotate180_self_inverse h4, h6, ite_false,
@@ -283,8 +275,8 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s
       have hp : s1.α.trans s2.α (to1d p) = s2.α.trans s1.α (to1d p) := by simp_rw [h]
 
       rw [h_s1, h_s2] at hp
-      simp only [createRectangleSpin, Equiv.trans_apply, Equiv.coe_fn_mk, to2d_to1d_inverse,
-        a.left, ite_true, a.right] at hp
+      simp_rw [Equiv.trans_apply, createRectangleSpin, Equiv.coe_fn_mk, to2d_to1d_inverse,
+        a.left, a.right, ite_true, to2d_to1d_inverse] at hp
 
       by_cases h1 : isInsideRectangle (rotate180 p R1) R2
       · by_cases h2 : isInsideRectangle (rotate180 p R2) R1
