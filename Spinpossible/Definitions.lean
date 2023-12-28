@@ -105,7 +105,6 @@ structure Rectangle (m n : PNat) where
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
 
--- make this a Prop ( & abbrev) and some problems go away while some others appear'
 def isInsideRectangle (p : Point m n) (r : Rectangle m n) : Prop :=
   r.topLeft.row.val ≤ p.1.val ∧ p.1.val ≤ r.bottomRight.row.val ∧
   r.topLeft.col.val ≤ p.2.val ∧ p.2.val ≤ r.bottomRight.col.val
@@ -119,7 +118,7 @@ def rotateCalc (a b c : Fin n) : Fin n := by
     a.val - (b.val - c.val) ≤ a.val := by apply Nat.sub_le
     _                       < n     := a.isLt
 
-lemma rotate_calc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rotateCalc a i b) b = i := by
+lemma rotateCalc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rotateCalc a i b) b = i := by
   simp only [rotateCalc, Nat.sub_sub, Nat.sub_sub_self h1, Nat.sub_add_cancel h2]
 
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
@@ -128,7 +127,7 @@ def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
 
 lemma rotate180_self_inverse (h : isInsideRectangle p r) : rotate180 (rotate180 p r) r = p := by
   simp_rw [isInsideRectangle, Fin.val_fin_le] at h
-  simp [h, rotate180, rotate_calc_self_inverse]
+  simp [h, rotate180, rotateCalc_self_inverse]
 
 lemma spin_stays_inside (h : isInsideRectangle p r) : isInsideRectangle (rotate180 p r) r := by
   simp_rw [isInsideRectangle, Fin.val_fin_le] at h
