@@ -242,14 +242,143 @@ lemma spin_stays_inside_cent (h1 : common_center r1 r2) (h2 : isInsideRectangle 
   unfold common_center at h1
   simp_all only [and_imp, spin_stays_inside, h2, h3]
 
+lemma other_lemma5 (h1 : rotate180 (rotate180 p r1) r2 = rotate180 (rotate180 p r2) r1)
+    (h2 : isInsideRectangle p r1) (h3 : isInsideRectangle p r2)
+    (h4: isInsideRectangle (rotate180 p r1) r2)
+    (h5: isInsideRectangle (rotate180 p r2) r1)
+    : rotate180 p r2 = rotate180 p r1 := by
+  unfold rotate180 rotateCalc at h1
+  unfold rotate180 rotateCalc
+
+  have a1 : r1.topLeft.row ≤ r1.bottomRight.row := r1.validRow
+  have a2 : r1.topLeft.col ≤ r1.bottomRight.col := r1.validCol
+  have a3 : r2.topLeft.row ≤ r2.bottomRight.row := r2.validRow
+  have a4 : r2.topLeft.col ≤ r2.bottomRight.col := r2.validCol
+
+  simp_all only [Point.mk.injEq, Fin.mk.injEq]
+  with_reducible aesop_destruct_products
+  rename_i left right
+  apply And.intro
+  ·
+    have e1_1 : p.row.val ≤ r2.bottomRight.row.val := by
+      unfold isInsideRectangle at h3
+      simp_all only
+    have e1_2 : p.row.val ≥ r2.topLeft.row.val := by
+      unfold isInsideRectangle at h3
+      simp_all only
+    rw [tsub_tsub_assoc e1_1 e1_2]
+    -- clear e1 e2
+    have e2_1 : p.row.val ≤ r1.bottomRight.row.val := by
+      unfold isInsideRectangle at h2
+      simp_all only
+    have e2_2 : p.row.val ≥ r1.topLeft.row.val := by
+      unfold isInsideRectangle at h2
+      simp_all only
+    rw [tsub_tsub_assoc e2_1 e2_2]
+    -- clear e1 e2
+    rw [tsub_add_eq_add_tsub e1_1, tsub_add_eq_add_tsub e2_1]
+    have e3_1 : p.row.val ≤ r2.bottomRight.row.val + r2.topLeft.row.val := by
+      calc
+        p.row.val ≤ r2.bottomRight.row.val := e1_1
+        _ ≤ r2.bottomRight.row.val + r2.topLeft.row.val := by apply Nat.le_add_right
+    have e3_2 : p.row.val ≤ r1.bottomRight.row.val + r1.topLeft.row.val := by
+      calc
+        p.row.val ≤ r1.bottomRight.row.val := e2_1
+        _ ≤ r1.bottomRight.row.val + r1.topLeft.row.val := by apply Nat.le_add_right
+    rw [tsub_left_inj e3_1 e3_2]
+
+    omega
+  · have e1_1 : p.col.val ≤ r2.bottomRight.col.val := by
+      unfold isInsideRectangle at h3
+      simp_all only
+    have e1_2 : p.col.val ≥ r2.topLeft.col.val := by
+      unfold isInsideRectangle at h3
+      simp_all only
+    rw [tsub_tsub_assoc e1_1 e1_2]
+    -- clear e1 e2
+    have e2_1 : p.col.val ≤ r1.bottomRight.col.val := by
+      unfold isInsideRectangle at h2
+      simp_all only
+    have e2_2 : p.col.val ≥ r1.topLeft.col.val := by
+      unfold isInsideRectangle at h2
+      simp_all only
+    rw [tsub_tsub_assoc e2_1 e2_2]
+    -- clear e1 e2
+    rw [tsub_add_eq_add_tsub e1_1, tsub_add_eq_add_tsub e2_1]
+    have e3_1 : p.col.val ≤ r2.bottomRight.col.val + r2.topLeft.col.val := by
+      calc
+        p.col.val ≤ r2.bottomRight.col.val := e1_1
+        _ ≤ r2.bottomRight.col.val + r2.topLeft.col.val := by apply Nat.le_add_right
+    have e3_2 : p.col.val ≤ r1.bottomRight.col.val + r1.topLeft.col.val := by
+      calc
+        p.col.val ≤ r1.bottomRight.col.val := e2_1
+        _ ≤ r1.bottomRight.col.val + r1.topLeft.col.val := by apply Nat.le_add_right
+    rw [tsub_left_inj e3_1 e3_2]
+
+    omega
+
+-- technically h3 isn't needed
+lemma important_lemma (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2)
+    (h3 : isInsideRectangle p R1) (h4 : isInsideRectangle p R2)
+    (h5 : isInsideRectangle (rotate180 p R1) R2) (h6 : ¬isInsideRectangle (rotate180 p R2) R1) :
+    (fun i ↦ Spin.u s1 (s2.α.symm i) + Spin.u s2 i) ≠ (fun i ↦ Spin.u s2 (s1.α.symm i) + Spin.u s1 i) := by
+  rw [h_s1, h_s2, createRectangleSpin]
+  by_contra a
+  rw [Function.funext_iff] at a
+  specialize a (to1d (rotate180 p R2))
+  unfold createRectangleSpin at a
+  simp_all only [Equiv.coe_fn_symm_mk, to2d_to1d_inverse, ite_false, add_zero, add_left_eq_self, ite_eq_right_iff,
+    one_ne_zero, imp_false]
+  have x : isInsideRectangle (rotate180 p R2) R2 := by simp [spin_stays_inside h4]
+  simp [rotate180_self_inverse h4, x] at a
+  contradiction
+
+
 theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.isSpinAbout R1) (h_s2 : s2.isSpinAbout R2) :
     s1 * s2 = s2 * s1 ↔ (rectangles_disjoint R1 R2 ∨ common_center R1 R2) := by
   apply Iff.intro
   · intro h
-    -- unfold rectangles_disjoint2 common_center at *
-    -- exfalso
-    -- aesop
-    sorry
+    dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h
+    simp only [Equiv.invFun_as_coe, Spin.mk.injEq] at h
+    by_cases h1 : rectangles_disjoint R1 R2
+    · exact Or.inl h1
+    ·
+      have h2 : common_center R1 R2 := by
+        unfold common_center at *
+        intro p a
+        have left := a.left
+        have right := a.right
+
+        have q : s1.α.trans s2.α (to1d p) = s2.α.trans s1.α (to1d p) := by
+          simp_all only [left, Equiv.trans_apply, Nat.mul_eq]
+
+        have x : s1 = createRectangleSpin R1 := by rw [h_s1]
+        have y : s2 = createRectangleSpin R2 := by rw [h_s2]
+        rw [x, y] at q
+        unfold createRectangleSpin at q
+        simp [left] at q
+        simp [right] at q
+        by_cases h3 : isInsideRectangle (rotate180 p R1) R2
+        · simp [h3] at q
+          by_cases h4 : isInsideRectangle (rotate180 p R2) R1
+          . simp [h4] at q
+            have z2 : rotate180 (rotate180 p R1) R2 = rotate180 (rotate180 p R2) R1 := by
+              have z1 : to2d (to1d (rotate180 (rotate180 p R1) R2)) = to2d (to1d (rotate180 (rotate180 p R2) R1)) := by
+                rw [q]
+              simpa [to2d_to1d_inverse] using z1
+            simp [other_lemma5 z2 left right h3 h4]
+          . have x := important_lemma h_s1 h_s2 left right h3 h4
+            simp_all only [and_self, ite_true, Nat.mul_eq, ne_eq, not_true_eq_false]
+        · simp [h3] at q
+          by_cases h4 : isInsideRectangle (rotate180 p R2) R1
+          . have x := important_lemma h_s2 h_s1 right left h4 h3
+            simp_all only [and_self, ite_true, Nat.mul_eq, ne_eq, not_true_eq_false]
+          . simp [h4] at q
+            have z1 : to2d (to1d (rotate180 p R1)) = to2d (to1d (rotate180 p R2)) := by
+                rw [q]
+            simp [to2d_to1d_inverse, Eq.symm] at z1
+            exact z1.symm
+      exact Or.inr h2
   · intro h
     dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight]
     simp only [Equiv.invFun_as_coe, Spin.mk.injEq]
