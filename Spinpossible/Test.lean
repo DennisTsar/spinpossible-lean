@@ -86,7 +86,7 @@ namespace TestRectSpins
   def firstSpinRes := performSpin test_rectangle board3by3
   def secondSpinRes := performSpin test_rectangle2 firstSpinRes
 
-  def combinedSpin := createRectangleSpin test_rectangle * createRectangleSpin test_rectangle2
+  def combinedSpin := test_rectangle.toSpin * test_rectangle2.toSpin
   def combinedSpinRes := combinedSpin.actionOnBoard board3by3
 
   #eval firstSpinRes

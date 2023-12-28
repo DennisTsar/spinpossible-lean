@@ -105,12 +105,12 @@ structure Rectangle (m n : PNat) where
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
 
-def isInsideRectangle (p : Point m n) (r : Rectangle m n) : Prop :=
+def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
   r.topLeft.row.val ≤ p.1.val ∧ p.1.val ≤ r.bottomRight.row.val ∧
   r.topLeft.col.val ≤ p.2.val ∧ p.2.val ≤ r.bottomRight.col.val
 
 -- don't know if there is a better way to do this
-instance : Decidable (isInsideRectangle p r) := And.decidable
+instance : Decidable (Point.IsInside p r) := And.decidable
 
 def rotateCalc (a b c : Fin n) : Fin n := by
   apply Fin.mk
@@ -125,44 +125,44 @@ lemma rotateCalc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rota
 def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
   ⟨rotateCalc r.bottomRight.row p.1 r.topLeft.row, rotateCalc r.bottomRight.col p.2 r.topLeft.col⟩
 
-lemma rotate180_self_inverse (h : isInsideRectangle p r) : rotate180 (rotate180 p r) r = p := by
-  simp_rw [isInsideRectangle, Fin.val_fin_le] at h
+lemma rotate180_self_inverse (h : p.IsInside r) : rotate180 (rotate180 p r) r = p := by
+  simp_rw [Point.IsInside, Fin.val_fin_le] at h
   simp [h, rotate180, rotateCalc_self_inverse]
 
-lemma spin_stays_inside (h : isInsideRectangle p r) : isInsideRectangle (rotate180 p r) r := by
-  simp_rw [isInsideRectangle, Fin.val_fin_le] at h
-  simp_rw [isInsideRectangle, rotate180, rotateCalc, tsub_le_iff_right]
+lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
+  simp_rw [Point.IsInside, Fin.val_fin_le] at h
+  simp_rw [Point.IsInside, rotate180, rotateCalc, tsub_le_iff_right]
   simp [h, tsub_tsub_assoc]
 
 -- Define a function to create a Spin element for a rectangle spin
-def createRectangleSpin (r : Rectangle m n) : Spin m n :=
+def Rectangle.toSpin (r : Rectangle m n) : Spin m n :=
   {
     α := Equiv.mk
       (fun pos =>
         let p := to2d pos
-        if isInsideRectangle p r then to1d (rotate180 p r) else pos
+        if p.IsInside r then to1d (rotate180 p r) else pos
       )
       (fun pos =>
         let p := to2d pos
-        if isInsideRectangle p r then to1d (rotate180 p r) else pos
+        if p.IsInside r then to1d (rotate180 p r) else pos
       )
       (by
         apply Function.leftInverse_iff_comp.mpr
         funext x
-        by_cases h : isInsideRectangle (to2d x) r
+        by_cases h : (to2d x).IsInside r
         · simp [h, spin_stays_inside, rotate180_self_inverse]
         · simp [h]
       )
       (by
         apply Function.leftInverse_iff_comp.mpr
         funext x
-        by_cases h : isInsideRectangle (to2d x) r
+        by_cases h : (to2d x).IsInside r
         · simp [h, spin_stays_inside, rotate180_self_inverse]
         · simp [h]
       ),
-    u := fun pos => if isInsideRectangle (to2d pos) r then 1 else 0
+    u := fun pos => if  (to2d pos).IsInside r then 1 else 0
   }
 
 -- Function to perform a spin on a board using the defined Spin action
 def performSpin (r : Rectangle m n) (b : board m n) : board m n :=
-  (createRectangleSpin r).actionOnBoard b
+  r.toSpin.actionOnBoard b
