@@ -82,8 +82,8 @@ def standardBoard (m n : PNat) : board m n :=
 
 def orientation.other (o : orientation) : orientation :=
   match o with
-  | orientation.positive  => orientation.negative
-  | orientation.negative  => orientation.positive
+  | orientation.positive => orientation.negative
+  | orientation.negative => orientation.positive
 
 lemma orientation.other_self (o : orientation) : o.other.other = o :=
   match o with
@@ -160,7 +160,7 @@ def Rectangle.toSpin (r : Rectangle m n) : Spin m n :=
         · simp [h, spin_stays_inside, rotate180_self_inverse]
         · simp [h]
       ),
-    u := fun pos => if  (to2d pos).IsInside r then 1 else 0
+    u := fun pos => if (to2d pos).IsInside r then 1 else 0
   }
 
 -- Function to perform a spin on a board using the defined Spin action
