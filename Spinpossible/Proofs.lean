@@ -170,8 +170,8 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
           have b4 : r3.toSpin.u (to1d (rotate180 p2 r2)) = 1 := by
             rw [← h_s1s2_r3, h_s1, h_s2]
             dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight, Rectangle.toSpin]
-            simp only [to2d_to1d_inverse, h_p2_r2, ite_true, hx6, ite_false, zero_add]
-            simp [spin_stays_inside h_p2_r2, rotate180_self_inverse h_p2_r2]
+            simp only [spin_stays_inside h_p2_r2, reduceIte, rotate180_self_inverse h_p2_r2,
+              to2d_to1d_inverse, add_left_eq_self, ite_eq_right_iff, one_ne_zero]
             exact h_p2_not_r1
           simpa [Rectangle.toSpin] using b4
 
@@ -183,19 +183,19 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         simp [Rectangle.toSpin, h_p2_r2] at a3
         have x2 : p2.IsInside r3 := by
           by_contra l
-          simp [l] at a3
-          have : p2 = rotate180 p2 r2 := by exact to1d_inj a3.symm
+          simp only [l] at a3
+          have := to1d_inj a3.symm
           exact x this.symm
 
         refine rect_cent_if_rotate_eq b1 b2 ?_
-        simp only [x2, ite_true] at a3
+        simp only [x2] at a3
         nth_rw 1 [← to1d_inj a3.symm]
-        simp [rotate180_self_inverse h_p2_r2, rotate180_self_inverse x2]
+        simp only [rotate180_self_inverse h_p2_r2, rotate180_self_inverse x2]
       · have b2 : p2.IsInside r3 := by
           have b4 : r3.toSpin.u (to1d p2) = 1 := by
             rw [← h_s1s2_r3, h_s1, h_s2]
             dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight, Rectangle.toSpin]
-            simp only [to2d_to1d_inverse, h_p2_r2, ite_true, hx6, ite_false, zero_add]
+            simp only [to2d_to1d_inverse, h_p2_r2, reduceIte, hx6, zero_add]
           simpa [Rectangle.toSpin] using b4
         refine rect_cent_if_rotate_eq h_p2_r2 b2 ?_
         simp [Rectangle.toSpin, spin_stays_inside h_p2_r2, h_p2_r2, b2] at a3
@@ -209,9 +209,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
           rw [← h_s1s2_r3, h_s1, h_s2]
           dsimp only [HMul.hMul, Mul.mul, Spin.mul]
           dsimp only [perm.actionRight, Rectangle.toSpin]
-          simp [h_p1_not_r2, spin_stays_inside h_p1_r1]
-          simp_all only [ne_eq, Equiv.toFun_as_coe, Nat.mul_eq, to2d_to1d_inverse, ite_true, Equiv.trans_apply,
-            Equiv.coe_fn_mk, ite_false]
+          simp [h_p1_not_r2, spin_stays_inside h_p1_r1, a3_7]
 
         have b2 : (rotate180 p1 r1).IsInside r3 := by
           have t1 : (rotate180 p1 r1) ≠ p1 := by
@@ -237,7 +235,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         have b4 : r3.toSpin.u (to1d p1) = 1 := by
           rw [← h_s1s2_r3, h_s1, h_s2]
           dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight, Rectangle.toSpin]
-          simp only [to2d_to1d_inverse, h_p1_not_r2, ite_false, h_p1_r1, ite_true, add_zero]
+          simp only [to2d_to1d_inverse, h_p1_not_r2, reduceIte, h_p1_r1, add_zero]
 
         have b2 : p1.IsInside r3 := by simpa [Rectangle.toSpin] using b4
 
