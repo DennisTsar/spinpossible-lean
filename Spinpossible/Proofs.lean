@@ -15,8 +15,8 @@ theorem rect_spin_mul_eq_chain : ((Rectangle.toSpin r1) * (Rectangle.toSpin r2))
   · simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff, one_ne_zero,
       imp_false, Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one]
     by_cases h2 : (rotate180 ⟨i, j⟩ r2).IsInside r1
-    · simp_rw [h2, not_true_eq_false, ite_false, point_eq, h2, not_not, ite_true, orientation.other_self]
-    · simp_rw [h2, not_false_eq_true, not_not, ite_true, point_eq, h2, ite_false]
+    · simp_rw [h2, not_true_eq_false, not_false_eq_true, reduceIte, orientation.other_self]
+    · simp_rw [h2, not_false_eq_true, not_true_eq_false, reduceIte]
   · simp [h1]
 
 -- proposition 1
@@ -51,7 +51,7 @@ theorem spin_inverse_props (h : Spin.IsSpinAbout s r) :
     · simp [h1]
   . funext p
     by_cases h1 : (to2d p).IsInside r
-    · simp_rw [h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1, ite_true]; rfl
+    · simp_rw [h1, reduceIte, to2d_to1d_inverse, spin_stays_inside h1]; decide
     · simp [h1]
 
 -- proposition 2
@@ -88,7 +88,7 @@ lemma rect_cent_if_rotate_eq (h1 : Point.IsInside p r1) (h2 : Point.IsInside p r
   let h22 := h2.right.right
   have hp1 := rotate_calc_helper h3.left h1.right.left h2.right.left h1.left h2.left
   have hp2 := rotate_calc_helper h3.right h11.right h22.right h11.left h22.left
-  simp only [rotate180, rotateCalc, Point.mk.injEq, Fin.mk.injEq, Fin.val_fin_le, and_self,
+  simp only [rotate180, rotateCalc,
     hp1 p2.row ⟨a.left.right.left, a.right.right.left, a.left.left, a.right.left⟩,
     hp2 p2.col ⟨a.left.right.right.right, a.right.right.right.right,
       a.left.right.right.left, a.right.right.right.left⟩]
@@ -114,7 +114,7 @@ lemma point_outside_unaffected (h1 : s1.IsSpinAbout r1) (h2 : s2.IsSpinAbout r2)
     have x3 : (s1 * s2).actionOnBoard b =
         r2.toSpin.actionOnBoard (r1.toSpin.actionOnBoard b) := by
       rw [h1, h2, rect_spin_mul_eq_chain]
-    simp only [x2, x3]
+    simp only [x2, x3]; rfl
   have y : (performSpin r2 a) p.row p.col = a p.row p.col := by
     dsimp only [performSpin, Rectangle.toSpin, Spin.actionOnBoard]
     simp [h4, to2d_to1d_inverse]
@@ -225,7 +225,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
             simp_all only [spin_stays_inside]
 
         refine rect_cent_if_rotate_eq a3_6 b2 ?_
-        simp [Rectangle.toSpin, ne_eq, Equiv.toFun_as_coe, ite_true, a3_6, b2] at b1
+        simp [Rectangle.toSpin, Equiv.toFun_as_coe, ite_true, a3_6, b2] at b1
         rw [to1d_inj b1]
       · have b1 : r1.toSpin.α.toFun (to1d p1) = r3.toSpin.α.toFun (to1d p1) := by
           rw [← h_s1s2_r3, h_s1, h_s2]
@@ -240,7 +240,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         have b2 : p1.IsInside r3 := by simpa [Rectangle.toSpin] using b4
 
         refine rect_cent_if_rotate_eq h_p1_r1 b2 ?_
-        simp [Rectangle.toSpin, ne_eq, Equiv.toFun_as_coe, ite_true, b2, h_p1_r1] at b1
+        simp [Rectangle.toSpin, Equiv.toFun_as_coe, ite_true, b2, h_p1_r1] at b1
         rw [to1d_inj b1]
 
     have q1 : ∃ p : Point .., p.IsInside r1 ∧ p.IsInside r2 ∧ p.IsInside r3 := by
@@ -275,7 +275,7 @@ lemma rect_disjoint_eq : DisjointRect r1 r2 ↔
       · use ⟨r2.topLeft.row, r2.topLeft.col⟩
         simp_rw [a, le_refl, le_of_not_le h1, le_of_not_le h2, r2.validRow, r2.validCol, true_and]
   · intro h p a
-    simp_rw [Fin.val_fin_le]
+    rw [Fin.val_fin_le]
     push_neg
     intro a1 a2 a3
     rcases h with h1 | h1 | h1 | h1
@@ -305,7 +305,7 @@ lemma spin_stays_outside_cent (h1 : CommonCenter r1 r2) (h2 : ¬Point.IsInside p
   unfold CommonCenter at h1
   contrapose! h1
   use (rotate180 p r2)
-  simp_rw [spin_stays_inside h3, and_true, ne_eq]
+  simp_rw [spin_stays_inside h3, and_true]
   apply And.intro
   · exact h1
   · by_contra a
