@@ -46,6 +46,7 @@ def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
 
 -- Step 2: Action of Spin m x n on board
 
+@[ext]
 structure Point (m n : PNat) where
   row : Fin m
   col : Fin n
@@ -99,6 +100,7 @@ def Spin.actionOnBoard {m n : PNat} (s : Spin m n) (b : board m n) : board m n :
     let tile := b newI newJ
     if s.u origPos = 1 then { tile with orient := tile.orient.other } else tile
 
+@[ext]
 structure Rectangle (m n : PNat) where
   topLeft : Point m n
   bottomRight : Point m n
