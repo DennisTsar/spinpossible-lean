@@ -1,16 +1,14 @@
 import Mathlib.Data.ZMod.Basic
 import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
 
-universe u
-
 def perm (N : Nat) := Equiv.Perm (Fin N)
 
 namespace perm
 
-  -- apply α and then β
-  def actionRight (α β : perm N) : perm N := α.trans β
+-- apply α and then β
+def actionRight (α β : perm N) : perm N := α.trans β
 
-  instance : Mul (perm N) := ⟨actionRight⟩
+instance : Mul (perm N) := ⟨actionRight⟩
 
 end perm
 
@@ -22,13 +20,11 @@ structure Spin (m n : PNat) where
 
 namespace Spin
 
-  def mul (x y : Spin m n) : Spin m n :=
-    {
-      α := x.α * y.α,
-      u := fun i => x.u (y.α.invFun i) + y.u i
-    }
+def mul (x y : Spin m n) : Spin m n where
+  α := x.α * y.α
+  u := fun i => x.u (y.α.invFun i) + y.u i
 
-  instance : Mul (Spin m n) := ⟨mul⟩
+instance : Mul (Spin m n) := ⟨mul⟩
 
 end Spin
 
@@ -55,11 +51,11 @@ structure Point (m n : PNat) where
 lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
 
 -- Convert 2D coordinates to 1D (flattened)
-def to1d (pos : Point m n) : Fin (m * n) := by
-  apply Fin.mk
-  calc
+def to1d (pos : Point m n) : Fin (m * n) where
+  val := pos.2.val + pos.1.val * n
+  isLt := by calc
     pos.2.val + pos.1.val * n < n + pos.1.val * n := by apply Nat.add_lt_add_right pos.2.isLt
-    _ = (pos.1.val + 1) * n := by rw [Nat.succ_mul, Nat.add_comm]
+    _ = (pos.1.val + 1) * n := by ring
     _ ≤ m * n := Nat.mul_le_mul_right n pos.1.isLt
 
 -- Convert 1D coordinates (flattened) to 2D
@@ -114,10 +110,10 @@ def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
 -- don't know if there is a better way to do this
 instance : Decidable (Point.IsInside p r) := And.decidable
 
-def rotateCalc (a b c : Fin n) : Fin n := by
-  apply Fin.mk
-  calc
-    a.val - (b.val - c.val) ≤ a.val := by apply Nat.sub_le
+def rotateCalc (a b c : Fin n) : Fin n where
+  val := a.val - (b.val - c.val)
+  isLt := by calc
+    a.val - (b.val - c.val) ≤ a.val := Nat.sub_le (a) (b - c)
     _                       < n     := a.isLt
 
 lemma rotateCalc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rotateCalc a i b) b = i := by
@@ -137,33 +133,31 @@ lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
   simp [h, tsub_tsub_assoc]
 
 -- Define a function to create a Spin element for a rectangle spin
-def Rectangle.toSpin (r : Rectangle m n) : Spin m n :=
-  {
-    α := Equiv.mk
-      (fun pos =>
-        let p := to2d pos
-        if p.IsInside r then to1d (rotate180 p r) else pos
-      )
-      (fun pos =>
-        let p := to2d pos
-        if p.IsInside r then to1d (rotate180 p r) else pos
-      )
-      (by
-        apply Function.leftInverse_iff_comp.mpr
-        funext x
-        by_cases h : (to2d x).IsInside r
-        · simp [h, spin_stays_inside, rotate180_self_inverse]
-        · simp [h]
-      )
-      (by
-        apply Function.leftInverse_iff_comp.mpr
-        funext x
-        by_cases h : (to2d x).IsInside r
-        · simp [h, spin_stays_inside, rotate180_self_inverse]
-        · simp [h]
-      ),
-    u := fun pos => if (to2d pos).IsInside r then 1 else 0
-  }
+def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
+  α := Equiv.mk
+    (fun pos =>
+      let p := to2d pos
+      if p.IsInside r then to1d (rotate180 p r) else pos
+    )
+    (fun pos =>
+      let p := to2d pos
+      if p.IsInside r then to1d (rotate180 p r) else pos
+    )
+    (by
+      apply Function.leftInverse_iff_comp.mpr
+      funext x
+      by_cases h : (to2d x).IsInside r
+      · simp [h, spin_stays_inside, rotate180_self_inverse]
+      · simp [h]
+    )
+    (by
+      apply Function.leftInverse_iff_comp.mpr
+      funext x
+      by_cases h : (to2d x).IsInside r
+      · simp [h, spin_stays_inside, rotate180_self_inverse]
+      · simp [h]
+    )
+  u := fun pos => if (to2d pos).IsInside r then 1 else 0
 
 -- Function to perform a spin on a board using the defined Spin action
 def performSpin (r : Rectangle m n) (b : board m n) : board m n :=
