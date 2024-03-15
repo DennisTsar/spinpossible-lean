@@ -127,7 +127,7 @@ lemma point_outside_rect_unchanged (h : ¬Point.IsInside p r) :
 -- TODO: what's the most convenient way to write this?
 --  Specifically, I want to handle both when I have this as a hypothesis and as a goal
 lemma to1d_inj (h : to1d p = to1d q) : p = q := by
-  have x : to2d (to1d p) = to2d (to1d q) := by rw [h]
+  have x : to2d (to1d p) = to2d (to1d q) := by congr
   simpa only [to2d_to1d_inverse] using x
 
 theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
@@ -160,8 +160,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       have a3_3 : r1.toSpin.α.toFun (to1d p2) = to1d p2 := by
         simp_all only [Rectangle.toSpin, to2d_to1d_inverse, ite_false]
       rw [← h_s1s2_r3, h_s1, h_s2]
-      dsimp only [HMul.hMul, Mul.mul, Spin.mul]
-      exact congrArg r2.toSpin.α.toFun a3_3.symm
+      exact congrArg (Rectangle.toSpin r2).α.toFun (a3_3.symm)
 
     have a4 : CommonCenter r2 r3 := by
       by_cases hx6 : (rotate180 p2 r2).IsInside r1
@@ -217,16 +216,15 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
             rw [l] at hx6
             exact h_p1_not_r2 hx6
           by_contra l
-          simp [Rectangle.toSpin, spin_stays_inside h_p1_r1, l, rotate180_self_inverse h_p1_r1] at b1
-          have : p1 = rotate180 p1 r1 := by rw [← to1d_inj b1]
-          exact t1 this.symm
+          simp only [Rectangle.toSpin, to2d_to1d_inverse, h_p1_r1, spin_stays_inside,
+            rotate180_self_inverse, reduceIte, l] at b1
+          exact t1 (to1d_inj b1).symm
 
-        have a3_6 : (rotate180 p1 r1).IsInside r1 := by
-            simp_all only [spin_stays_inside]
+        have a3_6 : (rotate180 p1 r1).IsInside r1 := spin_stays_inside h_p1_r1
 
         refine rect_cent_if_rotate_eq a3_6 b2 ?_
         simp [Rectangle.toSpin, Equiv.toFun_as_coe, ite_true, a3_6, b2] at b1
-        rw [to1d_inj b1]
+        exact to1d_inj b1.symm
       · have b1 : r1.toSpin.α.toFun (to1d p1) = r3.toSpin.α.toFun (to1d p1) := by
           rw [← h_s1s2_r3, h_s1, h_s2]
           simp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight, Rectangle.toSpin]
@@ -241,7 +239,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
 
         refine rect_cent_if_rotate_eq h_p1_r1 b2 ?_
         simp [Rectangle.toSpin, Equiv.toFun_as_coe, ite_true, b2, h_p1_r1] at b1
-        rw [to1d_inj b1]
+        exact to1d_inj b1.symm
 
     have q1 : ∃ p : Point .., p.IsInside r1 ∧ p.IsInside r2 ∧ p.IsInside r3 := by
       sorry
@@ -274,26 +272,16 @@ lemma rect_disjoint_eq : DisjointRect r1 r2 ↔
         simp_rw [a, le_refl, le_of_not_le h1, r1.validCol, h2, r2.validRow, and_true]
       · use ⟨r2.topLeft.row, r2.topLeft.col⟩
         simp_rw [a, le_refl, le_of_not_le h1, le_of_not_le h2, r2.validRow, r2.validCol, true_and]
-  · intro h p a
-    rw [Fin.val_fin_le]
-    push_neg
-    intro a1 a2 a3
-    rcases h with h1 | h1 | h1 | h1
-    · absurd h1; exact not_lt.mpr (le_trans a1 a.right.left)
-    · absurd h1; exact not_lt.mpr (le_trans a3 a.right.right.right)
-    · absurd h1; exact not_lt.mpr (le_trans a.left a2)
-    · calc
-        r2.bottomRight.col < r1.topLeft.col := h1
-        _ ≤ p.col := a.right.right.left
+  · omega
 
 
 lemma rect_commonCenter_comm : CommonCenter r1 r2 ↔ CommonCenter r2 r1 := by
-  simp_rw [CommonCenter]
+  simp only [CommonCenter]
   aesop
 
 lemma rect_disjoint_comm : DisjointRect r1 r2 ↔ DisjointRect r2 r1 := by
-  simp_rw [rect_disjoint_eq]
-  aesop
+  simp only [rect_disjoint_eq]
+  omega
 
 lemma spin_stays_outside_disj (h1 : Point.IsInside p r2) (h2 : DisjointRect r1 r2) :
     ¬(rotate180 p r2).IsInside r1 := by
@@ -312,7 +300,7 @@ lemma spin_stays_outside_cent (h1 : CommonCenter r1 r2) (h2 : ¬Point.IsInside p
     absurd h2
     rw [rotate180_self_inverse h3] at a
     rw [a]
-    simp_rw [spin_stays_inside h1]
+    exact spin_stays_inside h1
 
 lemma spin_stays_inside_cent (h1 : CommonCenter r1 r2) (h2 : Point.IsInside p r1)
     (h3 : Point.IsInside p r2) : (rotate180 p r2).IsInside r1 := by
@@ -364,7 +352,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
       by_cases h1 : (rotate180 p r1).IsInside r2
       · by_cases h2 : (rotate180 p r2).IsInside r1
         . simp_rw [h1, h2, ite_true] at hp
-          exact rotate_eq_if_comm (by rw [to1d_inj hp]) a.left a.right
+          exact rotate_eq_if_comm (to1d_inj hp) a.left a.right
         . absurd h.right
           exact spin_not_comm_if_outside h_s1 h_s2 a.left a.right h2
       · by_cases h2 : (rotate180 p r2).IsInside r1
@@ -383,7 +371,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
         simp_rw [Equiv.trans_apply, Equiv.coe_fn_mk]
         by_cases h1 : (to2d p).IsInside r1
         · by_cases h2 : (to2d p).IsInside r2
-          · absurd h2; exact a (to2d p) h1
+          · exact (a (to2d p) h1 h2).elim
           · have h3 := spin_stays_outside_disj h1 (rect_disjoint_comm.mp a)
             simp_rw [h2, ite_false, h1, ite_true, to2d_to1d_inverse, h3, ite_false]
         · by_cases h2 : (to2d p).IsInside r2
@@ -393,9 +381,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
       · funext p
         by_cases h1 : (to2d p).IsInside r1
         · by_cases h2 : (to2d p).IsInside r2
-          · have h3 := spin_stays_outside_disj h1 (rect_disjoint_comm.mp a)
-            have h4 := spin_stays_outside_disj h2 a
-            simp_rw [h1, h2, ite_true, to2d_to1d_inverse, h4, h3]
+          · exact (a (to2d p) h1 h2).elim
           · have h3 := spin_stays_outside_disj h1 (rect_disjoint_comm.mp a)
             simp_rw [h2, ite_false, h1, ite_true, to2d_to1d_inverse, h3, ite_false, add_comm]
         · by_cases h2 : (to2d p).IsInside r2

@@ -10,6 +10,8 @@ package spinpossible where
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
 
+require tryAtEachStep from git "https://github.com/dwrensha/tryAtEachStep" @ "main"
+
 @[default_target]
 lean_lib Spinpossible where
   globs := #[.submodules `Spinpossible]
