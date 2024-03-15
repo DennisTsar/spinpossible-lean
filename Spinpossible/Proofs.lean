@@ -114,7 +114,7 @@ lemma point_outside_unaffected (h1 : s1.IsSpinAbout r1) (h2 : s2.IsSpinAbout r2)
     have x3 : (s1 * s2).actionOnBoard b =
         r2.toSpin.actionOnBoard (r1.toSpin.actionOnBoard b) := by
       rw [h1, h2, rect_spin_mul_eq_chain]
-    simp only [x2, x3]; rfl
+    rw [x2, x3]; rfl
   have y : (performSpin r2 a) p.row p.col = a p.row p.col := by
     dsimp only [performSpin, Rectangle.toSpin, Spin.actionOnBoard]
     simp [h4, to2d_to1d_inverse]
