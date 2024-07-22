@@ -1,5 +1,7 @@
 import Spinpossible.Definitions
 
+set_option linter.hashCommand false -- I don't think I should have to do this
+
 def board3by3 := standardBoard 3 3
 
 -- I assume there's something built-in for this, but idk what it is

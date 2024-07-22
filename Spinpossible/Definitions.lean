@@ -42,7 +42,7 @@ def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
 
 -- Step 2: Action of Spin m x n on board
 
-@[ext]
+@[ext, pp_using_anonymous_constructor]
 structure Point (m n : PNat) where
   row : Fin m
   col : Fin n
@@ -82,6 +82,7 @@ def orientation.other (o : orientation) : orientation :=
   | orientation.positive => orientation.negative
   | orientation.negative => orientation.positive
 
+@[simp]
 lemma orientation.other_self (o : orientation) : o.other.other = o :=
   match o with
   | orientation.positive => rfl
@@ -96,7 +97,7 @@ def Spin.actionOnBoard {m n : PNat} (s : Spin m n) (b : board m n) : board m n :
     let tile := b newI newJ
     if s.u origPos = 1 then { tile with orient := tile.orient.other } else tile
 
-@[ext]
+@[ext, pp_using_anonymous_constructor]
 structure Rectangle (m n : PNat) where
   topLeft : Point m n
   bottomRight : Point m n
@@ -123,14 +124,14 @@ lemma rotateCalc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rota
 def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
   ⟨rotateCalc r.bottomRight.row p.1 r.topLeft.row, rotateCalc r.bottomRight.col p.2 r.topLeft.col⟩
 
+@[simp]
 lemma rotate180_self_inverse (h : p.IsInside r) : rotate180 (rotate180 p r) r = p := by
   simp_rw [Point.IsInside, Fin.val_fin_le] at h
   simp [h, rotate180, rotateCalc_self_inverse]
 
 lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
-  simp_rw [Point.IsInside, Fin.val_fin_le] at h
-  simp_rw [Point.IsInside, rotate180, rotateCalc, tsub_le_iff_right]
-  simp [h, tsub_tsub_assoc]
+  simp_rw [Point.IsInside, rotate180, rotateCalc] at h ⊢
+  omega
 
 -- Define a function to create a Spin element for a rectangle spin
 def Rectangle.toSpin (r : Rectangle m n) : Spin m n where

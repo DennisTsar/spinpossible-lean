@@ -14,9 +14,7 @@ theorem rect_spin_mul_eq_chain : ((Rectangle.toSpin r1) * (Rectangle.toSpin r2))
   by_cases h1 : Point.IsInside ⟨i, j⟩ r2
   · simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff, one_ne_zero,
       imp_false, Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one]
-    by_cases h2 : (rotate180 ⟨i, j⟩ r2).IsInside r1
-    · simp_rw [h2, not_true_eq_false, not_false_eq_true, reduceIte, orientation.other_self]
-    · simp_rw [h2, not_false_eq_true, not_true_eq_false, reduceIte]
+    split <;> simp
   · simp [h1]
 
 -- proposition 1
@@ -46,12 +44,11 @@ theorem spin_inverse_props (h : Spin.IsSpinAbout s r) :
   apply And.intro
   . funext p
     by_cases h1 : (to2d p).IsInside r
-    · simp_rw [Function.comp_apply, h1, ite_true, to2d_to1d_inverse, spin_stays_inside h1,
-        ite_true, rotate180_self_inverse h1, to1d_to2d_inverse, id_eq]
+    · simp [h1, spin_stays_inside]
     · simp [h1]
   . funext p
     by_cases h1 : (to2d p).IsInside r
-    · simp_rw [h1, reduceIte, to2d_to1d_inverse, spin_stays_inside h1]; decide
+    · simp [h1, spin_stays_inside]
     · simp [h1]
 
 -- proposition 2
@@ -73,6 +70,7 @@ theorem spin_inverse_is_not_spin (h : Spin.IsSpinAbout s r) : ¬(s * s).IsSpinAb
 
 -- more convenient to have this version than number-based version,
 -- but maybe worth showing that they're equivalent
+-- this might be missing a condition that there exists such a point? (aka not disjoint)
 def CommonCenter (r1 r2 : Rectangle m n) : Prop :=
   ∀ p, (p.IsInside r1 ∧ p.IsInside r2) → (rotate180 p r2 = rotate180 p r1)
 
@@ -87,14 +85,24 @@ lemma rect_cent_if_rotate_eq (h1 : Point.IsInside p r1) (h2 : Point.IsInside p r
   let h11 := h1.right.right
   let h22 := h2.right.right
   have hp1 := rotate_calc_helper h3.left h1.right.left h2.right.left h1.left h2.left
+    p2.row ⟨a.left.right.left, a.right.right.left, a.left.left, a.right.left⟩
   have hp2 := rotate_calc_helper h3.right h11.right h22.right h11.left h22.left
-  simp only [rotate180, rotateCalc,
-    hp1 p2.row ⟨a.left.right.left, a.right.right.left, a.left.left, a.right.left⟩,
-    hp2 p2.col ⟨a.left.right.right.right, a.right.right.right.right,
-      a.left.right.right.left, a.right.right.right.left⟩]
+    p2.col ⟨a.left.right.right.right, a.right.right.right.right,
+      a.left.right.right.left, a.right.right.right.left⟩
+  simp only [rotate180, rotateCalc, hp1, hp2]
 
+lemma rect_commonCenter_comm : CommonCenter r1 r2 ↔ CommonCenter r2 r1 := by
+  simp only [CommonCenter]
+  aesop
+
+-- "r1 contains r2"
 def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
-  ∀ p, Point.IsInside p r1 → Point.IsInside p r2
+  ∀ p, Point.IsInside p r2 → Point.IsInside p r1
+
+lemma exists_point_in_rect (r: Rectangle m n) : ∃ p, Point.IsInside p r := by
+  simp only [Point.IsInside]
+  use r.topLeft
+  exact ⟨by apply Preorder.le_refl, r.validRow, by apply Preorder.le_refl, r.validCol⟩
 
 lemma s1_eq_s2_of_r1_eq_r2 (h_s1 : Spin.IsSpinAbout s1 r1) (h_s2 : s2.IsSpinAbout r2)
     (h : r1 = r2) : s1 = s2 := by
@@ -183,9 +191,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         have x2 : p2.IsInside r3 := by
           by_contra l
           simp only [l] at a3
-          have := to1d_inj a3.symm
-          exact x this.symm
-
+          exact x (to1d_inj a3.symm).symm
         refine rect_cent_if_rotate_eq b1 b2 ?_
         simp only [x2] at a3
         nth_rw 1 [← to1d_inj a3.symm]
@@ -241,13 +247,56 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         simp [Rectangle.toSpin, Equiv.toFun_as_coe, ite_true, b2, h_p1_r1] at b1
         exact to1d_inj b1.symm
 
-    have q1 : ∃ p : Point .., p.IsInside r1 ∧ p.IsInside r2 ∧ p.IsInside r3 := by
-      sorry
     sorry
-  . have r1_contains_r2_or_r2_contains_r1 : r1.Contains r3 ∨ r2.Contains r3 := by
+  .
+    have r1_contains_r2_or_r2_contains_r1 : r1.Contains r2 ∨ r2.Contains r1 := by
       by_contra! h
+      simp [exists_p1_p2] at h_exists_p1_p2
+      simp [Rectangle.Contains] at h
+      obtain ⟨p1, h_p1⟩ := h.left
+      obtain ⟨p2, h_p2⟩ := h.right
+      absurd h_p1.right
+      exact h_exists_p1_p2 p2 h_p2.left h_p2.right p1 h_p1.left
+    rcases r1_contains_r2_or_r2_contains_r1 with h1 | h1
+    ·
+      simp [Rectangle.Contains] at h1
+
+      have : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
+        by_contra! h
+        apply h_r1_ne_r2
+        have a1 : r1.topLeft.IsInside r2 := by
+          have : r1.topLeft.IsInside r1 := by
+            simp only [Point.IsInside]
+            exact ⟨by apply Preorder.le_refl, r1.validRow, by apply Preorder.le_refl, r1.validCol⟩
+          exact h r1.topLeft (h1 r1.topLeft (h r1.topLeft this))
+        have a2 : r2.topLeft.IsInside r1 := by
+          have : r2.topLeft.IsInside r2 := by
+            simp only [Point.IsInside]
+            exact ⟨by apply Preorder.le_refl, r2.validRow, by apply Preorder.le_refl, r2.validCol⟩
+          exact h1 r2.topLeft (h r2.topLeft (h1 r2.topLeft this))
+        have b1 : r1.bottomRight.IsInside r2 := by
+          have : r1.bottomRight.IsInside r1 := by
+            simp only [Point.IsInside]
+            exact ⟨r1.validRow, by apply Preorder.le_refl, r1.validCol, by apply Preorder.le_refl⟩
+          exact h r1.bottomRight (h1 r1.bottomRight (h r1.bottomRight this))
+        have b2 : r2.bottomRight.IsInside r1 := by
+          have : r2.bottomRight.IsInside r2 := by
+            simp only [Point.IsInside]
+            exact ⟨r2.validRow, by apply Preorder.le_refl, r2.validCol, by apply Preorder.le_refl⟩
+          exact h1 r2.bottomRight (h r2.bottomRight (h1 r2.bottomRight this))
+        ext
+        · simp only [Point.IsInside] at a1 a2
+          omega
+        · simp only [Point.IsInside] at a1 a2
+          omega
+        · simp only [Point.IsInside] at b1 b2
+          omega
+        · simp only [Point.IsInside] at b1 b2
+          omega
+
+      obtain ⟨a1, a2⟩ := this
       sorry
-    sorry
+    · sorry
 
 -- proposition 3
 def DisjointRect (r1 r2 : Rectangle m n) : Prop :=
@@ -260,24 +309,19 @@ lemma rect_disjoint_eq : DisjointRect r1 r2 ↔
   apply Iff.intro
   · intro a
     contrapose! a
-    simp_rw [Fin.val_fin_le]
+    have : _ ∧ _ ∧ _ ∧ _ := ⟨r1.validRow, r1.validCol, r2.validRow, r2.validCol⟩
     by_cases h1 : r2.topLeft.row ≤ r1.topLeft.row
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
       · use ⟨r1.topLeft.row, r1.topLeft.col⟩
-        simp_rw [le_refl, r1.validRow, r1.validCol, h1, a, h2, and_self]
+        simp only [true_and]; omega
       · use ⟨r1.topLeft.row, r2.topLeft.col⟩
-        simp_rw [le_refl, r1.validRow, a, h1, le_of_not_le h2, r2.validCol, true_and]
+        simp only [true_and]; omega
     · by_cases h2 : r2.topLeft.col ≤ r1.topLeft.col
       · use ⟨r2.topLeft.row, r1.topLeft.col⟩
-        simp_rw [a, le_refl, le_of_not_le h1, r1.validCol, h2, r2.validRow, and_true]
+        simp only [true_and]; omega
       · use ⟨r2.topLeft.row, r2.topLeft.col⟩
-        simp_rw [a, le_refl, le_of_not_le h1, le_of_not_le h2, r2.validRow, r2.validCol, true_and]
+        simp only [true_and]; omega
   · omega
-
-
-lemma rect_commonCenter_comm : CommonCenter r1 r2 ↔ CommonCenter r2 r1 := by
-  simp only [CommonCenter]
-  aesop
 
 lemma rect_disjoint_comm : DisjointRect r1 r2 ↔ DisjointRect r2 r1 := by
   simp only [rect_disjoint_eq]
@@ -293,14 +337,12 @@ lemma spin_stays_outside_cent (h1 : CommonCenter r1 r2) (h2 : ¬Point.IsInside p
   unfold CommonCenter at h1
   contrapose! h1
   use (rotate180 p r2)
-  simp_rw [spin_stays_inside h3, and_true]
-  apply And.intro
-  · exact h1
-  · by_contra a
-    absurd h2
-    rw [rotate180_self_inverse h3] at a
-    rw [a]
-    exact spin_stays_inside h1
+  simp_rw [spin_stays_inside h3, h1, true_and]
+  by_contra a
+  absurd h2
+  rw [rotate180_self_inverse h3] at a
+  rw [a]
+  exact spin_stays_inside h1
 
 lemma spin_stays_inside_cent (h1 : CommonCenter r1 r2) (h2 : Point.IsInside p r1)
     (h3 : Point.IsInside p r2) : (rotate180 p r2).IsInside r1 := by
@@ -327,27 +369,23 @@ lemma spin_not_comm_if_outside (h_s1 : Spin.IsSpinAbout s1 r1) (h_s2 : Spin.IsSp
   by_contra a
   rw [h_s1, h_s2, Function.funext_iff] at a
   specialize a (to1d (rotate180 p r2))
-  unfold Rectangle.toSpin at a
-  simp_rw [Equiv.coe_fn_symm_mk, to2d_to1d_inverse, rotate180_self_inverse h4, h6, ite_false,
-    to2d_to1d_inverse, spin_stays_inside h4, ite_true, to2d_to1d_inverse, h3] at a
-  contradiction
+  simp [Rectangle.toSpin, h3, h4, h6, spin_stays_inside] at a
 
 theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
     s1 * s2 = s2 * s1 ↔ (DisjointRect r1 r2 ∨ CommonCenter r1 r2) := by
   apply Iff.intro
   · intro h
     dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h
-    simp_rw [Equiv.invFun_as_coe, Spin.mk.injEq, Nat.mul_eq] at h
+    simp_rw [Equiv.invFun_as_coe, Spin.mk.injEq] at h
     by_cases h1 : DisjointRect r1 r2
     · exact Or.inl h1
     · apply Or.inr
-      dsimp only [CommonCenter]
       intro p a
       have hp : s1.α.trans s2.α (to1d p) = s2.α.trans s1.α (to1d p) := by simp_rw [h]
 
       rw [h_s1, h_s2] at hp
       simp_rw [Equiv.trans_apply, Rectangle.toSpin, Equiv.coe_fn_mk, to2d_to1d_inverse,
-        a.left, a.right, ite_true, to2d_to1d_inverse] at hp
+        a, ite_true, to2d_to1d_inverse] at hp
 
       by_cases h1 : (rotate180 p r1).IsInside r2
       · by_cases h2 : (rotate180 p r2).IsInside r1
@@ -432,19 +470,5 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
   (∃ r3 : Rectangle m n, (s1 * s2 * s1).IsSpinAbout r3 ∧ SameShape r3 r2) ↔
   (s1 * s2 = s2 * s1 ∨ r1.Contains r2) := by
   apply Iff.intro
-
-  -- Forward direction
-  intro h
-  -- Extract the existence of r3 and its properties
-  obtain ⟨r3, h_s3_r3, h_shape_r3_r2⟩ := h
-  -- Now, use h_s3_r3 and h_shape_r3_r2 to prove the right-hand side of the equivalence
-  sorry
-
-  -- Reverse direction
-  intro h
-  cases h
-  -- Case 1: s1 and s2 commute
-  sorry
-  -- Case 2: r1 contains r2
-  -- Prove the existence of r3 that is a spin s3 and has the same shape as r2
-  sorry
+  · sorry
+  · sorry
