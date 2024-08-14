@@ -19,7 +19,10 @@ def perm2 : perm 3 where
   toFun := fun i => i + 1
   invFun := fun i => i - 1
   left_inv := by exact leftInverse_sub_add_left 1
-  right_inv := by exact leftInverse_sub_add_left (-1)
+  right_inv := by -- or just `by decide`
+    apply Function.rightInverse_of_injective_of_leftInverse
+    · exact sub_left_injective
+    · exact leftInverse_sub_add_left 1
 
 #guard perm1.toFun = ![1, 0, 2]
 #guard perm2.toFun = ![1, 2, 0]
