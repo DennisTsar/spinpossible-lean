@@ -42,11 +42,11 @@ theorem spin_inverse_props (h : Spin.IsSpinAbout s r) :
   unfold Rectangle.toSpin perm.actionRight
   simp_rw [Nat.mul_eq, Equiv.toFun_as_coe, Equiv.coe_trans, Equiv.coe_fn_mk]
   apply And.intro
-  . funext p
+  · funext p
     by_cases h1 : (to2d p).IsInside r
     · simp [h1, spin_stays_inside]
     · simp [h1]
-  . funext p
+  · funext p
     by_cases h1 : (to2d p).IsInside r
     · simp [h1, spin_stays_inside]
     · simp [h1]
@@ -154,7 +154,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
     (∃ p2 : Point .., p2.IsInside r2 ∧ ¬p2.IsInside r1)
 
   by_cases h_exists_p1_p2 : exists_p1_p2
-  . obtain ⟨p1, h_p1_r1, h_p1_not_r2⟩ := h_exists_p1_p2.left
+  · obtain ⟨p1, h_p1_r1, h_p1_not_r2⟩ := h_exists_p1_p2.left
     obtain ⟨p2, h_p2_r2, h_p2_not_r1⟩ := h_exists_p1_p2.right
 
     -- have a1 : (b : board m n) → (performSpin r1 b) p1.row p1.col = (performSpin r3 b) p1.row p1.col := by
@@ -248,7 +248,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         exact to1d_inj b1.symm
 
     sorry
-  .
+  ·
     have r1_contains_r2_or_r2_contains_r1 : r1.Contains r2 ∨ r2.Contains r1 := by
       by_contra! h
       simp [exists_p1_p2] at h_exists_p1_p2
@@ -389,14 +389,14 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
 
       by_cases h1 : (rotate180 p r1).IsInside r2
       · by_cases h2 : (rotate180 p r2).IsInside r1
-        . simp_rw [h1, h2, ite_true] at hp
+        · simp_rw [h1, h2, ite_true] at hp
           exact rotate_eq_if_comm (to1d_inj hp) a.left a.right
-        . absurd h.right
+        · absurd h.right
           exact spin_not_comm_if_outside h_s1 h_s2 a.left a.right h2
       · by_cases h2 : (rotate180 p r2).IsInside r1
-        . absurd h.right
+        · absurd h.right
           exact (spin_not_comm_if_outside h_s2 h_s1 a.right a.left h1).symm
-        . simp_rw [h1, h2, ite_false] at hp
+        · simp_rw [h1, h2, ite_false] at hp
           exact to1d_inj hp.symm
   · intro h
     rw [h_s1, h_s2]
