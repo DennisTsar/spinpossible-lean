@@ -102,7 +102,7 @@ def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
 lemma exists_point_in_rect (r: Rectangle m n) : ∃ p, Point.IsInside p r := by
   simp only [Point.IsInside]
   use r.topLeft
-  exact ⟨by apply Preorder.le_refl, r.validRow, by apply Preorder.le_refl, r.validCol⟩
+  exact ⟨le_refl _, r.validRow, le_refl _, r.validCol⟩
 
 lemma s1_eq_s2_of_r1_eq_r2 (h_s1 : Spin.IsSpinAbout s1 r1) (h_s2 : s2.IsSpinAbout r2)
     (h : r1 = r2) : s1 = s2 := by
@@ -267,22 +267,22 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         have a1 : r1.topLeft.IsInside r2 := by
           have : r1.topLeft.IsInside r1 := by
             simp only [Point.IsInside]
-            exact ⟨by apply Preorder.le_refl, r1.validRow, by apply Preorder.le_refl, r1.validCol⟩
+            exact ⟨le_refl _, r1.validRow, le_refl _, r1.validCol⟩
           exact h r1.topLeft (h1 r1.topLeft (h r1.topLeft this))
         have a2 : r2.topLeft.IsInside r1 := by
           have : r2.topLeft.IsInside r2 := by
             simp only [Point.IsInside]
-            exact ⟨by apply Preorder.le_refl, r2.validRow, by apply Preorder.le_refl, r2.validCol⟩
+            exact ⟨le_refl _, r2.validRow, le_refl _, r2.validCol⟩
           exact h1 r2.topLeft (h r2.topLeft (h1 r2.topLeft this))
         have b1 : r1.bottomRight.IsInside r2 := by
           have : r1.bottomRight.IsInside r1 := by
             simp only [Point.IsInside]
-            exact ⟨r1.validRow, by apply Preorder.le_refl, r1.validCol, by apply Preorder.le_refl⟩
+            exact ⟨r1.validRow, le_refl _, r1.validCol, le_refl _⟩
           exact h r1.bottomRight (h1 r1.bottomRight (h r1.bottomRight this))
         have b2 : r2.bottomRight.IsInside r1 := by
           have : r2.bottomRight.IsInside r2 := by
             simp only [Point.IsInside]
-            exact ⟨r2.validRow, by apply Preorder.le_refl, r2.validCol, by apply Preorder.le_refl⟩
+            exact ⟨r2.validRow, le_refl _, r2.validCol, le_refl _⟩
           exact h1 r2.bottomRight (h r2.bottomRight (h1 r2.bottomRight this))
         ext
         · simp only [Point.IsInside] at a1 a2
