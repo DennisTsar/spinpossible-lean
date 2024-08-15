@@ -149,23 +149,6 @@ lemma Rectangle.corners_inside (r : Rectangle m n) : r.topLeft.IsInside r ∧ r.
   have : _ ∧ _ := ⟨r.validRow, r.validCol⟩
   omega
 
-lemma yolo : (rotate180 r1.topRight r1) = r1.bottomLeft := by
-  ext
-  · simp [rotate180, rotateCalc]
-  · simp [rotate180, rotateCalc]
-    have := r1.validRow
-    have := r1.validCol
-    omega
-
-lemma yolo2 : (rotate180 r1.bottomLeft r1) = r1.topRight := by
-  ext
-  · simp [rotate180, rotateCalc]
-    have := r1.validRow
-    have := r1.validCol
-    omega
-  · simp [rotate180, rotateCalc]
-
-set_option maxHeartbeats 0 in
 theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
     ¬IsLowercaseSpin (s1 * s2) := by
   intro ⟨r3, h_s1s2_r3⟩
@@ -285,20 +268,13 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       obtain ⟨p2, h_p2⟩ := h.right
       absurd h_p1.right
       exact h_exists_p1_p2 p2 h_p2.left h_p2.right p1 h_p1.left
-    -- clear h_s1s2_r3
-    -- wlog qwer : r1.Contains r2 generalizing r1 r2
-    -- ·
-    --   simp [] at this
-    --   have t12345 : Rectangle.Contains r2 r1 := by aesop
-    --   sorry
+
     rcases r1_contains_r2_or_r2_contains_r1 with h1 | h1
     ·
       have ht := h1
       simp [Rectangle.Contains] at h1
 
-
-      -- this is proven but not sure I need it (actually maybe I do)
-      have yolo1 : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
+      have : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
         by_contra! h
         apply h_r1_ne_r2
         have a1 : r1.topLeft.IsInside r2 := by
@@ -364,7 +340,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         ) := by
           by_contra! h
           have h_all_points_in_r2 : ∀ (p : Point m n), p.IsInside r1 → p.IsInside r2 := by
-            simp_all [Point.IsInside]
+            simp [Point.IsInside] at h ⊢
             omega
           aesop
 
@@ -382,7 +358,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
           by_cases u1 : r1.bottomRight.IsInside r2
           · simp [Equiv.trans, Function.comp] at w1
             have s2 := congrFun (congrArg (fun qwe => qwe.toFun) w1) (to1d r1.bottomRight)
-            simp [*] at s2
+            simp [u1, h1] at s2
             by_cases yolo : (rotate180 r1.bottomRight r1).IsInside r2
             · simp [rotate180, rotateCalc, Point.IsInside] at yolo h123
               omega
@@ -401,82 +377,69 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
         simp [Equiv.trans, Function.comp] at w1
         have s2 := congrFun (congrArg (fun qwe => qwe.toFun) w1) (to1d r1.topLeft)
         simp [*] at s2
+        clear w1 h_s1 h_s2
         by_cases v : (rotate180 r1.topLeft r1).IsInside r2
         · simp [v] at s2
           have m2 := congrFun w2 (to1d (rotate180 r1.topLeft r1))
 
           simp [to2d_to1d_inverse, h123, s_res, reduceIte, v] at m2
 
-          have ee1 : rotate180 r1.topLeft r1 = r1.bottomRight := by
-            ext
-            · simp [rotate180, rotateCalc]
-            · simp [rotate180, rotateCalc]
+          have corner_inverse : rotate180 r1.topLeft r1 = r1.bottomRight := by
+            ext <;> simp [rotate180, rotateCalc]
 
-          simp [ee1, s_res2] at m2
+          simp [corner_inverse, s_res2] at m2
           simp [rotate180, rotateCalc, Point.IsInside] at m2 v
           omega
         · simp [v] at s2
           have := to1d_inj s2
           simp [rotate180, rotateCalc] at this
-          have : r1.topLeft = r3.topLeft := by
-            have := r3.validRow
-            have := r3.validCol
-            have x5 : r3.topLeft.row ≥ r1.topLeft.row := by
+          have r1_r3_topLeft_eq : r1.topLeft = r3.topLeft := by
+            have row_eq : r3.topLeft.row ≥ r1.topLeft.row := by
               by_contra! n
               have n2 : ¬r3.topLeft.IsInside r1 := by
                 simp [Point.IsInside]
                 omega
-              have n3 : ¬r3.topLeft.IsInside r2 := by
-                by_contra! m
-                exact n2 (h1 r3.topLeft m)
+              have n3 : ¬r3.topLeft.IsInside r2 := mt (h1 r3.topLeft) n2
               have m2 := congrFun w2 (to1d r3.topLeft)
               simp [n3, n2, r3.corners_inside] at m2
-            have x6 : r3.topLeft.col ≥ r1.topLeft.col := by
+            have col_eq : r3.topLeft.col ≥ r1.topLeft.col := by
               by_contra! n
               have n2 : ¬r3.topLeft.IsInside r1 := by
                 simp [Point.IsInside]
                 omega
-              have n3 : ¬r3.topLeft.IsInside r2 := by
-                by_contra! m
-                exact n2 (h1 r3.topLeft m)
+              have n3 : ¬r3.topLeft.IsInside r2 := mt (h1 r3.topLeft) n2
               have m2 := congrFun w2 (to1d r3.topLeft)
               simp [n3, n2, r3.corners_inside] at m2
             simp [Point.IsInside] at s_res
-            ext
-            · omega
-            · omega
-          have : r1.bottomRight = r3.bottomRight := by
-            have x5 : r3.bottomRight.row ≤ r1.bottomRight.row := by
+            ext <;> omega
+          have r1_r3_bottomRight_eq : r1.bottomRight = r3.bottomRight := by
+            have row_eq : r3.bottomRight.row ≤ r1.bottomRight.row := by
               by_contra! n
               have n2 : ¬r3.bottomRight.IsInside r1 := by
                 simp [Point.IsInside]
                 omega
-              have n3 : ¬r3.bottomRight.IsInside r2 := by
-                by_contra! m
-                exact n2 (h1 r3.bottomRight m)
+              have n3 : ¬r3.bottomRight.IsInside r2 := mt (h1 r3.bottomRight) n2
               have m2 := congrFun w2 (to1d r3.bottomRight)
               simp [n3, n2, r3.corners_inside] at m2
-            have x6 : r3.bottomRight.col ≤ r1.bottomRight.col := by
+            have col_eq : r3.bottomRight.col ≤ r1.bottomRight.col := by
               by_contra! n
               have n2 : ¬r3.bottomRight.IsInside r1 := by
                 simp [Point.IsInside]
                 omega
-              have n3 : ¬r3.bottomRight.IsInside r2 := by
-                by_contra! m
-                exact n2 (h1 r3.bottomRight m)
+              have n3 : ¬r3.bottomRight.IsInside r2 := mt (h1 r3.bottomRight) n2
               have m2 := congrFun w2 (to1d r3.bottomRight)
               simp [n3, n2, r3.corners_inside] at m2
             simp [Point.IsInside] at s_res2
-            ext
-            · omega
-            · omega
+            ext <;> omega
           -- This is probably a knockout blow?
           -- It has to be because
           -- s1 * s2 = s3 = s3 * s2
           -- which would only mean that s2 must be a no-op, but we know that it's not
           -- Perhaps this is asking for a lemma that says a rectangle spin cannot be the identiy?
           have d1 : r1 = r3 := by
-            aesop
+            ext : 1
+            · exact r1_r3_topLeft_eq
+            · exact r1_r3_bottomRight_eq
           have e1 : r2.topLeft.IsInside r1 := by
             have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
             simp [Point.IsInside]
@@ -490,9 +453,8 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
           have e10 : (rotate180 r2.topLeft r1).IsInside r3 := by
             rw [← d1]
             exact e6
-          have f1 := congrFun w2 (to1d (rotate180 (rotate180 r2.topLeft r1) r1))
-          simp [← d1, e6] at f1
-          simp [rotate180_self_inverse, e8, e1] at f1
+          have f1 := congrFun w2 (to1d r2.topLeft)
+          simp [← d1, e6, e8, e1] at f1
           simp [Point.IsInside, rotate180, rotateCalc] at e8 f1
           omega
       · sorry
