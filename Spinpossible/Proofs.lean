@@ -138,6 +138,29 @@ lemma to1d_inj (h : to1d p = to1d q) : p = q := by
   have x : to2d (to1d p) = to2d (to1d q) := by congr
   simpa only [to2d_to1d_inverse] using x
 
+abbrev Rectangle.topRight (r : Rectangle m n) : Point m n :=
+  ⟨r.topLeft.row, r.bottomRight.col⟩
+
+abbrev Rectangle.bottomLeft (r : Rectangle m n) : Point m n :=
+  ⟨r.bottomRight.row, r.topLeft.col⟩
+
+lemma yolo : (rotate180 r1.topRight r1) = r1.bottomLeft := by
+  ext
+  · simp [rotate180, rotateCalc]
+  · simp [rotate180, rotateCalc]
+    have := r1.validRow
+    have := r1.validCol
+    omega
+
+lemma yolo2 : (rotate180 r1.bottomLeft r1) = r1.topRight := by
+  ext
+  · simp [rotate180, rotateCalc]
+    have := r1.validRow
+    have := r1.validCol
+    omega
+  · simp [rotate180, rotateCalc]
+
+set_option maxHeartbeats 0 in
 theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
     ¬IsLowercaseSpin (s1 * s2) := by
   intro ⟨r3, h_s1s2_r3⟩
@@ -257,11 +280,20 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       obtain ⟨p2, h_p2⟩ := h.right
       absurd h_p1.right
       exact h_exists_p1_p2 p2 h_p2.left h_p2.right p1 h_p1.left
+    -- clear h_s1s2_r3
+    -- wlog qwer : r1.Contains r2 generalizing r1 r2
+    -- ·
+    --   simp [] at this
+    --   have t12345 : Rectangle.Contains r2 r1 := by aesop
+    --   sorry
     rcases r1_contains_r2_or_r2_contains_r1 with h1 | h1
     ·
+      have ht := h1
       simp [Rectangle.Contains] at h1
 
-      have : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
+
+      -- this is proven but not sure I need it (actually maybe I do)
+      have yolo1 : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
         by_contra! h
         apply h_r1_ne_r2
         have a1 : r1.topLeft.IsInside r2 := by
@@ -293,9 +325,587 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
           omega
         · simp only [Point.IsInside] at b1 b2
           omega
+      -- obtain ⟨someP, someP_h⟩ := this
 
-      obtain ⟨a1, a2⟩ := this
-      sorry
+      have a_r1 : r1.topLeft.IsInside r1 := by
+        simp only [Point.IsInside]
+        have := r1.validRow
+        have := r1.validCol
+        omega
+
+      have a_r2 : r2.topLeft.IsInside r2 := by
+        simp only [Point.IsInside]
+        have := r2.validRow
+        have := r2.validCol
+        omega
+
+      have b_r2 : r2.bottomRight.IsInside r2 := by
+        simp only [Point.IsInside]
+        have := r2.validRow
+        have := r2.validCol
+        omega
+
+      have w1_2 : r2.topLeft.row ≥ r1.topLeft.row := by
+        have : r2.topLeft.IsInside r1 := h1 r2.topLeft a_r2
+        simp only [Point.IsInside] at this
+        omega
+
+      have w2_2 : r2.bottomRight.row ≤ r1.bottomRight.row := by
+        have : r2.bottomRight.IsInside r1 := h1 r2.bottomRight b_r2
+        simp only [Point.IsInside] at this
+        omega
+
+      have w3_2 : r2.bottomRight.col ≤ r1.bottomRight.col := by
+        have : r2.bottomRight.IsInside r1 := h1 r2.bottomRight b_r2
+        simp only [Point.IsInside] at this
+        omega
+
+      have w4_2 : r2.topLeft.col ≥ r1.topLeft.col := by
+        have : r2.topLeft.IsInside r1 := h1 r2.topLeft a_r2
+        simp only [Point.IsInside] at this
+        omega
+
+
+      -- at least one set of adjacent corners must not be in r2
+      have x123 : (
+        (¬r1.topLeft.IsInside r2 ∧ ¬r1.topRight.IsInside r2) ∨
+        (¬r1.topRight.IsInside r2 ∧ ¬r1.bottomRight.IsInside r2) ∨
+        (¬r1.bottomRight.IsInside r2 ∧ ¬r1.bottomLeft.IsInside r2) ∨
+        (¬r1.bottomLeft.IsInside r2 ∧ ¬r1.topLeft.IsInside r2)
+        ) := by
+          by_contra! h
+          have h_all_points_in_r2 : ∀ (p : Point m n), p.IsInside r1 → p.IsInside r2 := by
+            simp_all [Point.IsInside]
+            omega
+          aesop
+
+      rcases x123 with h123 | h123 | h123 | h123
+      · simp [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
+        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
+        simp_all
+        obtain ⟨w1, w2⟩ := h_s1s2_r3
+        -- absurd h_s1s2_r3
+        have s1_a : r1.topLeft.IsInside r1 := by
+          have := r1.validCol
+          have := r1.validRow
+          simp [Point.IsInside]
+          omega
+        have s_res : r1.topLeft.IsInside r3 := by
+          have s1 := congrFun w2 (to1d r1.topLeft)
+          simp only [to2d_to1d_inverse, ↓reduceIte, add_zero, h123, s1_a] at s1
+          by_contra! h
+          simp [h] at s1
+        have s1_a2 : r1.bottomRight.IsInside r1 := by
+          have := r1.validCol
+          have := r1.validRow
+          simp [Point.IsInside]
+          omega
+        have s_res2 : r1.bottomRight.IsInside r3 := by
+          by_cases u1 : r1.bottomRight.IsInside r2
+          · rw [Equiv.trans] at w1
+            simp [Function.comp, *] at w1
+            have s2 := congrFun (congrArg (fun qwe => qwe.toFun) w1) (to1d r1.bottomRight)
+            simp [*] at s2
+            by_cases yolo : (rotate180 r1.bottomRight r1).IsInside r2
+            ·
+              simp [yolo] at s2
+              by_contra! l1
+              simp [l1] at s2
+              have := to1d_inj s2
+
+              simp [rotate180, rotateCalc] at this
+              absurd this
+              have : r2.topLeft.row ≥ r1.topLeft.row := by
+                by_contra! m
+                have xre1 : r2.topLeft.IsInside r2 := by
+                  have := r2.validCol
+                  have := r2.validRow
+                  simp [Point.IsInside]
+                  omega
+                have xre2 : r2.topLeft.IsInside r1 := by
+                  exact h1 r2.topLeft xre1
+                simp [Point.IsInside] at xre2
+                omega
+              have : r2.topLeft.col ≥ r1.topLeft.col := by
+                by_contra! m
+                have xre1 : r2.topLeft.IsInside r2 := by
+                  have := r2.validCol
+                  have := r2.validRow
+                  simp [Point.IsInside]
+                  omega
+                have xre2 : r2.topLeft.IsInside r1 := by
+                  exact h1 r2.topLeft xre1
+                simp [Point.IsInside] at xre2
+                omega
+              simp [Point.IsInside, rotate180, rotateCalc] at yolo
+              have : r2.topLeft.row > r1.topLeft.row ∨ r2.topLeft.col > r1.topLeft.col := by
+                by_contra! n
+                simp [Point.IsInside] at h123
+                omega
+              omega
+            · simp [yolo] at s2
+              have : rotate180 r1.bottomRight r1 ≠ r1.bottomRight := by
+                by_contra! n
+                rw [n] at yolo
+                exact yolo u1
+              by_contra! l1
+              simp [l1] at s2
+              exact this (to1d_inj s2)
+          ·
+            have s1 := congrFun w2 (to1d r1.bottomRight)
+            simp [*] at s1
+            by_contra! h
+            simp [h] at s1
+            -- by_cases yolo : r1.bottomRight.IsInside r2
+            -- · simp [*] at s1
+            --   by_cases yolo : (rotate180 r1.bottomRight r2).IsInside r1
+            --   · simp [yolo] at s1
+            --     sorry
+            --   · simp [yolo] at s1
+            -- · simp [yolo] at s1
+            --   contradiction
+        rw [Equiv.trans] at w1
+        simp [Function.comp, *] at w1
+        have s2 := congrFun (congrArg (fun qwe => qwe.toFun) w1) (to1d r1.topLeft)
+        simp [*] at s2
+        -- absurd w1
+        by_cases v : (rotate180 r1.topLeft r1).IsInside r2
+        · simp [v] at s2
+          have yoyojo := to1d_inj s2
+
+          have m2 := congrFun w2 (to1d (rotate180 r1.topLeft r1))
+
+          simp [to2d_to1d_inverse, h123, s_res, reduceIte, v] at m2
+
+          have ee1 : rotate180 r1.topLeft r1 = r1.bottomRight := by
+            ext
+            · simp [rotate180, rotateCalc]
+            · simp [rotate180, rotateCalc]
+
+          simp [ee1, s_res2] at m2
+          simp [Rectangle.bottomLeft, rotate180, rotateCalc, Point.IsInside, Rectangle.topRight] at *
+          omega
+          -- sorry
+
+          -- have xx1 : ¬(rotate180 r1.topRight r1).IsInside r2 := by
+          --   by_contra! n
+          --   have qq1 : r1.topRight.IsInside r1 := by
+          --     have := r1.validCol
+          --     have := r1.validRow
+          --     simp [Point.IsInside]
+          --     omega
+          --   have qq2 : r1.topRight.col ≥ r1.topLeft.col := by
+          --     simp [Rectangle.topRight]
+          --     have := r1.validCol
+          --     omega
+          --   have qq3 : r1.topRight.row = r1.topLeft.row := by
+          --     simp [Rectangle.topRight]
+          --   have qq4 : r1.topRight.row ≤ r2.topLeft.row := by
+          --     simp [Rectangle.topRight]
+          --     omega
+          --   simp [Point.IsInside, Rectangle.topRight, rotate180, rotateCalc] at n v qq1 qq2 qq3 qq4
+          --   simp [Point.IsInside, rotate180, rotateCalc] at s1_a s1_a2 s_res s_res2
+          --   have := r1.validRow
+          --   have := r1.validCol
+          --   have := r2.validRow
+          --   have := r2.validCol
+          --   have := r3.validRow
+          --   have := r3.validCol
+          --   -- have : r2.topLeft.row ≥ r1.topLeft.row := sorry
+          --   -- have : r2.topLeft.col ≥ r1.topLeft.col := sorry
+          --   -- have : r2.bottomRight.col ≤ r1.bottomRight.col := sorry
+          --   -- have : r2.bottomRight.col ≤ r1.bottomRight.col := sorry
+          --   have : ¬ r1.topRight.IsInside r2 := h123.2
+          --   simp [Point.IsInside, Rectangle.topRight, rotate180, rotateCalc] at this
+          --   -- have : r2.topLeft.row > r1.topLeft.row ∨ r2.topLeft.col > r1.topLeft.col := sorry
+          --   -- have : r2.bottomRight.row < r1.bottomRight.row ∨ r2.bottomRight.col < r1.bottomRight.col := sorry
+          --   have x5 : r3.topLeft.row ≥ r1.topLeft.row := by
+          --     by_contra! n
+          --     have n1 : r3.topLeft.IsInside r3 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n2 : ¬r3.topLeft.IsInside r1 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n3 : ¬r3.topLeft.IsInside r2 := by
+          --       by_contra! m
+          --       exact n2 (h1 r3.topLeft m)
+          --     have m2 := congrFun w2 (to1d r3.topLeft)
+          --     simp [*] at m2
+          --   have x6 : r3.topLeft.col ≥ r1.topLeft.col := by
+          --     by_contra! n
+          --     have n1 : r3.topLeft.IsInside r3 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n2 : ¬r3.topLeft.IsInside r1 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n3 : ¬r3.topLeft.IsInside r2 := by
+          --       by_contra! m
+          --       exact n2 (h1 r3.topLeft m)
+          --     have m2 := congrFun w2 (to1d r3.topLeft)
+          --     simp [*] at m2
+          --   have : r1.topLeft = r3.topLeft := by
+          --     have := r3.validRow
+          --     have := r3.validCol
+          --     have x5 : r3.topLeft.row ≥ r1.topLeft.row := by
+          --       by_contra! n
+          --       have n1 : r3.topLeft.IsInside r3 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n2 : ¬r3.topLeft.IsInside r1 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n3 : ¬r3.topLeft.IsInside r2 := by
+          --         by_contra! m
+          --         exact n2 (h1 r3.topLeft m)
+          --       have m2 := congrFun w2 (to1d r3.topLeft)
+          --       simp [*] at m2
+          --     have x6 : r3.topLeft.col ≥ r1.topLeft.col := by
+          --       by_contra! n
+          --       have n1 : r3.topLeft.IsInside r3 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n2 : ¬r3.topLeft.IsInside r1 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n3 : ¬r3.topLeft.IsInside r2 := by
+          --         by_contra! m
+          --         exact n2 (h1 r3.topLeft m)
+          --       have m2 := congrFun w2 (to1d r3.topLeft)
+          --       simp [*] at m2
+          --     ext
+          --     omega
+          --     omega
+          --   have : r1.bottomRight = r3.bottomRight := by
+          --     have := r3.validRow
+          --     have := r3.validCol
+          --     have x5 : r3.bottomRight.row ≤ r1.bottomRight.row := by
+          --       by_contra! n
+          --       have n1 : r3.bottomRight.IsInside r3 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n2 : ¬r3.bottomRight.IsInside r1 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n3 : ¬r3.bottomRight.IsInside r2 := by
+          --         by_contra! m
+          --         exact n2 (h1 r3.bottomRight m)
+          --       have m2 := congrFun w2 (to1d r3.bottomRight)
+          --       simp [*] at m2
+          --     have x6 : r3.bottomRight.col ≤ r1.bottomRight.col := by
+          --       by_contra! n
+          --       have n1 : r3.bottomRight.IsInside r3 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n2 : ¬r3.bottomRight.IsInside r1 := by
+          --         simp [Point.IsInside]
+          --         omega
+          --       have n3 : ¬r3.bottomRight.IsInside r2 := by
+          --         by_contra! m
+          --         exact n2 (h1 r3.bottomRight m)
+          --       have m2 := congrFun w2 (to1d r3.bottomRight)
+          --       simp [*] at m2
+          --     ext
+          --     omega
+          --     omega
+          --   have d1 : r1 = r3 := by
+          --     aesop
+          --   have e8 : r2.topLeft.IsInside r2 := by
+          --     have := r2.validCol
+          --     have := r2.validRow
+          --     simp [Point.IsInside]
+          --     omega
+          --   have e1 : r2.topLeft.IsInside r1 := by
+          --     have := r2.validCol
+          --     have := r2.validRow
+          --     simp [Point.IsInside]
+          --     omega
+          --   have e9 : r2.topLeft.IsInside r3 := by
+          --     rw [← d1]
+          --     exact h1 r2.topLeft a_r2
+          --   have e6 : (rotate180 r2.topLeft r1).IsInside r1 := by
+          --     simp [spin_stays_inside e1]
+          --   have e10 : (rotate180 r2.topLeft r1).IsInside r3 := by
+          --     rw [← d1]
+          --     exact e6
+          --   have f1 := congrFun w2 (to1d (rotate180 (rotate180 r2.topLeft r1) r1))
+          --   simp [← d1, e6] at f1
+          --   simp [rotate180_self_inverse, e8, e1] at f1
+          --   simp [Point.IsInside, rotate180, rotateCalc] at e8 f1
+          --   omega
+          -- -- simp [Point.IsInside, rotate180, rotateCalc] at s1_a s1_a2 s_res s_res2
+          -- -- have := r1.validRow
+          -- -- have := r1.validCol
+          -- -- have := r2.validRow
+          -- -- have := r2.validCol
+          -- -- have := r3.validRow
+          -- -- have := r3.validCol
+          -- -- have : r2.topLeft.row ≥ r1.topLeft.row := sorry
+          -- -- have : r2.topLeft.col ≥ r1.topLeft.col := sorry
+          -- -- have : r2.bottomRight.col ≤ r1.bottomRight.col := sorry
+          -- -- have : r2.bottomRight.col ≤ r1.bottomRight.col := sorry
+          -- -- have : r2.topLeft.row > r1.topLeft.row ∨ r2.topLeft.col > r1.topLeft.col := sorry
+          -- -- have : r2.bottomRight.row < r1.bottomRight.row ∨ r2.bottomRight.col < r1.bottomRight.col := sorry
+          -- -- omega
+          -- -- have m2 := congrFun w2 (to1d r1.topLeft)
+          -- -- simp [to2d_to1d_inverse, v, h123] at m2
+          -- have s2 := congrFun (congrArg (fun qwe => qwe.toFun) w1) (to1d r1.topRight)
+          -- have : r1.topRight.IsInside r1 := by
+          --   have := r1.validCol
+          --   have := r1.validRow
+          --   simp [Point.IsInside]
+          --   omega
+          -- simp [this] at s2
+          -- simp [xx1] at s2
+          -- have s_res : r1.topRight.IsInside r3 := by
+          --   have s1 := congrFun w2 (to1d r1.topRight)
+          --   simp only [to2d_to1d_inverse, ↓reduceIte, add_zero, h123, this] at s1
+          --   by_contra! h
+          --   simp [h] at s1
+          -- simp [s_res] at s2
+          -- have : r1.topLeft.row = r3.topLeft.row := by
+          --   have := r3.validRow
+          --   have := r3.validCol
+          --   have x5 : r3.topLeft.row ≥ r1.topLeft.row := by
+          --     by_contra! n
+          --     have n1 : r3.topLeft.IsInside r3 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n2 : ¬r3.topLeft.IsInside r1 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n3 : ¬r3.topLeft.IsInside r2 := by
+          --       by_contra! m
+          --       exact n2 (h1 r3.topLeft m)
+          --     have m2 := congrFun w2 (to1d r3.topLeft)
+          --     simp [*] at m2
+          --   have x6 : r3.topLeft.col ≥ r1.topLeft.col := by
+          --     by_contra! n
+          --     have n1 : r3.topLeft.IsInside r3 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n2 : ¬r3.topLeft.IsInside r1 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n3 : ¬r3.topLeft.IsInside r2 := by
+          --       by_contra! m
+          --       exact n2 (h1 r3.topLeft m)
+          --     have m2 := congrFun w2 (to1d r3.topLeft)
+          --     simp [*] at m2
+          --   simp [Point.IsInside] at s_res
+          --   omega
+          -- have : r1.bottomRight = r3.bottomRight := by
+          --   have := r3.validRow
+          --   have := r3.validCol
+          --   have x5 : r3.bottomRight.row ≤ r1.bottomRight.row := by
+          --     by_contra! n
+          --     have n1 : r3.bottomRight.IsInside r3 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n2 : ¬r3.bottomRight.IsInside r1 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n3 : ¬r3.bottomRight.IsInside r2 := by
+          --       by_contra! m
+          --       exact n2 (h1 r3.bottomRight m)
+          --     have m2 := congrFun w2 (to1d r3.bottomRight)
+          --     simp [*] at m2
+          --   have x6 : r3.bottomRight.col ≤ r1.bottomRight.col := by
+          --     by_contra! n
+          --     have n1 : r3.bottomRight.IsInside r3 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n2 : ¬r3.bottomRight.IsInside r1 := by
+          --       simp [Point.IsInside]
+          --       omega
+          --     have n3 : ¬r3.bottomRight.IsInside r2 := by
+          --       by_contra! m
+          --       exact n2 (h1 r3.bottomRight m)
+          --     have m2 := congrFun w2 (to1d r3.bottomRight)
+          --     simp [*] at m2
+          --   simp [Point.IsInside] at s_res2
+          --   ext
+          --   · omega
+          --   · omega
+          -- have s2_2 := congrFun (congrArg (fun qwe => qwe.toFun) w1) (to1d r1.bottomLeft)
+          -- have asd123 : r1.bottomLeft.IsInside r1 := by
+          --   have := r1.validCol
+          --   have := r1.validRow
+          --   simp [Point.IsInside]
+          --   omega
+          -- simp [asd123] at s2_2
+          -- have s_res : r1.bottomLeft.IsInside r3 := by
+          --   have s1 := congrFun w2 (to1d r1.bottomLeft)
+          --   simp at s1
+          --   by_contra! h
+          --   simp [h] at s1
+          --   by_cases hh1 : r1.bottomLeft.IsInside r2
+          --   · simp [hh1] at s1
+          --     simp [Point.IsInside, Rectangle.bottomLeft] at *
+          --     omega
+          --   · simp [hh1] at s1
+          --     simp [Point.IsInside, Rectangle.bottomLeft] at s1 asd123
+          --     omega
+          -- simp [s_res] at s2_2
+          -- -- I HAVE NO IDEA IF THIS IS TRUE (seems not :()
+          -- -- have : r1.bottomLeft.col = r3.bottomLeft.col := by
+          -- --   by_cases hyolo : (rotate180 r1.bottomLeft r1).IsInside r2
+          -- --   · simp [hyolo] at s2_2
+          -- --     have := to1d_inj s2_2
+          -- --     simp [rotate180, rotateCalc] at this
+          -- --     simp [Rectangle.bottomLeft]
+          -- --     -- have : rotate180 r1.topRight r1 = rotate180 r1.topRight r3 := to1d_inj s2
+          -- --     simp [rotate180, rotateCalc, Point.IsInside] at *
+          -- --     omega
+          -- --   · simp [hyolo] at s2_2
+          -- --     have := to1d_inj s2_2
+          -- --     simp [rotate180, rotateCalc] at this yoyojo
+          -- --     simp [Rectangle.bottomLeft]
+          -- --     have := r1.validRow
+          -- --     have := r1.validCol
+          -- --     have := r2.validRow
+          -- --     have := r2.validCol
+          -- --     have := r3.validRow
+          -- --     have := r3.validCol
+          -- --     -- have : rotate180 r1.topRight r1 = rotate180 r1.topRight r3 := to1d_inj s2
+          -- --     simp [Point.IsInside] at asd123 s_res
+          -- --     -- simp [Rectangle.bottomLeft, rotate180, rotateCalc, Point.IsInside] at *
+          -- --     have : r1.topRight = r3.topRight := sorry
+          -- --     -- simp [Rectangle.bottomLeft, rotate180, rotateCalc, Point.IsInside, Rectangle.topRight] at *
+          -- --     have dd1 := congrFun w2 (to1d r1.bottomLeft)
+          -- --     simp [*] at dd1
+          -- --     have : rotate180 r1.topRight r1 = r1.bottomLeft := by
+          -- --       simp [yolo]
+          -- --     have gg1 : ¬(rotate180 r1.topRight r1).IsInside r2 := by exact xx1
+          -- --     have gg2 : ¬r1.bottomLeft.IsInside r2 := by
+          -- --       exact Eq.mpr_not (congrFun (congrArg Point.IsInside this.symm) r2) xx1
+          -- --     have : ¬(rotate180 r1.bottomLeft r1).IsInside r2 := sorry -- definitely true
+          -- --     have : (rotate180 r1.topLeft r1).IsInside r2 := sorry -- definitely true
+          -- --     have : ¬(rotate180 r1.topRight r1).IsInside r2 := sorry -- definitely true
+          -- --     have : ¬(rotate180 r1.bottomRight r1).IsInside r2 := sorry -- definitely true
+          -- --     have : r1.bottomRight.IsInside r2 := sorry -- definitely true
+          -- --     have : ¬r1.topRight.IsInside r2 := sorry -- definitely true
+          -- --     have : ¬r1.bottomLeft.IsInside r2 := sorry -- definitely true
+          -- --     have : ¬r1.topLeft.IsInside r2 := sorry -- definitely true
+          -- --     simp [Rectangle.bottomLeft, rotate180, rotateCalc, Point.IsInside, Rectangle.topRight] at *
+          -- --     omega
+          -- --     sorry
+          -- -- -- have : r1.topRight.col = r3.topRight.col := sorry
+          -- -- -- have : r1.topRight.row = r3.topRight.row := sorry
+          -- -- simp [Rectangle.topRight, Rectangle.bottomLeft] at *
+          -- -- have : r1.topLeft = r3.topLeft := by
+          -- --   ext
+          -- --   · omega
+          -- --   · omega
+          -- have s2 := to1d_inj s2
+          -- rw [yolo2] at s2_2
+          -- simp [h123] at s2_2
+          -- have s2_2 := to1d_inj s2_2
+          -- have ab1 := congrArg rotate180 s2
+          -- sorry
+        · simp [v] at s2
+          have := to1d_inj s2
+          simp [rotate180, rotateCalc] at this
+          have : r1.topLeft = r3.topLeft := by
+            have := r3.validRow
+            have := r3.validCol
+            have x5 : r3.topLeft.row ≥ r1.topLeft.row := by
+              by_contra! n
+              have n1 : r3.topLeft.IsInside r3 := by
+                simp [Point.IsInside]
+                omega
+              have n2 : ¬r3.topLeft.IsInside r1 := by
+                simp [Point.IsInside]
+                omega
+              have n3 : ¬r3.topLeft.IsInside r2 := by
+                by_contra! m
+                exact n2 (h1 r3.topLeft m)
+              have m2 := congrFun w2 (to1d r3.topLeft)
+              simp [*] at m2
+            have x6 : r3.topLeft.col ≥ r1.topLeft.col := by
+              by_contra! n
+              have n1 : r3.topLeft.IsInside r3 := by
+                simp [Point.IsInside]
+                omega
+              have n2 : ¬r3.topLeft.IsInside r1 := by
+                simp [Point.IsInside]
+                omega
+              have n3 : ¬r3.topLeft.IsInside r2 := by
+                by_contra! m
+                exact n2 (h1 r3.topLeft m)
+              have m2 := congrFun w2 (to1d r3.topLeft)
+              simp [*] at m2
+            simp [Point.IsInside] at s_res
+            ext
+            · omega
+            · omega
+          have : r1.bottomRight = r3.bottomRight := by
+            have := r3.validRow
+            have := r3.validCol
+            have x5 : r3.bottomRight.row ≤ r1.bottomRight.row := by
+              by_contra! n
+              have n1 : r3.bottomRight.IsInside r3 := by
+                simp [Point.IsInside]
+                omega
+              have n2 : ¬r3.bottomRight.IsInside r1 := by
+                simp [Point.IsInside]
+                omega
+              have n3 : ¬r3.bottomRight.IsInside r2 := by
+                by_contra! m
+                exact n2 (h1 r3.bottomRight m)
+              have m2 := congrFun w2 (to1d r3.bottomRight)
+              simp [*] at m2
+            have x6 : r3.bottomRight.col ≤ r1.bottomRight.col := by
+              by_contra! n
+              have n1 : r3.bottomRight.IsInside r3 := by
+                simp [Point.IsInside]
+                omega
+              have n2 : ¬r3.bottomRight.IsInside r1 := by
+                simp [Point.IsInside]
+                omega
+              have n3 : ¬r3.bottomRight.IsInside r2 := by
+                by_contra! m
+                exact n2 (h1 r3.bottomRight m)
+              have m2 := congrFun w2 (to1d r3.bottomRight)
+              simp [*] at m2
+            simp [Point.IsInside] at s_res2
+            ext
+            · omega
+            · omega
+          -- This is probably a knockout blow?
+          -- It has to be because
+          -- s1 * s2 = s3 = s3 * s2
+          -- which would only mean that s2 must be a no-op, but we know that it's not
+          -- Perhaps this is asking for a lemma that says a rectangle spin cannot be the identiy?
+          have d1 : r1 = r3 := by
+            aesop
+          have e8 : r2.topLeft.IsInside r2 := by
+            have := r2.validCol
+            have := r2.validRow
+            simp [Point.IsInside]
+            omega
+          have e1 : r2.topLeft.IsInside r1 := by
+            have := r2.validCol
+            have := r2.validRow
+            simp [Point.IsInside]
+            omega
+          have e9 : r2.topLeft.IsInside r3 := by
+            rw [← d1]
+            exact h1 r2.topLeft a_r2
+          have e6 : (rotate180 r2.topLeft r1).IsInside r1 := by
+            simp [spin_stays_inside e1]
+          have e10 : (rotate180 r2.topLeft r1).IsInside r3 := by
+            rw [← d1]
+            exact e6
+          have f1 := congrFun w2 (to1d (rotate180 (rotate180 r2.topLeft r1) r1))
+          simp [← d1, e6] at f1
+          simp [rotate180_self_inverse, e8, e1] at f1
+          simp [Point.IsInside, rotate180, rotateCalc] at e8 f1
+          omega
+      · sorry
+      · sorry
+      · sorry
     · sorry
 
 -- proposition 3
