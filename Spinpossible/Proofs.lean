@@ -336,8 +336,6 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
           · by_contra! h
             have app := congrFun h_s1s2_r3_orient (to1d r1.bottomRight)
             simp [r1_bot_in_r2, r1.corners_inside, h] at app
-        have app_perm := congrFun (congrArg Equiv.toFun h_s1s2_r3_perm) (to1d r1.topLeft)
-        simp [r1.corners_inside, r1_top_in_r3] at app_perm
         clear h_s1s2_r3_perm h_s1 h_s2
         -- Perhaps this is asking for a lemma that says a rectangle spin cannot be the identiy?
         have r3_eq_r1 : r3 = r1 := by
