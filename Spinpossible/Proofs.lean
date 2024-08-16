@@ -354,7 +354,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       -- TODO: sometimes when I edit a proof in here the whole top level proof randomly breaks
       -- Restarting the file fixes the issue, but this sounds like a bug that should be reported
       rcases this with h_corners | h_corners | h_corners | h_corners
-      case neg.inl | neg.inl.inr.inr.inr =>
+      case neg.inl.inl | neg.inl.inr.inr.inr =>
         dsimp [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
         dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
         simp [h_s1, h_s2] at h_s1s2_r3
