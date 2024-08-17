@@ -177,7 +177,7 @@ theorem s1s2_not_spin_aux1 {r1 r2 r3 : Rectangle m n} {s1 s2 : Spin m n} {someP:
       · dsimp [rotate180, rotateCalc, Point.IsInside] at h_corners r1_bot_rot_in_r2 someP_h ⊢
         omega
       · by_contra! h
-        have app := congrFun (congrArg Equiv.toFun h_s1s2_r3_perm) (to1d (rotate180 someP r1))
+        have app := congr($h_s1s2_r3_perm (to1d (rotate180 someP r1)))
         simp [r1_bot_in_r2, h1, r1_bot_rot_in_r2, h] at app
         have : rotate180 (rotate180 someP r1) r1 ≠ (rotate180 someP r1) := by
           by_contra! n
