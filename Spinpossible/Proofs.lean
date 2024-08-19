@@ -258,7 +258,6 @@ theorem s1s2_not_spin.aux2 {r1 r2 r3 : Rectangle m n} {s1 s2 : Spin m n} {p: Poi
     contradiction
   exact r2_top_neq_bot app.symm
 
-set_option maxHeartbeats 0 in
 theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
     ¬IsLowercaseSpin (s1 * s2) := by
   intro ⟨r3, h_s1s2_r3⟩
@@ -363,261 +362,53 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
 
     have yo : CommonCenter2 r1 r2 := rect_cent_trans a6_2 (rect_commonCenter2_comm.mp a4)
 
-    by_cases ht1 : r3.topLeft.IsInside r2
-    · by_cases ht2 : r3.topLeft.IsInside r1
-      · have : rotate180 r3.topLeft r1 = rotate180 r3.topLeft r3 := by
-          have := test a6_2
-          simp [CommonCenter] at this
-          have := this r3.topLeft ht2 r3.corners_inside.1
-          simp_all
-        dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-        simp [h_s1, h_s2] at h_s1s2_r3
-        obtain ⟨_, h_s1s2_r3_orient⟩ := h_s1s2_r3
-        have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
-        simp [r3.corners_inside, ht1, ht2] at app
-        have : r1.topLeft.IsInside r3 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r1.topLeft)
-          simp [r1.corners_inside, ht1, ht2, h] at app
-          by_cases yy : r1.topLeft.IsInside r2
-          ·
-            have : rotate180 r1.topLeft r2 = rotate180 r1.topLeft r1 := by
-              have := test yo
-              simp [CommonCenter] at this
-              have := this r1.topLeft r1.corners_inside.1 yy
-              simp_all
-            simp [yy, this, r1.corners_inside, spin_stays_inside] at app;
-            have app9 := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.topLeft r1))
-            simp [rotate180_self_inverse, ← this, r1.corners_inside, spin_stays_inside, yy] at app9
-            simp [this] at app9
-            dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-            omega
-          · simp [yy, r1.corners_inside] at app
-        have : r1.topLeft = r3.topLeft := by
-          dsimp [Point.IsInside] at *
-          ext <;> omega
-        have : r3.bottomRight.IsInside r1 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r3.bottomRight)
-          simp [r3.corners_inside, ht1, ht2, h] at app
-          by_cases yy : r3.bottomRight.IsInside r2
-          · simp [yy] at app;
-            have : rotate180 r3.bottomRight r2 = rotate180 r3.bottomRight r3 := by
-              have := test a4
-              simp [CommonCenter] at this
-              have := this r3.bottomRight yy r3.corners_inside.2
-              simp_all
-            dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-            omega
-          · simp [yy, *] at app
-        have : r1.bottomRight.IsInside r3 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r1.bottomRight)
-          simp [r1.corners_inside, ht1, ht2, h] at app
-          by_cases yy : r1.bottomRight.IsInside r2
-          ·
-            have : rotate180 r1.bottomRight r2 = rotate180 r1.bottomRight r1 := by
-              have := test yo
-              simp [CommonCenter] at this
-              have := this r1.bottomRight r1.corners_inside.2 yy
-              simp_all
-            simp [yy, this, r1.corners_inside, spin_stays_inside] at app;
-            have app9 := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.bottomRight r1))
-            simp [rotate180_self_inverse, ← this, r1.corners_inside, spin_stays_inside, yy] at app9
-            simp [this] at app9
-            dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-            omega
-          · simp [yy, r1.corners_inside] at app
-        have : r1.bottomRight = r3.bottomRight := by
-          dsimp [Point.IsInside] at *
-          ext <;> omega
-        have r1_eq_r3 : r1 = r3 := by
-          ext : 1 <;> assumption
+    have r1_top_not_in_r2 : ¬r1.topLeft.IsInside r2 := by
+      by_contra! h
+      dsimp [Point.IsInside, CommonCenter, CommonCenter2] at yo h h_p1_r1 h_p1_not_r2
+      omega
+
+    dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
+    dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
+    simp [h_s1, h_s2] at h_s1s2_r3
+    obtain ⟨_, h_s1s2_r3_orient⟩ := h_s1s2_r3
+
+    have r1_top_in_r3 : r1.topLeft.IsInside r3 := by
+      by_contra! h
+      have app := congrFun h_s1s2_r3_orient (to1d r1.topLeft)
+      simp [r1.corners_inside, r1_top_not_in_r2, h] at app
+
+    have r1_bot_in_r3 : r1.bottomRight.IsInside r3 := by
+      dsimp [Point.IsInside, CommonCenter2] at r1_top_in_r3 a6_2 ⊢
+      omega
+
+    have r3_top_not_in_r2 : ¬r3.topLeft.IsInside r2 := by
+      dsimp [Point.IsInside, CommonCenter2] at r1_top_not_in_r2 r1_top_in_r3 a4 ⊢
+      omega
+
+    by_cases ht2 : r3.topLeft.IsInside r1
+    · have r3_bot_in_r1 : r3.bottomRight.IsInside r1 := by
+        dsimp [Point.IsInside, CommonCenter2] at ht2 a6_2 ⊢
+        omega
+      have r2_top_not_in_r3 : ¬r2.topLeft.IsInside r3 := by
+        dsimp [Point.IsInside, CommonCenter2] at h_p2_r2 h_p2_not_r1 ht2 a6_2 a4 ⊢
+        omega
+      have : r1.bottomRight = r3.bottomRight := by
+        dsimp [Point.IsInside] at r3_bot_in_r1 r1_bot_in_r3
+        ext <;> omega
+      have : r1.topLeft = r3.topLeft := by
+        dsimp [Point.IsInside] at r1_top_in_r3 ht2
+        ext <;> omega
+      have r1_eq_r3 : r1 = r3 := by ext : 1 <;> assumption
+      have z1 : r2.bottomRight.IsInside r3 := by
+        by_contra! h
         have app_orient := congrFun h_s1s2_r3_orient (to1d r2.topLeft)
-        simp [r2.corners_inside, r1_eq_r3] at app_orient
-        by_cases yy : r2.topLeft.IsInside r3
-        · simp [yy, *] at app_orient;
-          dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-          omega
-        · simp [yy, *] at app_orient;
-          have z1 : (rotate180 r2.topLeft r2).IsInside r3 := by
-            by_contra! h
-            simp [h] at app_orient
-          have z2 : (rotate180 r2.topLeft r2).IsInside r2 := by
-            simp [r2.corners_inside, spin_stays_inside]
-          rw [r2.corners_rotate.1] at z2 z1
-          have : rotate180 r2.bottomRight r2 = rotate180 r2.bottomRight r3 := by
-            have := test a4
-            simp [CommonCenter] at this
-            have := this r2.bottomRight r2.corners_inside.2 z1
-            simp_all
-          have app := congrFun h_s1s2_r3_orient (to1d r2.bottomRight)
-          simp [r1.corners_inside, ht1, ht2] at app
-          simp [yy, this, r1.corners_inside, spin_stays_inside] at app;
-          have app9 := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.bottomRight r1))
-          simp [rotate180_self_inverse, ← this, r1.corners_inside, spin_stays_inside, yy] at app9
-          dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-          omega
-      ·
-        have : rotate180 r3.topLeft r2 = rotate180 r3.topLeft r3 := by
-          have := test a4
-          simp [CommonCenter] at this
-          have := this r3.topLeft ht1 r3.corners_inside.1
-          simp_all
-        dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-        simp [h_s1, h_s2] at h_s1s2_r3
-        obtain ⟨_, h_s1s2_r3_orient⟩ := h_s1s2_r3
-        have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
-        simp [r3.corners_inside, ht1, ht2] at app
-        rw [this, r3.corners_rotate.1] at app
-        have : r3.bottomRight.IsInside r2 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r3.bottomRight)
-          simp [r3.corners_inside, ht1, ht2, h] at app
-          contradiction
-        have : r2.bottomRight.IsInside r3 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r2.bottomRight)
-          simp [r2.corners_inside, ht1, ht2, h] at app
-          have : (rotate180 r2.bottomRight r2).IsInside r1 := by
-            by_contra! yy
-            simp [yy] at app
-          dsimp [Point.IsInside, rotate180, rotateCalc, CommonCenter, CommonCenter2] at *
-          omega
-        have : r2.bottomRight = r3.bottomRight := by
-          dsimp [Point.IsInside] at *
-          ext <;> omega
-        have : r3.topLeft.IsInside r2 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
-          simp [r3.corners_inside, ht1, ht2, h] at app
-          contradiction
-        have : r2.topLeft.IsInside r3 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r2.topLeft)
-          simp [r2.corners_inside, ht1, ht2, h] at app
-          have : (rotate180 r2.topLeft r2).IsInside r1 := by
-            by_contra! yy
-            simp [yy] at app
-          dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-          omega
-        have : r2.topLeft = r3.topLeft := by
-          dsimp [Point.IsInside] at *
-          ext <;> omega
-        have r1_eq_r3 : r2 = r3 := by
-          ext : 1 <;> assumption
-        have app_orient := congrFun h_s1s2_r3_orient (to1d r1.topLeft)
-        simp [r1.corners_inside, r1_eq_r3] at app_orient
-        by_cases yy : r1.topLeft.IsInside r3
-        · simp [yy, *] at app_orient;
-          dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-          omega
-        · simp [yy, *, r1.corners_inside] at app_orient;
-    · by_cases ht2 : r3.topLeft.IsInside r1
-      · have : rotate180 r3.topLeft r1 = rotate180 r3.topLeft r3 := by
-          have := test a6_2
-          simp [CommonCenter] at this
-          have := this r3.topLeft ht2 r3.corners_inside.1
-          simp_all
-        dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-        simp [h_s1, h_s2] at h_s1s2_r3
-        obtain ⟨_, h_s1s2_r3_orient⟩ := h_s1s2_r3
-        have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
-        simp [r3.corners_inside, ht1, ht2] at app
-        have : r1.topLeft.IsInside r3 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r1.topLeft)
-          simp [r1.corners_inside, ht1, ht2, h] at app
-          by_cases yy : r1.topLeft.IsInside r2
-          ·
-            have : rotate180 r1.topLeft r2 = rotate180 r1.topLeft r1 := by
-              have := test yo
-              simp [CommonCenter] at this
-              have := this r1.topLeft r1.corners_inside.1 yy
-              simp_all
-            simp [yy, this, r1.corners_inside, spin_stays_inside] at app;
-            have app9 := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.topLeft r1))
-            simp [rotate180_self_inverse, ← this, r1.corners_inside, spin_stays_inside, yy] at app9
-            simp [this] at app9
-            dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-            omega
-          · simp [yy, r1.corners_inside] at app
-        have : r1.topLeft = r3.topLeft := by
-          dsimp [Point.IsInside] at *
-          ext <;> omega
-        have : r3.bottomRight.IsInside r1 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r3.bottomRight)
-          simp [r3.corners_inside, ht1, ht2, h] at app
-          by_cases yy : r3.bottomRight.IsInside r2
-          · simp [yy] at app;
-            have : rotate180 r3.bottomRight r2 = rotate180 r3.bottomRight r3 := by
-              have := test a4
-              simp [CommonCenter] at this
-              have := this r3.bottomRight yy r3.corners_inside.2
-              simp_all
-            dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-            omega
-          · simp [yy, *] at app
-        have : r1.bottomRight.IsInside r3 := by
-          by_contra! h
-          have app := congrFun h_s1s2_r3_orient (to1d r1.bottomRight)
-          simp [r1.corners_inside, ht1, ht2, h] at app
-          by_cases yy : r1.bottomRight.IsInside r2
-          ·
-            have : rotate180 r1.bottomRight r2 = rotate180 r1.bottomRight r1 := by
-              have := test yo
-              simp [CommonCenter] at this
-              have := this r1.bottomRight r1.corners_inside.2 yy
-              simp_all
-            simp [yy, this, r1.corners_inside, spin_stays_inside] at app;
-            have app9 := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.bottomRight r1))
-            simp [rotate180_self_inverse, ← this, r1.corners_inside, spin_stays_inside, yy] at app9
-            simp [this] at app9
-            dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-            omega
-          · simp [yy, r1.corners_inside] at app
-        have : r1.bottomRight = r3.bottomRight := by
-          dsimp [Point.IsInside] at *
-          ext <;> omega
-        have r1_eq_r3 : r1 = r3 := by
-          ext : 1 <;> assumption
-        have app_orient := congrFun h_s1s2_r3_orient (to1d r2.topLeft)
-        simp [r2.corners_inside, r1_eq_r3] at app_orient
-        by_cases yy : r2.topLeft.IsInside r3
-        · simp [yy, *] at app_orient;
-          dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-          omega
-        · simp [yy, *] at app_orient;
-          have z1 : (rotate180 r2.topLeft r2).IsInside r3 := by
-            by_contra! h
-            simp [h] at app_orient
-          have z2 : (rotate180 r2.topLeft r2).IsInside r2 := by
-            simp [r2.corners_inside, spin_stays_inside]
-          rw [r2.corners_rotate.1] at z2 z1
-          have : rotate180 r2.bottomRight r2 = rotate180 r2.bottomRight r3 := by
-            have := test a4
-            simp [CommonCenter] at this
-            have := this r2.bottomRight r2.corners_inside.2 z1
-            simp_all
-          have app := congrFun h_s1s2_r3_orient (to1d r2.bottomRight)
-          simp [r1.corners_inside, ht1, ht2] at app
-          simp [yy, this, r1.corners_inside, spin_stays_inside] at app;
-          have app9 := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.bottomRight r1))
-          simp [rotate180_self_inverse, ← this, r1.corners_inside, spin_stays_inside, yy] at app9
-          dsimp [Point.IsInside, CommonCenter, CommonCenter2] at *
-          omega
-      · dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-        simp [h_s1, h_s2] at h_s1s2_r3
-        obtain ⟨_, h_s1s2_r3_orient⟩ := h_s1s2_r3
-        have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
-        simp [*, r3.corners_inside] at app
-  ·
-    have r1_contains_r2_or_r2_contains_r1 : r1.Contains r2 ∨ r2.Contains r1 := by
+        simp [h, r2_top_not_in_r3, r2.corners_rotate, r2.corners_inside, r1_eq_r3] at app_orient
+      dsimp [Point.IsInside, CommonCenter2] at z1 a4 r2_top_not_in_r3
+      omega
+    · have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
+      simp [r3.corners_inside, r3_top_not_in_r2] at app
+      contradiction
+  · have r1_contains_r2_or_r2_contains_r1 : r1.Contains r2 ∨ r2.Contains r1 := by
       by_contra! h
       simp [exists_p1_p2] at h_exists_p1_p2
       simp [Rectangle.Contains] at h
