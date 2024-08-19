@@ -1,4 +1,5 @@
 import Spinpossible.Definitions
+import Mathlib.Tactic
 
 def Spin.IsSpinAbout (s : Spin m n) (r : Rectangle m n) : Prop :=
   s = r.toSpin
