@@ -309,16 +309,10 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       have r2_in_r1 : r2.topLeft.IsInside r1 ∧ r2.bottomRight.IsInside r1 :=
         ⟨h1 r2.topLeft r2.corners_inside.1, h1 r2.bottomRight r2.corners_inside.2⟩
 
-      have : r2.topLeft.row ≥ r1.topLeft.row := by
+      have : r2.topLeft.row ≥ r1.topLeft.row ∧ r2.bottomRight.row ≤ r1.bottomRight.row := by
         dsimp only [Point.IsInside] at r2_in_r1
         omega
-      have : r2.bottomRight.row ≤ r1.bottomRight.row := by
-        dsimp only [Point.IsInside] at r2_in_r1
-        omega
-      have : r2.bottomRight.col ≤ r1.bottomRight.col := by
-        dsimp only [Point.IsInside] at r2_in_r1
-        omega
-      have : r2.topLeft.col ≥ r1.topLeft.col := by
+      have : r2.bottomRight.col ≤ r1.bottomRight.col ∧ r2.topLeft.col ≥ r1.topLeft.col := by
         dsimp only [Point.IsInside] at r2_in_r1
         omega
 
