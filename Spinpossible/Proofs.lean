@@ -544,9 +544,57 @@ def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.col - r1.topLeft.col) = (r2.bottomRight.col - r2.topLeft.col)
 
 theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
+  -- TODO: consider if this should be phrased using `IsLowercaseSpin`
   (∃ r3 : Rectangle m n, (s1 * s2 * s1).IsSpinAbout r3 ∧ SameShape r3 r2) ↔
   (s1 * s2 = s2 * s1 ∨ r1.Contains r2) := by
   apply Iff.intro
   · sorry
-  · sorry
-  -- sorry
+  · intro h
+    rcases h with h | h
+    · use r2
+      simp only [SameShape, and_self, and_true]
+      ext
+      · -- would be nice for these first steps to be shorter
+        -- also can I use `Equiv.toFun_as_coe` + `funext`?
+        rw [Equiv.ext_iff]
+        intro p
+        rw [← @to1d_to2d_inverse _ _ p] -- can I do this without `@`?
+        set p := to2d p -- can I combine this with the `intro` step?
+        by_contra! h_p
+        have h_p2 : (s2 * s1 * s1).α.toFun (to1d p) ≠ r2.toSpin.α.toFun (to1d p) := by rwa [h] at h_p
+        dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h_p h_p2
+        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p h_p2
+        simp [h_s1, h_s2] at h_p h_p2
+        clear h_s1 h_s2
+        by_cases h1 : p.IsInside r1
+        · simp [h1, spin_stays_inside] at h_p h_p2
+          by_cases h2 : p.IsInside r2
+          · simp [h1, h2, spin_stays_inside] at h_p h_p2
+            by_cases h3 : (rotate180 p r1).IsInside r2
+            all_goals
+              simp [h1, h2, h3, spin_stays_inside] at h_p h_p2
+              by_cases h4 : (rotate180 p r2).IsInside r1
+              · simp [h1, h2, h3, h4, spin_stays_inside] at h_p h_p2
+              · simp [h1, h2, h3, h4, spin_stays_inside] at h_p h_p2
+          · simp [h1, h2, spin_stays_inside] at h_p h_p2
+        · simp [h1, spin_stays_inside] at h_p h_p2
+          by_cases h2 : p.IsInside r2
+          · simp [h1, h2, spin_stays_inside] at h_p h_p2
+            simp [h_p, spin_stays_inside] at h_p2
+          · simp [h1, h2, spin_stays_inside] at h_p h_p2
+      · funext p
+        rw [← @to1d_to2d_inverse _ _ p]
+        set p := to2d p
+        by_contra! h_p
+        have h_p2 : (s2 * s1 * s1).u (to1d p) ≠ r2.toSpin.u (to1d p) := by rwa [h] at h_p
+        dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h_p h_p2
+        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p h_p2
+        simp [h_s1, h_s2] at h_p h_p2
+        clear h_s1 h_s2
+        by_cases h1 : p.IsInside r1
+        · simp [h1, spin_stays_inside] at h_p h_p2
+          by_cases h2 : p.IsInside r2
+          · simp [h2] at h_p h_p2
+          · simp [h2] at h_p h_p2
+        · simp [h1, spin_stays_inside] at h_p h_p2
+    · sorry

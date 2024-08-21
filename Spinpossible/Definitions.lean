@@ -14,6 +14,7 @@ end perm
 
 def VN (N : Nat) := Fin N → ZMod 2
 
+@[ext]
 structure Spin (m n : PNat) where
   α : perm (m * n)
   u : VN (m * n)
