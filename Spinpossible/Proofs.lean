@@ -566,22 +566,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
         dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p h_p2
         simp [h_s1, h_s2] at h_p h_p2
         clear h_s1 h_s2
-        by_cases h1 : p.IsInside r1
-        · simp [h1, spin_stays_inside] at h_p h_p2
-          by_cases h2 : p.IsInside r2
-          · simp [h1, h2, spin_stays_inside] at h_p h_p2
-            by_cases h3 : (rotate180 p r1).IsInside r2
-            all_goals
-              simp [h1, h2, h3, spin_stays_inside] at h_p h_p2
-              by_cases h4 : (rotate180 p r2).IsInside r1
-              · simp [h1, h2, h3, h4, spin_stays_inside] at h_p h_p2
-              · simp [h1, h2, h3, h4, spin_stays_inside] at h_p h_p2
-          · simp [h1, h2, spin_stays_inside] at h_p h_p2
-        · simp [h1, spin_stays_inside] at h_p h_p2
-          by_cases h2 : p.IsInside r2
-          · simp [h1, h2, spin_stays_inside] at h_p h_p2
-            simp [h_p, spin_stays_inside] at h_p2
-          · simp [h1, h2, spin_stays_inside] at h_p h_p2
+        split_ifs at h_p2 <;> simp_all [spin_stays_inside]
       · funext p
         rw [← @to1d_to2d_inverse _ _ p]
         set p := to2d p
@@ -591,10 +576,5 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
         dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p h_p2
         simp [h_s1, h_s2] at h_p h_p2
         clear h_s1 h_s2
-        by_cases h1 : p.IsInside r1
-        · simp [h1, spin_stays_inside] at h_p h_p2
-          by_cases h2 : p.IsInside r2
-          · simp [h2] at h_p h_p2
-          · simp [h2] at h_p h_p2
-        · simp [h1, spin_stays_inside] at h_p h_p2
+        split_ifs at h_p <;> simp_all [spin_stays_inside]
     · sorry
