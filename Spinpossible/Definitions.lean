@@ -114,9 +114,7 @@ instance : Decidable (Point.IsInside p r) := And.decidable
 
 def rotateCalc (a b c : Fin n) : Fin n where
   val := a.val - (b.val - c.val)
-  isLt := by calc
-    a.val - (b.val - c.val) ≤ a.val := Nat.sub_le (a) (b - c)
-    _                       < n     := a.isLt
+  isLt := by omega
 
 lemma rotateCalc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rotateCalc a i b) b = i := by
   simp only [rotateCalc, Nat.sub_sub, Nat.sub_sub_self h1, Nat.sub_add_cancel h2]

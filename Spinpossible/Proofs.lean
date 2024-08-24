@@ -540,8 +540,18 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
 -- proposition 4
 
 def SameShape (r1 r2 : Rectangle m n) : Prop :=
-  (r1.bottomRight.row - r1.topLeft.row) = (r2.bottomRight.row - r2.topLeft.row) ∧
-  (r1.bottomRight.col - r1.topLeft.col) = (r2.bottomRight.col - r2.topLeft.col)
+  (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val  - r2.topLeft.row.val) ∧
+  (r1.bottomRight.col.val  - r1.topLeft.col.val) = (r2.bottomRight.col.val  - r2.topLeft.col.val)
+
+lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
+  (h2: r2t ≤ r2b)
+  (h11: r1t ≤ r2t)
+  (h12: r1b ≥ r2b)
+  (h7: r1b - (r2b - r1t) ≤ p.val)
+  (h8: p.val ≤ r1b - (r2t - r1t))
+  : r1b.val - (r2b.val - (r1b.val - (p.val - r1t.val) - r2t.val) - r1t.val) =
+    r1b.val - (r2t.val - r1t.val) - (p.val - (r1b.val - (r2b.val - r1t.val))) := by
+  omega
 
 theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
   -- TODO: consider if this should be phrased using `IsLowercaseSpin`
@@ -577,4 +587,74 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
         simp [h_s1, h_s2] at h_p h_p2
         clear h_s1 h_s2
         split_ifs at h_p <;> simp_all [spin_stays_inside]
-    · sorry
+    · let r3 : Rectangle m n := ⟨
+        rotate180 r2.bottomRight r1,
+        rotate180 r2.topLeft r1,
+        by
+          dsimp [Point.IsInside, rotate180, rotateCalc]
+          simp only [Fin.mk_le_mk, tsub_le_iff_right, ge_iff_le]
+          have := r2.validCol
+          omega,
+        by
+          dsimp [Point.IsInside, rotate180, rotateCalc]
+          simp only [Fin.mk_le_mk, tsub_le_iff_right, ge_iff_le]
+          have := r2.validRow
+          omega,
+      ⟩
+      have r2_top_in_r1 := h r2.topLeft ⟨Nat.le_refl _, r2.validRow, Nat.le_refl _, r2.validCol⟩
+      have r2_bot_in_r1 := h r2.bottomRight ⟨r2.validRow, Nat.le_refl _, r2.validCol, Nat.le_refl _⟩
+      -- the `p.IsInside r1` is kinda superfluous, but easier to accept it than fight it
+      have : ∀ p : Point .., p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
+        intro p p_in_r1
+        apply Iff.intro
+        · have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
+          dsimp [Point.IsInside, rotate180, rotateCalc] at r2_top_in_r1 ⊢
+          clear r2_bot_in_r1 p_in_r1 h r3 -- help `omega` out a bit (still a bit slow)
+          omega
+        · dsimp [Point.IsInside, rotate180, rotateCalc] at p_in_r1 ⊢;
+          clear r2_top_in_r1 r2_bot_in_r1 h r3 -- help `omega` out a bit
+          omega
+      have r3_in_r1 : r1.Contains r3 := by
+        intro p h_p
+        dsimp [Point.IsInside, rotate180, rotateCalc] at r2_bot_in_r1 h_p ⊢
+        clear this r2_top_in_r1 h r3 -- help `omega` out a bit
+        omega
+      use r3
+      · apply And.intro
+        · ext
+          · rw [Equiv.ext_iff]
+            intro p
+            rw [← @to1d_to2d_inverse _ _ p] -- can I do this without `@`?
+            set p := to2d p -- can I combine this with the `intro` step?
+            by_contra! h_p
+            dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h_p
+            dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p
+            simp [h_s1, h_s2] at h_p
+            clear h_s1 h_s2
+            split_ifs at h_p <;> simp_all [spin_stays_inside, Rectangle.Contains]
+            · dsimp [Point.IsInside, rotate180, rotateCalc] at h_p;
+              absurd h_p
+              simp only [Point.mk.injEq, Fin.mk.injEq]
+              dsimp only [Point.IsInside, rotate180, rotateCalc] at *
+              constructor <;> apply s1s2s1_is_spin_iff.aux1 <;> omega
+            · have h1 := r3_in_r1 p (by assumption)
+              have h2 := (this p h1).mp (by assumption)
+              contradiction
+          · funext p
+            rw [← @to1d_to2d_inverse _ _ p]
+            set p := to2d p
+            by_contra! h_p
+            dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h_p
+            dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p
+            simp [h_s1, h_s2] at h_p
+            clear h_s1 h_s2 r2_bot_in_r1 r2_top_in_r1
+            split_ifs at h_p <;>
+            simp_all only [spin_stays_inside, Rectangle.Contains, to2d_to1d_inverse,
+              add_zero, CharTwo.add_self_eq_zero, zero_ne_one, not_false_eq_true,
+              not_true_eq_false, to1d_inj, to2d_to1d_inverse, zero_add]
+            · have h1 := r3_in_r1 p (by assumption)
+              have h2 := (this p h1).mp (by assumption)
+              contradiction
+        · dsimp only [SameShape, Point.IsInside, rotate180, rotateCalc] at r2_bot_in_r1 r2_top_in_r1 ⊢
+          clear r3_in_r1 this r3 -- help `omega` out a bit
+          omega
