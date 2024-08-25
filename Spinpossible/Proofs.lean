@@ -558,7 +558,99 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
   (∃ r3 : Rectangle m n, (s1 * s2 * s1).IsSpinAbout r3 ∧ SameShape r3 r2) ↔
   (s1 * s2 = s2 * s1 ∨ r1.Contains r2) := by
   apply Iff.intro
-  · sorry
+  · by_cases h1 : r1.Contains r2
+    · intro; exact Or.inr h1
+    · intro h
+      simp [h1]
+      rw [(s1s2_eq_s2s1_iff h_s1 h_s2).mpr]
+      -- is there a way to "early return" a proof
+      -- e.g. "If DisjointRect r1 r2 then this is trivial.
+      --       For the remainder of the code, assume ¬DisjointRect r1 r2"
+      -- This is basically what I already have, except for the nesting
+      -- I could just not nest the second `by_cases` block, but that feels a bit ugly
+      by_cases h2 : DisjointRect r1 r2
+      · exact Or.inl h2
+      · apply Or.inr
+        by_contra! h9
+
+        have yolo : ¬r2.topLeft.IsInside r1 ∨ ¬r2.bottomRight.IsInside r1 := by
+          by_contra! h
+          have : ∀ (p : Point m n), p.IsInside r2 → p.IsInside r1 := by
+            dsimp [Rectangle.Contains, Point.IsInside] at *
+            omega
+          exact h1 this
+        obtain ⟨r3, ⟨h4, h5⟩⟩ := h
+        absurd h4
+        dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 ⊢
+        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight]
+        simp [h_s1, h_s2]
+        rw [Equiv.ext_iff]
+        intro o
+        have a4 := o (to1d r2.topLeft)
+        simp [r2.corners_inside] at a4
+        rcases yolo with h8 | h8
+        · simp [h8, r2.corners_inside] at a4
+          by_contra! t10
+          have a5 := congr($t10 (to1d r2.topLeft))
+          simp [r2.corners_inside, h8] at a5
+          by_cases h11 : (rotate180 r2.topLeft r2).IsInside r1
+          · simp [h11, spin_stays_inside] at a4 a5
+            have : ¬r2.topLeft.IsInside r3 := by
+              by_contra! u
+              simp [u] at a5
+            simp [this] at a4
+            have : (rotate180 (rotate180 r2.topLeft r2) r1).IsInside r1 := spin_stays_inside (by assumption)
+            rw [a4] at this
+            contradiction
+          · simp [h11, spin_stays_inside] at a4 a5
+            have e2 : r2.topLeft.IsInside r3 := by
+              by_contra! u
+              simp [u] at a5
+            simp [e2] at a4
+            have e7 : CommonCenter r2 r3 := by
+              apply rect_commonCenter_if_rotate_eq r2.corners_inside.1 e2
+              exact id (Eq.symm a4)
+            have d1 : ¬CommonCenter r1 r3 := by
+              by_contra! u
+              have : CommonCenter r1 r2 := commonCenter_trans u (commonCenter_comm.mp e7)
+              contradiction
+            have ewq := commonCenter_rotate e7
+            simp [DisjointRect] at h2
+            obtain ⟨n1, n2⟩ := h2
+            have g1 := o (to1d n1)
+            have g2 := congr($t10 (to1d n1))
+            simp [n2, h8, h11, r2.corners_inside] at g1 g2
+            by_cases b11 : (rotate180 n1 r1).IsInside r2
+            · simp [b11, spin_stays_inside, n2] at g1 g2
+              by_cases d123 : (rotate180 (rotate180 n1 r1) r2).IsInside r1
+              · simp [d123] at g1 g2
+                have x1 : n1.IsInside r3 := by
+                  by_contra! u
+                  simp [u] at g2
+                simp [x1] at g1
+                have zx := ewq n1 ⟨n2.2, x1⟩
+                rw [zx] at g1
+
+                have := congr(rotate180 $g1 r1)
+                simp [d123, spin_stays_inside] at this
+                have := rotate_eq_if_comm this n2.1 n2.2
+                have := rect_commonCenter_if_rotate_eq n2.1 n2.2 this
+                contradiction
+              · simp [d123] at g1 g2
+                have : ¬ n1.IsInside r3 := by
+                  by_contra! u
+                  simp [u] at g2
+                simp [this] at g1
+                dsimp [Point.IsInside, CommonCenter, rotate180, rotateCalc] at *
+                omega
+            · simp [b11, spin_stays_inside, n2] at g1 g2
+              have : ¬ n1.IsInside r3 := by
+                by_contra! u
+                simp [u] at g2
+              simp [this] at g1
+              dsimp [Point.IsInside, CommonCenter, rotate180, rotateCalc] at *
+              omega
+        · sorry
   · intro h
     rcases h with h | h
     · use r2
