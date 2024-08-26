@@ -112,12 +112,9 @@ def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
 -- don't know if there is a better way to do this
 instance : Decidable (Point.IsInside p r) := And.decidable
 
-def rotateCalc (a b c : Fin n) : Fin n where
+abbrev rotateCalc (a b c : Fin n) : Fin n where
   val := a.val - (b.val - c.val)
   isLt := by omega
-
-lemma rotateCalc_self_inverse (h1 : a ≥ i) (h2 : i ≥ b) : rotateCalc a (rotateCalc a i b) b = i := by
-  simp only [rotateCalc, Nat.sub_sub, Nat.sub_sub_self h1, Nat.sub_add_cancel h2]
 
 -- Function to calculate the new position after 180 degree rotation around the rectangle center
 def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
@@ -125,12 +122,12 @@ def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
 
 @[simp]
 lemma rotate180_self_inverse (h : p.IsInside r) : rotate180 (rotate180 p r) r = p := by
-  simp_rw [Point.IsInside, Fin.val_fin_le] at h
-  simp [h, rotate180, rotateCalc_self_inverse]
+  dsimp [Point.IsInside, rotate180] at *
+  have : _ ∧ _ := ⟨r.validRow, r.validCol⟩
+  ext <;> simp only [Nat.sub_sub_self] <;> omega
 
 lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
-  simp_rw [Point.IsInside, rotate180, rotateCalc] at h ⊢
-  omega
+  dsimp [Point.IsInside, rotate180] at *; omega
 
 -- Define a function to create a Spin element for a rectangle spin
 def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
