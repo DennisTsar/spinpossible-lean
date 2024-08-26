@@ -10,6 +10,8 @@ def actionRight (α β : perm N) : perm N := α.trans β
 
 instance : Mul (perm N) := ⟨actionRight⟩
 
+def mul_def (α β : perm N) : α * β = α.trans β := rfl
+
 end perm
 
 def VN (N : Nat) := Fin N → ZMod 2
@@ -26,6 +28,8 @@ def mul (x y : Spin m n) : Spin m n where
   u := fun i => x.u (y.α.invFun i) + y.u i
 
 instance : Mul (Spin m n) := ⟨mul⟩
+
+lemma mul_def (x y : Spin m n) : x * y = ⟨x.α * y.α, fun i => x.u (y.α.invFun i) + y.u i⟩ := rfl
 
 end Spin
 

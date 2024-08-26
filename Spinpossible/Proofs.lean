@@ -9,8 +9,8 @@ def IsLowercaseSpin (s : Spin m n) : Prop :=
 
 lemma rect_spin_mul_eq_chain : ((Rectangle.toSpin r1) * (Rectangle.toSpin r2)).actionOnBoard b =
     r2.toSpin.actionOnBoard (r1.toSpin.actionOnBoard b) := by
-  simp_rw [HMul.hMul, Mul.mul, Spin.mul, HMul.hMul, Mul.mul, perm.actionRight]
-  unfold Rectangle.toSpin Spin.actionOnBoard
+  simp only [Spin.mul_def, perm.mul_def, Rectangle.toSpin]
+  unfold Spin.actionOnBoard
   funext i j
   by_cases h1 : Point.IsInside ⟨i, j⟩ r2
   · simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff, one_ne_zero,
@@ -39,9 +39,7 @@ theorem spin_is_own_inverse'' (h : Spin.IsSpinAbout s r) : (s * s).actionOnBoard
 theorem spin_inverse_props (h : Spin.IsSpinAbout s r) :
     (s * s).α.toFun = id ∧ (s * s).u = fun _ => 0 := by
   rw [h]
-  dsimp only [HMul.hMul, Mul.mul, Spin.mul]
-  unfold Rectangle.toSpin perm.actionRight
-  simp_rw [Nat.mul_eq, Equiv.toFun_as_coe, Equiv.coe_trans, Equiv.coe_fn_mk]
+  simp only [Spin.mul_def, perm.mul_def, Rectangle.toSpin]
   apply And.intro
   · funext p
     by_cases h1 : (to2d p).IsInside r
@@ -130,8 +128,7 @@ lemma s1s2_not_spin.aux1 {r1 r2 r3 : Rectangle m n} {s1 s2 : Spin m n} {p: Point
     (p_is_corner : p = r1.topLeft ∨ p = r1.bottomRight)
     : False := by
   dsimp [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-  dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-  simp [h_s1, h_s2] at h_s1s2_r3
+  simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Spin.mk.injEq] at h_s1s2_r3
   obtain ⟨h_s1s2_r3_perm, h_s1s2_r3_orient⟩ := h_s1s2_r3
   clear h_s1 h_s2
 
@@ -187,8 +184,7 @@ lemma s1s2_not_spin.aux2 {r1 r2 r3 : Rectangle m n} {s1 s2 : Spin m n} {p: Point
     (p_is_corner: p = r2.topLeft ∨ p = r2.bottomRight)
     : False := by
   dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-  dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-  simp [h_s1, h_s2] at h_s1s2_r3
+  simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Spin.mk.injEq] at h_s1s2_r3
   obtain ⟨h_s1s2_r3_perm, h_s1s2_r3_orient⟩ := h_s1s2_r3
   clear h_s1 h_s2
 
@@ -260,8 +256,7 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
 
   by_cases h_exists_p1_p2 : exists_p1_p2
   · dsimp [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1s2_r3 h_s1 h_s2
-    dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_s1s2_r3
-    simp [h_s1, h_s2] at h_s1s2_r3
+    simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Spin.mk.injEq] at h_s1s2_r3
     obtain ⟨h_s1s2_r3_perm, h_s1s2_r3_orient⟩ := h_s1s2_r3
     clear h_s1 h_s2
 
@@ -429,8 +424,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
     s1 * s2 = s2 * s1 ↔ (DisjointRect r1 r2 ∨ CommonCenter r1 r2) := by
   apply Iff.intro
   · intro h
-    dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h
-    simp_rw [Equiv.invFun_as_coe, Spin.mk.injEq] at h
+    simp only [Spin.mul_def, perm.mul_def, Spin.mk.injEq] at h
     by_cases h1 : DisjointRect r1 r2
     · exact Or.inl h1
     · apply Or.inr
@@ -458,8 +452,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
           exact hp.symm
   · intro h
     rw [h_s1, h_s2]
-    dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight]
-    simp_rw [Equiv.invFun_as_coe, Spin.mk.injEq, Nat.mul_eq, Rectangle.toSpin, Equiv.coe_fn_symm_mk]
+    simp only [Spin.mul_def, perm.mul_def, Spin.mk.injEq, Rectangle.toSpin]
     rcases h with a | a
     · apply And.intro
       · apply Equiv.ext
@@ -576,8 +569,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
 
         obtain ⟨r3, ⟨h4, _⟩⟩ := h
         dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h4
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h4
-        simp [h_s1, h_s2] at h4
+        simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Spin.mk.injEq] at h4
         clear h_s1 h_s2
         obtain ⟨h_perm, h_orient⟩ := h4
         rw [Equiv.ext_iff] at h_perm
@@ -666,8 +658,8 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
         by_contra! h_p
         have h_p2 : (s2 * s1 * s1).α.toFun (to1d p) ≠ r2.toSpin.α.toFun (to1d p) := by rwa [h] at h_p
         dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h_p h_p2
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p h_p2
-        simp [h_s1, h_s2] at h_p h_p2
+        simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Equiv.trans_apply, Equiv.coe_fn_mk,
+          to2d_to1d_inverse, ne_eq, Equiv.toFun_as_coe] at h_p h_p2
         clear h_s1 h_s2
         split_ifs at h_p2 <;> simp_all [spin_stays_inside]
       · funext p
@@ -676,8 +668,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
         by_contra! h_p
         have h_p2 : (s2 * s1 * s1).u (to1d p) ≠ r2.toSpin.u (to1d p) := by rwa [h] at h_p
         dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h_p h_p2
-        dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight] at h_p h_p2
-        simp [h_s1, h_s2] at h_p h_p2
+        simp only [h_s1, h_s2, Spin.mul_def, to2d_to1d_inverse, ne_eq] at h_p h_p2
         clear h_s1 h_s2
         split_ifs at h_p <;> simp_all [spin_stays_inside]
     · let r3 : Rectangle m n := ⟨
@@ -707,8 +698,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
       use r3
       · apply And.intro
         · dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 ⊢
-          dsimp only [HMul.hMul, Mul.mul, Spin.mul, perm.actionRight]
-          simp [h_s1, h_s2]
+          simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Spin.mk.injEq]
           clear h_s1 h_s2
           constructor
           · rw [Equiv.ext_iff]
