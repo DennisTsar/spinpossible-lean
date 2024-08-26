@@ -319,8 +319,8 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       simp [exists_p1_p2] at h_exists_p1_p2
       simp [Rectangle.Contains] at h
       obtain ⟨⟨p1, h_p1⟩, ⟨p2, h_p2⟩⟩ := h
-      absurd h_p1.right
-      exact h_exists_p1_p2 p2 h_p2.left h_p2.right p1 h_p1.left
+      absurd h_p1.2
+      exact h_exists_p1_p2 p2 h_p2.1 h_p2.2 p1 h_p1.1
 
     rcases r1_contains_r2_or_r2_contains_r1 with h | h
     · rcases s1s2_not_spin.aux3 h h_r1_ne_r2 with h_corner | h_corner
@@ -380,10 +380,8 @@ lemma rotate_eq_if_comm (h1 : rotate180 (rotate180 p r1) r2 = rotate180 (rotate1
     rotate180 p r2 = rotate180 p r1 := by
   simp only [rotate180, Point.mk.injEq, Fin.mk.injEq] at h1 ⊢
   apply And.intro
-  · rw [rotate_eq_if_comm.aux1 h1.left h2.left h3.left h2.right.left h3.right.left]
-  · have h4 := h2.right.right
-    have h5 := h3.right.right
-    rw [rotate_eq_if_comm.aux1 h1.right h4.left h5.left h4.right h5.right]
+  · rw [rotate_eq_if_comm.aux1 h1.1 h2.1 h3.1 h2.2.1 h3.2.1]
+  · rw [rotate_eq_if_comm.aux1 h1.2 h2.2.2.1 h3.2.2.1 h2.2.2.2 h3.2.2.2]
 
 lemma spin_not_comm_if_outside (h_s1 : Spin.IsSpinAbout s1 r1) (h_s2 : Spin.IsSpinAbout s2 r2)
     (h3 : Point.IsInside p r1) (h4 : Point.IsInside p r2)
@@ -417,10 +415,10 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
       · by_cases h2 : (rotate180 p r2).IsInside r1
         · simp_rw [h1, h2, ite_true, to1d_inj] at hp
           exact rotate_eq_if_comm hp hp_r1 hp_r2
-        · absurd h.right
+        · absurd h.2
           exact spin_not_comm_if_outside h_s1 h_s2 hp_r1 hp_r2 h2
       · by_cases h2 : (rotate180 p r2).IsInside r1
-        · absurd h.right
+        · absurd h.2
           exact (spin_not_comm_if_outside h_s2 h_s1 hp_r2 hp_r1 h1).symm
         · simp_rw [h1, h2, ite_false, to1d_inj] at hp
           exact hp.symm
