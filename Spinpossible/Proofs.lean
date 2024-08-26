@@ -575,7 +575,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
   · by_cases h1 : r1.Contains r2
     · intro; exact Or.inr h1
     · intro h
-      simp [h1]
+      apply Or.inl
       rw [(s1s2_eq_s2s1_iff h_s1 h_s2).mpr]
       -- is there a way to "early return" a proof
       -- e.g. "If DisjointRect r1 r2 then this is trivial.
@@ -605,8 +605,6 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
 
         simp [DisjointRect] at h2
         obtain ⟨p, h_p⟩ := h2
-        have h_perm_p := h_perm (to1d p)
-        have h_orient_p := h_orient (to1d p)
 
         have ⟨r2_r3_commonCenter, p_in_r3⟩ : CommonCenter r3 r2 ∧ p.IsInside r3 := by
           rcases r2_corner_not_in_r1 with r2_top_r1 | r2_bot_r1
@@ -644,6 +642,9 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
             refine ⟨this, ?_⟩
             dsimp [Point.IsInside, CommonCenter] at *
             omega
+
+        have h_perm_p := h_perm (to1d p)
+        have h_orient_p := h_orient (to1d p)
 
         have : (rotate180 p r1).IsInside r2 := by
           by_contra! u
