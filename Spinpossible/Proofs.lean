@@ -209,8 +209,8 @@ lemma s1s2_not_spin.aux2 {s1 s2 : Spin m n}
     have r2_eq_r3 : r2 = r3 := by
       refine rect_eq_if_corners_inside ?top r3_top_in_r2 ?bot r3_bot_in_r2 <;>
       rcases p_is_corner with rfl | rfl
-      case bot.inl | bot.inr => exact r2_bot_in_r3
-      case top.inl | top.inr => exact r2.corners_rotate.2 ▸ h
+      case bot.inr | top.inl => exact r2_bot_in_r3
+      case bot.inl | top.inr => simpa [r2.corners_rotate] using h
     have app := congrFun h_s1s2_r3_orient (to1d (rotate180 r1.bottomRight r2))
     have r1_bot_in_r3 : r1.bottomRight.IsInside r3 := by
       rw [← r2_eq_r3]
