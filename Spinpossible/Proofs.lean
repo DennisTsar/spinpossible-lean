@@ -553,6 +553,20 @@ lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
     r1b.val - (r2t.val - r1t.val) - (p.val - (r1b.val - (r2b.val - r1t.val))) := by
   omega
 
+lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
+    (h_r3: r3.topLeft = rotate180 r2.bottomRight r1 ∧ r3.bottomRight = rotate180 r2.topLeft r1)
+    : ∀ (p : Point m n), p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
+  intro p p_in_r1
+  apply Iff.intro
+  · have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
+    have : r2.topLeft.IsInside r1 := h r2.topLeft r2.corners_inside.1
+    dsimp [Rectangle.Contains, Point.IsInside, rotate180, rotateCalc] at *
+    simp_rw [h_r3]
+    omega
+  · dsimp [Rectangle.Contains, Point.IsInside, rotate180, rotateCalc] at *
+    simp_rw [h_r3]
+    omega
+
 theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
   -- TODO: consider if this should be phrased using `IsLowercaseSpin`
   (∃ r3 : Rectangle m n, (s1 * s2 * s1).IsSpinAbout r3 ∧ SameShape r3 r2) ↔
@@ -702,16 +716,8 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
       have r2_top_in_r1 := h r2.topLeft ⟨Nat.le_refl _, r2.validRow, Nat.le_refl _, r2.validCol⟩
       have r2_bot_in_r1 := h r2.bottomRight ⟨r2.validRow, Nat.le_refl _, r2.validCol, Nat.le_refl _⟩
       -- the `p.IsInside r1` is kinda superfluous, but easier to accept it than fight it
-      have : ∀ p : Point .., p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
-        intro p p_in_r1
-        apply Iff.intro
-        · have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
-          dsimp [Point.IsInside, rotate180, rotateCalc] at r2_top_in_r1 ⊢
-          clear r2_bot_in_r1 p_in_r1 h r3 -- help `omega` out a bit (still a bit slow)
-          omega
-        · dsimp [Point.IsInside, rotate180, rotateCalc] at p_in_r1 ⊢;
-          clear r2_top_in_r1 r2_bot_in_r1 h r3 -- help `omega` out a bit
-          omega
+      have : ∀ p, p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) :=
+        s1s2s1_is_spin_iff.aux2 h ⟨rfl, rfl⟩
       have r3_in_r1 : r1.Contains r3 := by
         intro p h_p
         dsimp [Point.IsInside, rotate180, rotateCalc] at r2_bot_in_r1 h_p ⊢
