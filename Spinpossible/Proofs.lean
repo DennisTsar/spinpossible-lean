@@ -4,6 +4,7 @@ import Mathlib.Tactic
 def Spin.IsSpinAbout (s : Spin m n) (r : Rectangle m n) : Prop :=
   s = r.toSpin
 
+/-- We say that an element of `Spin m n` is a *spin* if it is a spin about some rectangle `r` -/
 def IsLowercaseSpin (s : Spin m n) : Prop :=
   ∃ (r : Rectangle m n), s.IsSpinAbout r
 
@@ -18,8 +19,7 @@ lemma rect_spin_mul_eq_chain : ((Rectangle.toSpin r1) * (Rectangle.toSpin r2)).a
     split <;> simp
   · simp [h1]
 
--- proposition 1
-
+/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   funext i j
   unfold performSpin Rectangle.toSpin Spin.actionOnBoard
@@ -27,15 +27,18 @@ theorem spin_is_own_inverse : performSpin r (performSpin r b) = b := by
   · simp [h, spin_stays_inside, rotate180_self_inverse, orientation.other_self]
   · simp [h]
 
+/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse' (h : Spin.IsSpinAbout s r) :
     s.actionOnBoard (s.actionOnBoard b) = b := by
   rw [h, ←performSpin, ←performSpin, spin_is_own_inverse]
 
+/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse'' (h : Spin.IsSpinAbout s r) : (s * s).actionOnBoard b = b := by
   have h1 : (s * s).actionOnBoard b = s.actionOnBoard (s.actionOnBoard b) := by
     rw [h, rect_spin_mul_eq_chain]
   simp only [h1, spin_is_own_inverse' h]
 
+/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_inverse_props (h : Spin.IsSpinAbout s r) :
     (s * s).α.toFun = id ∧ (s * s).u = fun _ => 0 := by
   rw [h]
@@ -49,8 +52,6 @@ theorem spin_inverse_props (h : Spin.IsSpinAbout s r) :
     by_cases h1 : (to2d p).IsInside r
     · simp [h1, spin_stays_inside]
     · simp [h1]
-
--- proposition 2
 
 lemma rectangle_flips_min_one_tile (r : Rectangle m n) :
     ∃ p, r.toSpin.u p = 1 := by
@@ -92,7 +93,7 @@ lemma commonCenter_if_rotate_eq (h1 : Point.IsInside p r1) (h2 : Point.IsInside 
   simp only [Point.mk.injEq, Fin.mk.injEq] at h3
   omega
 
--- "r1 contains r2"
+/-- `r1` contains `r2` -/
 def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
   ∀ p, Point.IsInside p r2 → Point.IsInside p r1
 
@@ -239,6 +240,8 @@ lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n} (h_contains : r1.Contains r2) (
     omega
   aesop
 
+/-- **Proposition 1.2**: Let `s1` and `s2` be spins about rectangles `r1` and `r2` respectively.
+    `s1 * s2` is not a spin. -/
 theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
     ¬IsLowercaseSpin (s1 * s2) := by
   intro ⟨r3, h_s1s2_r3⟩
@@ -332,7 +335,6 @@ theorem s1s2_not_spin {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.I
       · apply s1s2_not_spin.aux2 r2.corners_inside.1  h_s1 h_s2 h_s1s2_r3 h
         simp [r2.corners_rotate, h_corner]; exact Or.inl rfl
 
--- proposition 3
 def DisjointRect (r1 r2 : Rectangle m n) : Prop :=
   ∀ p : Point .., p.IsInside r1 → ¬p.IsInside r2
 
@@ -392,6 +394,8 @@ lemma spin_not_comm_if_outside (h_s1 : Spin.IsSpinAbout s1 r1) (h_s2 : Spin.IsSp
   specialize a (to1d (rotate180 p r2))
   simp [Rectangle.toSpin, h3, h4, h6, spin_stays_inside] at a
 
+/-- **Proposition 1.3**: Let `s1` and `s2` be spins about rectangles `r1` and `r2` respectively.
+    `s1 * s2 = s2 * s1` if and only if `r1` and `r2` are disjoint or have a common center. -/
 theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
     s1 * s2 = s2 * s1 ↔ (DisjointRect r1 r2 ∨ CommonCenter r1 r2) := by
   apply Iff.intro
@@ -482,8 +486,6 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
             simp_rw [h1, ite_false, h2, ite_true, to2d_to1d_inverse, h3, ite_false, add_comm]
           · simp_rw [h2, h1, ite_false, h2, h1]
 
--- proposition 4
-
 def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
   (r1.bottomRight.col.val - r1.topLeft.col.val) = (r2.bottomRight.col.val - r2.topLeft.col.val)
@@ -510,6 +512,9 @@ lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
     simp only [h_r3]
     omega
 
+/-- **Proposition 1.4**: Let `s1` and `s2` be spins about rectangles `r1` and `r2` respectively.
+    `s1 * s2 * s1` is a spin `s3` if and only if either `s1` and `s2` commute or `r1` contains `r2`.
+    The rectangle of `s3` has the same shape as `r2`. -/
 theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
   (∃ r3 : Rectangle m n, (s1 * s2 * s1).IsSpinAbout r3 ∧ SameShape r3 r2) ↔
   (s1 * s2 = s2 * s1 ∨ r1.Contains r2) := by
