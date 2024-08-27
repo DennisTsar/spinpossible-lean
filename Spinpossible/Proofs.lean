@@ -61,7 +61,7 @@ lemma rectangle_flips_min_one_tile (r : Rectangle m n) :
     exact ⟨r.validRow, r.validCol⟩
   simp_rw [Rectangle.toSpin, to2d_to1d_inverse, h, ite_true]
 
-theorem spin_inverse_is_not_spin (h : Spin.IsSpinAbout s r) : ¬(s * s).IsSpinAbout r2 := by
+lemma spin_inverse_is_not_spin (h : Spin.IsSpinAbout s r) : ¬(s * s).IsSpinAbout r2 := by
   rw [Spin.IsSpinAbout]
   intro h1
   have h2 : ∃ p, (s * s).u p = 1 := by simp_rw [h1, rectangle_flips_min_one_tile r2]
@@ -485,8 +485,8 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
 -- proposition 4
 
 def SameShape (r1 r2 : Rectangle m n) : Prop :=
-  (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val  - r2.topLeft.row.val) ∧
-  (r1.bottomRight.col.val  - r1.topLeft.col.val) = (r2.bottomRight.col.val  - r2.topLeft.col.val)
+  (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
+  (r1.bottomRight.col.val - r1.topLeft.col.val) = (r2.bottomRight.col.val - r2.topLeft.col.val)
 
 lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
   (_ : r2t ≤ r2b) (_ : r1t ≤ r2t) (_ : r1b ≥ r2b)
@@ -503,15 +503,14 @@ lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
   apply Iff.intro
   · have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
     have : r2.topLeft.IsInside r1 := h r2.topLeft r2.corners_inside.1
-    dsimp [Rectangle.Contains, Point.IsInside, rotate180] at *
-    simp_rw [h_r3]
+    dsimp [Point.IsInside, rotate180] at *
+    simp only [h_r3]
     omega
-  · dsimp [Rectangle.Contains, Point.IsInside, rotate180] at *
-    simp_rw [h_r3]
+  · dsimp [Point.IsInside, rotate180] at *
+    simp only [h_r3]
     omega
 
 theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s2.IsSpinAbout r2) :
-  -- TODO: consider if this should be phrased using `IsLowercaseSpin`
   (∃ r3 : Rectangle m n, (s1 * s2 * s1).IsSpinAbout r3 ∧ SameShape r3 r2) ↔
   (s1 * s2 = s2 * s1 ∨ r1.Contains r2) := by
   apply Iff.intro
