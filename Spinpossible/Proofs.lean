@@ -1,6 +1,8 @@
 import Spinpossible.Definitions
 import Mathlib.Tactic
 
+open scoped CharTwo -- useful since orient is in `ZMod 2` (specifically `CharTwo.two_eq_zero`)
+
 def Spin.IsSpinAbout (s : Spin m n) (r : Rectangle m n) : Prop :=
   s = r.toSpin
 
