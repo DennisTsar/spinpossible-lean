@@ -43,42 +43,36 @@ lemma rectangleSet_cond_iff {r : Rectangle m n} :
     · apply Finset.mk_mem_product <;> simp only [Finset.mem_univ]
     · simp only [and_self, exists_const, r.validRow, r.validCol]
 
-theorem Finset.card_product' (s : Finset α) (t : Finset β) : card (s.product t) = card s * card t :=
-  Finset.card_product _ _
-
-/- Proposition 2.1 -/
-lemma rectangleSet_card_val {m n i j : PNat} (h1 : i ≤ m) (h2 : j ≤ n) (h3 : m ≤ n)
+/-- **Proposition 2.1**
+    NOTE: The original conditions `i ≤ m`, `j ≤ n`, an `m ≤ n` are not necessary.
+-/
+lemma rectangleSet_card_val {m n i j : PNat}
     : (RectangleSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
-  have : (RectangleSet i j m n).card = (Finset.range (m.val + 1 - i)|>.product
-      (Finset.range (n.val + 1 - j))).card := by
-    apply Finset.card_bij (fun r _ => ⟨r.topLeft.row, r.topLeft.col⟩)
-    · intro r hr
-      apply Finset.mem_product.mpr
-      have := rectangleSet_cond_iff.mp hr
-      have : r.topLeft.row.val < m + 1 - i := by omega
-      have : r.topLeft.col.val < n + 1 - j := by omega
-      simp only [*, and_self, Finset.mem_range]
-    · intro r1 hr1 r2 hr2 h3
-      have := rectangleSet_cond_iff.mp hr1
-      have := rectangleSet_cond_iff.mp hr2
-      have : _ ∧ _ := ⟨r1.validRow, r1.validCol⟩
-      have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
-      have : _ ∧ _ := ⟨congr(Prod.fst $h3), congr(Prod.snd $h3)⟩
-      ext <;> omega
-    · intro ⟨p1, p2⟩ hp
-      have ⟨hp1, hp2⟩ := Finset.mem_product.mp hp
-      simp only [Finset.mem_range] at hp1 hp2
-      have : i.val - 1 + 1 = i := Nat.sub_add_cancel i.2
-      have : j.val - 1 + 1 = j := Nat.sub_add_cancel j.2
-      use ⟨
-        ⟨⟨p1, by omega⟩, ⟨p2, by omega⟩⟩,
-        ⟨⟨i - 1 + p1, by omega⟩, ⟨j - 1 + p2, by omega⟩⟩,
-        by simp,
-        by simp⟩
-      simp only [exists_prop, and_true]
-      apply rectangleSet_cond_iff.mpr
-      simp only
-      omega
-
-  rw [Finset.card_product'] at this
-  simpa using this
+  rw [←Finset.card_range (m + 1 - i), ←Finset.card_range (n + 1 - j), ←Finset.card_product]
+  apply Finset.card_bij (fun r _ => ⟨r.topLeft.row, r.topLeft.col⟩)
+  · intro r hr
+    apply Finset.mem_product.mpr
+    have := rectangleSet_cond_iff.mp hr
+    have : r.topLeft.row.val < m + 1 - i := by omega
+    have : r.topLeft.col.val < n + 1 - j := by omega
+    simp only [*, and_self, Finset.mem_range]
+  · intro r1 hr1 r2 hr2 h3
+    simp only [Prod.mk.injEq] at h3
+    have := rectangleSet_cond_iff.mp hr1
+    have := rectangleSet_cond_iff.mp hr2
+    have : _ ∧ _ := ⟨r1.validRow, r1.validCol⟩
+    have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
+    ext <;> omega
+  · intro ⟨p1, p2⟩ hp
+    have ⟨hp1, hp2⟩ := Finset.mem_product.mp hp
+    simp only [Finset.mem_range] at hp1 hp2
+    have : i.val - 1 + 1 = i := Nat.sub_add_cancel i.2
+    have : j.val - 1 + 1 = j := Nat.sub_add_cancel j.2
+    use ⟨
+      ⟨⟨p1, by omega⟩, ⟨p2, by omega⟩⟩,
+      ⟨⟨i - 1 + p1, by omega⟩, ⟨j - 1 + p2, by omega⟩⟩,
+      by simp, by simp⟩
+    simp only [exists_prop, and_true]
+    apply rectangleSet_cond_iff.mpr
+    simp only
+    omega
