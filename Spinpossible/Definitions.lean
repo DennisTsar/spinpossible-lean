@@ -16,10 +16,18 @@ end perm
 
 def VN (N : Nat) := Fin N → ZMod 2
 
+instance : DecidableEq (VN N) :=
+  have : DecidableEq (Fin N → ZMod 2) := inferInstance;
+  this
+instance : DecidableEq (perm N) :=
+  have : DecidableEq (Fin N ≃ Fin N) := inferInstance;
+  this
+
 @[ext]
 structure Spin (m n : PNat) where
   α : perm (m * n)
   u : VN (m * n)
+  deriving DecidableEq
 
 namespace Spin
 
@@ -51,6 +59,7 @@ def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
 structure Point (m n : PNat) where
   row : Fin m
   col : Fin n
+  deriving DecidableEq, Repr
 
 @[simp]
 lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
@@ -108,6 +117,7 @@ structure Rectangle (m n : PNat) where
   bottomRight : Point m n
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
+  deriving DecidableEq, Repr
 
 def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
   r.topLeft.row.val ≤ p.1.val ∧ p.1.val ≤ r.bottomRight.row.val ∧
