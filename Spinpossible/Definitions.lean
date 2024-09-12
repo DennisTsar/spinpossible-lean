@@ -16,12 +16,9 @@ end perm
 
 def VN (N : Nat) := Fin N → ZMod 2
 
-instance : DecidableEq (VN N) :=
-  have : DecidableEq (Fin N → ZMod 2) := inferInstance;
-  this
-instance : DecidableEq (perm N) :=
-  have : DecidableEq (Fin N ≃ Fin N) := inferInstance;
-  this
+instance : DecidableEq (VN N) := inferInstanceAs (DecidableEq (Fin N → ZMod 2))
+
+instance : DecidableEq (perm N) := inferInstanceAs (DecidableEq (Fin N ≃ Fin N))
 
 @[ext]
 structure Spin (m n : PNat) where
