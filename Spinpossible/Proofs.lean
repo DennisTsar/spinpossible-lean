@@ -165,12 +165,10 @@ lemma s1s2_not_spin.aux1 {r1 r2 r3 : Rectangle m n} {s1 s2 : Spin m n} {p : Poin
     apply rect_eq_if_corners_inside ?_ r1_top_in_r3 ?_ r1_bot_in_r3
     · by_contra h
       have app := congrFun h_s1s2_r3_orient (to1d r3.topLeft)
-      simp [(r2_in_r1 r3.topLeft).mt h, r3.corners_inside] at app
-      contradiction
+      simp [h, (r2_in_r1 r3.topLeft).mt, r3.corners_inside] at app
     · by_contra h
       have app := congrFun h_s1s2_r3_orient (to1d r3.bottomRight)
-      simp [(r2_in_r1 r3.bottomRight).mt h, r3.corners_inside] at app
-      contradiction
+      simp [h, (r2_in_r1 r3.bottomRight).mt h, r3.corners_inside] at app
   have := r2_in_r1 r2.bottomRight r2.corners_inside.2
   have app_orient := congrFun h_s1s2_r3_orient (to1d r2.topLeft)
   simp [r2.corners_inside, r2.corners_rotate, r2_in_r1, r3_eq_r1] at app_orient
