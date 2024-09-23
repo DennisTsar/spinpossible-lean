@@ -1,9 +1,12 @@
-import Mathlib
+import Mathlib.Algebra.Star.Order
+import Mathlib.Combinatorics.SimpleGraph.Path
+import Mathlib.GroupTheory.Perm.Support
 
 -- HEAVILY inspired by Group.exists_list_of_mem_closure
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} (h : a ∈ Subgroup.closure s) :
     ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
-  refine Subgroup.closure_induction h (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, one_mul _⟩)
+  refine Subgroup.closure_induction h
+    (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, one_mul _⟩)
     ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_
   · intro a b ⟨La, HL1a, HL2a⟩ ⟨L, HL1, HL2⟩
     use La ++ L
@@ -22,140 +25,82 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} (h : a
 
 open Equiv
 
-
-lemma something234 {α : Type*} [DecidableEq α] {x y a b : α} (h : x = (swap a b) y) (h2 : y ≠ a) (h3 : y ≠ b) : x = y := by
-  rw [h]
-  rw [swap_apply_of_ne_of_ne h2 h3]
-
-lemma foldl_apply_eq_scanl_last {α : Type*} [DecidableEq α]
-  (l : List (Perm α)) (x : α)
-  : List.foldl (fun a τ ↦ τ a) x l = (List.scanl (fun a τ ↦ τ a) x l).get ⟨l.length, by
-      have : (List.scanl (fun a τ ↦ τ a) x l).length = l.length + 1 := List.length_scanl x l
-      omega
-    ⟩ := by
+lemma foldl_apply_eq_scanl_last {α : Type*}
+    (l : List (Perm α)) (x : α)
+    : List.foldl (fun a τ ↦ τ a) x l =
+    (l.scanl (fun a τ ↦ τ a) x).get ⟨l.length, by simp [List.length_scanl]⟩ := by
   induction' l with head tail ih generalizing x
   · aesop
   · aesop
 
-lemma foldr_apply_eq_prod_x {α : Type*} [DecidableEq α]
+lemma foldr_apply_eq_prod_x {α : Type*}
     (l : List (Perm α)) (x : α)
     : List.foldr (fun τ a ↦ τ a) x l = l.prod x := by
   induction' l with head tail ih generalizing x
-  · -- Base Case: l is empty
-    simp [List.foldl, List.prod, Perm.mul_def, Equiv.refl_apply]
-  · -- Inductive Step: l = head :: tail
-    simp [List.foldl]
-    aesop
+  · simp [List.foldl, List.prod, Perm.mul_def, Equiv.refl_apply]
+  · simp_all [List.foldl]
 
-lemma foldl_eq_reverse_prod {α : Type*} [DecidableEq α]
+lemma foldl_eq_reverse_prod {α : Type*}
   (l : List (Equiv.Perm α)) (x : α)  :
   (List.foldl (fun a τ ↦ τ a) x l) = l.reverse.prod x := by
   induction l generalizing x with
-  | nil =>
-    -- Base case: the foldl of an empty list is just the initial value x
-    simp
-  | cons τ tl ih =>
-    -- Simplify the foldl for the cons case
-    simp [List.foldl]
-    -- We need to use the inductive hypothesis on the tail tl
-    rw [ih]
-    -- Now we address the current goal, which is:
-    -- ⊢ tl.prod = swap (τ x) y
+  | nil => simp
+  | cons τ tl ih => simp [List.foldl]; rw [ih]
 
+lemma swap_inv_eq_self [DecidableEq α] {x : Perm α} (h : x.IsSwap) : x = x⁻¹ := by
+  have ⟨_, _, _, hswap⟩ := h
+  rw [hswap]
+  apply swap_inv
 
-
--- set_option maxHeartbeats 0 in
-lemma something8762 [DecidableEq α]
+lemma graph_connected.aux1 [DecidableEq α]
   (l : List (Equiv.Perm α)) (hl : ∀ τ ∈ l, τ.IsSwap) (h : l.prod = Equiv.swap x y)
-  : (List.scanl (fun a τ ↦ τ a) x l).get ⟨l.length, by
-      have : (List.scanl (fun a τ ↦ τ a) x l).length = l.length + 1 := List.length_scanl _ _
-      simp [this]
-    ⟩ = y := by
-  have h_length : (List.scanl (fun a τ ↦ τ a) x l).length = l.length + 1 :=
-    List.length_scanl _ _
-  have h_get : (List.scanl (fun a τ ↦ τ a) x l).get ⟨l.length, by omega⟩ =
+  : (List.scanl (fun a τ ↦ τ a) x l).get ⟨l.length, by simp [List.length_scanl]⟩ = y := by
+  have h_get : (l.scanl (fun a τ ↦ τ a) x).get ⟨l.length, by simp [List.length_scanl]⟩ =
       l.foldl (fun a τ ↦ τ a) x := by
     simp [foldl_apply_eq_scanl_last]
   rw [h_get]
   have h1 : l.foldl (fun a τ ↦ τ a) x = l.reverse.prod x := by
     apply foldl_eq_reverse_prod l x
   have h_prod_reverse : l.reverse.prod = l.prod⁻¹ := by
-    have aaa := List.prod_reverse_noncomm l
-    have : ∀ w ∈ l, w = w⁻¹ := by
-      intro w hw
-      have ⟨a, b, hab, hab2⟩ := hl w hw
-      aesop
     have a1 : ∀ w ∈ l, w⁻¹ = w := by
       intro w hw
-      have ⟨a, b, hab, hab2⟩ := hl w hw
-      have := this w hw
-      exact this.symm
-    have a2 : (List.map (fun x ↦ x⁻¹) l) = (List.map (fun x ↦ x) l) := by
-      apply List.map_eq_map_iff.mpr
-      exact a1
-    have a3 : (List.map (fun x ↦ x) l) = l := by
-      apply List.map_id
-    rwa [a2, a3] at aaa
+      exact swap_inv_eq_self (hl w hw)|>.symm
+    simpa [List.map_eq_map_iff.mpr a1, List.map_id] using l.prod_reverse_noncomm
   rw [h1, h_prod_reverse, h]
-  rw [Equiv.swap_inv]
-  rw [Equiv.swap_apply_def]
-  split_ifs
-  · exact rfl
-  · exfalso
-    aesop
-  · aesop
-
--- deriving instance DecidableEq for Equiv α α
-
--- instance {α : Type*} [DecidableEq α] : DecidableEq (Equiv α α) := inferInstance
--- instance {α : Type*} [DecidableEq α] : DecidableEq (Perm α) := inferInstanceAs (DecidableEq (Equiv α α))
+  simp
 
 open Equiv SimpleGraph Subgroup Equiv.Perm in
-lemma graph_connected [DecidableEq α] (E : Finset (Equiv.Perm α))
-    (hE : ∀ σ ∈ E, σ.IsSwap) (h_closure : Subgroup.closure E.toSet = ⊤)
+lemma graph_connected [DecidableEq α] (E : Set (Equiv.Perm α))
+    (hE : ∀ σ ∈ E, σ.IsSwap) (h_closure : Subgroup.closure E = ⊤)
     : (SimpleGraph.fromRel (λ x y => swap x y ∈ E)).Preconnected := by
   let G := SimpleGraph.fromRel (λ x y => swap x y ∈ E)
   -- Define the action of the subgroup generated by E on α
-  let H := Subgroup.closure E.toSet
+  let H := Subgroup.closure E
   have hH_top : H = ⊤ := h_closure
   have h_transitive : ∀ x y : α, ∃ σ ∈ H, σ x = y := by
     intros x y
     have h_swap : swap x y ∈ H := by
       rw [hH_top]
       exact mem_top _
-    exact ⟨swap x y, h_swap, by aesop⟩
-  simp [SimpleGraph.Preconnected]
+    exact ⟨swap x y, h_swap, swap_apply_left x y⟩
   intro x y
   have h_swap_in_H : swap x y ∈ H := by
     rw [hH_top]
     exact mem_top _
   -- Express swap x y as a product of elements from E
   have : ∃ l : List (Equiv.Perm α), (∀ τ ∈ l, τ ∈ E) ∧ l.prod = swap x y := by
-    have : swap x y ∈ Subgroup.closure E.toSet := h_swap_in_H
-    have ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure this
+    have ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure h_swap_in_H
     use l
-    aesop
-    have := h1 _ a
-    have : τ⁻¹ = τ := by
-      --hE τ this
-      rcases this with h | h
-      · have : τ.IsSwap := hE _ h
-        unfold IsSwap at this
-        aesop
-      · have : τ⁻¹.IsSwap := hE _ h
-        unfold IsSwap Inv.inv instInv at this
-        obtain ⟨a, b, hab, h2⟩ := this
-        have : swap a b = swap b a := swap_comm a b
-        simp at h2
-        have := congr(Equiv.symm $h2)
-        simp at this
-        have : Equiv.symm τ = τ⁻¹ := by aesop
-        aesop
-    simp_all only [or_self]
+    simp_all only [mem_top, true_and, Finset.mem_coe, and_true, H]
+    intro τ a
+    rcases (h1 _ a) with h | h
+    · exact h
+    · have : τ⁻¹.IsSwap := hE _ h
+      rwa [swap_inv_eq_self this] at h
   obtain ⟨l, hlE, hl_prod⟩ := this
   -- Build the sequence of vertices starting from x by applying the permutations in l
-  let vertices := List.scanl (λ a τ => τ a) x l
-  have : vertices.length = l.length + 1 := List.length_scanl x l
+  let vertices := l.scanl (λ a τ => τ a) x
+  have : vertices.length = l.length + 1 := l.length_scanl x
   have h_adj : ∀ i (hi : i < l.length),
       G.Adj (vertices.get ⟨i, by omega⟩) (vertices.get ⟨i+1, by omega⟩) ∨ vertices.get ⟨i, by omega⟩ = vertices.get ⟨i+1, by omega⟩ := by
     intros i hi
@@ -164,87 +109,54 @@ lemma graph_connected [DecidableEq α] (E : Finset (Equiv.Perm α))
     left
     let τ := l.get ⟨i, by omega⟩
     have hτE : τ ∈ E := hlE τ (List.get_mem l i (by omega))
-    have hτ_swap : τ.IsSwap := hE τ hτE
-    -- τ acts as swapping two elements
-    obtain ⟨a, b, hab⟩ := hτ_swap
-    -- let a := τ.swap_fun.left
-    -- let b := τ.swap_fun.right
-    have hτ_eq : τ = swap a b := by aesop
-    -- Compute vertices.get! (i+1)
+    obtain ⟨a, b, _, hτ_eq⟩ := hE τ hτE
     have h_next : vertices.get ⟨i+1, by omega⟩ = τ (vertices.get ⟨i, by omega⟩) := by
       simp [vertices]
-      have hq : i + 1 < (List.scanl (fun a τ ↦ τ a) x l).length := by
+      have hq : i + 1 < (l.scanl (fun a τ ↦ τ a) x).length := by
         simp [vertices] at this
         omega
-      have a := @List.get_succ_scanl _ _ _ _ _ i hq
-      have : (List.scanl (fun a τ ↦ τ a) x l).get ⟨i + 1, hq⟩ = (List.scanl (fun a τ ↦ τ a) x l)[i + 1] := rfl
-      rw [this] at a
-      have : (List.scanl (fun a τ ↦ τ a) x l).get ⟨i, by omega⟩ = (List.scanl (fun a τ ↦ τ a) x l)[i] := rfl
-      rw [this] at a
-      exact a
-    -- So swap (vertices.get! i) (vertices.get! (i+1)) ∈ E
+      exact List.get_succ_scanl (h := hq)
     have h_swap_in_E : swap (vertices.get ⟨i, by omega⟩) (vertices.get ⟨i+1, by omega⟩) ∈ E := by
-      rw [h_next]
-      rw [hτ_eq]
-      -- Since τ swaps a and b, and acts on vertices.get! i
+      rw [h_next, hτ_eq]
       by_cases h_case : vertices.get ⟨i, by omega⟩ = a
-      · rw [h_case]
-        rw [swap_apply_left]
-        aesop
-        -- rw [swap_apply_right]
+      · rw [h_case, swap_apply_left]
+        simp_all
       · by_cases h_case' : vertices.get ⟨i, by omega⟩ = b
-        · rw [h_case']
-          rw [swap_apply_right]
-          rw [swap_comm]
-          aesop
+        · rw [h_case', swap_apply_right, swap_comm]
+          simp_all
         · rw [hτ_eq] at h_next
-          have := something234 h_next
-          aesop
+          have := swap_apply_of_ne_of_ne h_case h_case'
+          simp_all
     rw [fromRel_adj]
     constructor
     · by_contra yo
       rw [yo] at h_swap_in_E
       have := hE _ h_swap_in_E
-      absurd this
-      unfold IsSwap
-      set lk := vertices.get ⟨i + 1, by omega⟩
-      simp
-      intro z1 z2 z3
-      by_contra! uu
-      have := swap_eq_refl_iff.mp uu.symm
+      rw [swap_self] at this
       contradiction
-    · aesop
+    · simp_all
   -- Construct the path from x to y using the sequence of vertices
-  let rec build_walk (n : ℕ) (hn : n ≤ l.length) : G.Walk (vertices.get ⟨n, by omega⟩) (vertices.get ⟨l.length, by omega⟩) :=
+  let rec build_walk (n : Nat) (hn : n ≤ l.length)
+      : G.Walk (vertices.get ⟨n, by omega⟩) (vertices.get ⟨l.length, by omega⟩) :=
     if h_eq : n = l.length then by
       rewrite [Fin.mk.inj_iff.mpr h_eq]
       exact Walk.nil
-      -- Base case: n = l.length, the walk is nil
     else
-      -- Inductive step: n < l.length
-      have h_lt : n < l.length := lt_of_le_of_ne hn h_eq
-      have : n + 1 < l.length.succ := by omega
-      let tail := build_walk (n + 1) (Nat.le_of_lt_succ (Nat.succ_le_of_lt this))
-      have za := h_adj n h_lt
+      let tail := build_walk (n + 1) (by omega)
       if re : vertices.get ⟨n, by omega⟩ = vertices.get ⟨n + 1, by omega⟩ then by
         rewrite [re]
         exact tail
       else
+        have := h_adj n (by omega)
         have edge : G.Adj (vertices.get ⟨n, by omega⟩) (vertices.get ⟨n + 1, by omega⟩) := by tauto
         Walk.cons edge tail
-      -- have edge : G.Adj (vertices.get ⟨n, by omega⟩) (vertices.get ⟨n + 1, by omega⟩) := h_adj n h_lt
-      -- have : n + 1 < l.length.succ := by omega
-      -- let tail := build_walk (n + 1) (Nat.le_of_lt_succ (Nat.succ_le_of_lt this))
-      -- Walk.cons edge tail
   -- Build the walk starting from n = 0
-  have h_zero_le : 0 ≤ l.length := Nat.zero_le _
-  let walk := build_walk 0 h_zero_le
-  -- Since vertices.get! 0 = x and vertices.get! l.length = y, we have a Walk from x to y
+  let walk := build_walk 0 (by omega)
   have h_start : vertices.get ⟨0, by omega⟩ = x := by
     simp [vertices]
   have h_end : vertices.get ⟨l.length, by omega⟩ = y := by
     simp [vertices]
-    have := something8762 l (by aesop) hl_prod
-    aesop
+    have := graph_connected.aux1 l (by simp_all) hl_prod
+    simp_all
   rw [← h_start, ← h_end]
   exact ⟨walk⟩
