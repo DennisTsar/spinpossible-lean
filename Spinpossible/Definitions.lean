@@ -121,7 +121,7 @@ def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
   r.topLeft.col.val ≤ p.2.val ∧ p.2.val ≤ r.bottomRight.col.val
 
 -- don't know if there is a better way to do this
-instance : Decidable (Point.IsInside p r) := And.decidable
+instance : Decidable (Point.IsInside p r) := instDecidableAnd
 
 abbrev rotateCalc (a b c : Fin n) : Fin n where
   val := a.val - (b.val - c.val)
