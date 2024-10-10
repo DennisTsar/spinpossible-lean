@@ -1,7 +1,7 @@
 import Spinpossible.Proofs
 import Mathlib.Data.Finset.Basic
 
-lemma to2d_injective { m n : PNat} : Function.Injective (to2d : Fin (m * n) -> _)
+lemma to2d_injective {m n : PNat} : Function.Injective (to2d : Fin (m * n) -> _)
   | p1, p2, h => by simpa only [to1d_to2d_inverse] using congr(to1d $h)
 
 lemma to2d_surjective {m n : PNat} : Function.Surjective (to2d : Fin (m * n) -> _) :=
@@ -46,7 +46,7 @@ lemma rectangleSet_cond_iff {r : Rectangle m n} :
 /-- **Proposition 2.1**
     NOTE: The original conditions `i ≤ m`, `j ≤ n`, an `m ≤ n` are not necessary.
 -/
-lemma rectangleSet_card_val {m n i j : PNat}
+theorem rectangleSet_card_val {m n i j : PNat}
     : (RectangleSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
   rw [←Finset.card_range (m + 1 - i), ←Finset.card_range (n + 1 - j), ←Finset.card_product]
   apply Finset.card_bij (fun r _ => ⟨r.topLeft.row, r.topLeft.col⟩)

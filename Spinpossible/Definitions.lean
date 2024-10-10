@@ -134,7 +134,6 @@ def rotate180 (p : Point m n) (r : Rectangle m n) : Point m n :=
 @[simp]
 lemma rotate180_self_inverse (h : p.IsInside r) : rotate180 (rotate180 p r) r = p := by
   dsimp [Point.IsInside, rotate180] at *
-  have : _ ∧ _ := ⟨r.validRow, r.validCol⟩
   ext <;> simp only [Nat.sub_sub_self] <;> omega
 
 lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
