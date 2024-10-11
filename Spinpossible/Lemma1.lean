@@ -26,17 +26,10 @@ open Equiv
 lemma foldl_apply_eq_scanl_last {α : Type*}
     (l : List (Perm α)) (x : α)
     : List.foldl (fun a τ ↦ τ a) x l =
-    (l.scanl (fun a τ ↦ τ a) x).get ⟨l.length, by simp [List.length_scanl]⟩ := by
+    (l.scanl (fun a τ ↦ τ a) x)[l.length]'(by simp [List.length_scanl]) := by
   induction' l with head _ ih generalizing x
   · rfl
   · exact ih _
-
-lemma foldr_apply_eq_prod_x {α : Type*}
-    (l : List (Perm α)) (x : α)
-    : List.foldr (fun τ a ↦ τ a) x l = l.prod x := by
-  induction' l generalizing x
-  · rfl
-  · simp_all [List.foldl]
 
 lemma foldl_eq_reverse_prod {α : Type*}
   (l : List (Equiv.Perm α)) (x : α)  :
@@ -50,8 +43,8 @@ lemma swap_inv_eq_self [DecidableEq α] {x : Perm α} (h : x.IsSwap) : x = x⁻�
   rw [hswap, swap_inv]
 
 lemma graph_connected.aux1 [DecidableEq α]
-  (l : List (Equiv.Perm α)) (hl : ∀ τ ∈ l, τ.IsSwap) (h : l.prod = Equiv.swap x y)
-  : (List.scanl (fun a τ ↦ τ a) x l).get ⟨l.length, by simp [List.length_scanl]⟩ = y := by
+  {l : List (Equiv.Perm α)} (hl : ∀ τ ∈ l, τ.IsSwap) (h : l.prod = Equiv.swap x y)
+  : (List.scanl (fun a τ ↦ τ a) x l)[l.length]'(by simp [List.length_scanl]) = y := by
   have h_prod_reverse : l.reverse.prod = l.prod⁻¹ := by
     have a1 : ∀ w ∈ l, w⁻¹ = w := fun w hw ↦ swap_inv_eq_self (hl w hw)|>.symm
     simpa [List.map_eq_map_iff.mpr a1, List.map_id] using l.prod_reverse_noncomm
@@ -73,7 +66,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Equiv.Perm α))
   have : ∃ l : List (Equiv.Perm α), (∀ τ ∈ l, τ ∈ E) ∧ l.prod = swap x y := by
     have ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure h_swap_in_H
     use l
-    simp_all only [mem_top, true_and, Finset.mem_coe, and_true, H]
+    refine ⟨?_, h2⟩
     intro τ a
     rcases (h1 _ a) with h | h
     · exact h
@@ -82,56 +75,42 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Equiv.Perm α))
   -- Build the sequence of vertices starting from x by applying the permutations in l
   let vertices := l.scanl (λ a τ => τ a) x
   have : vertices.length = l.length + 1 := l.length_scanl x
-  have h_adj : ∀ i (hi : i < l.length),
-      G.Adj (vertices.get ⟨i, by omega⟩) (vertices.get ⟨i+1, by omega⟩) ∨ vertices.get ⟨i, by omega⟩ = vertices.get ⟨i+1, by omega⟩ := by
-    intro i hi
-    by_cases pol : vertices.get ⟨i, by omega⟩ = vertices.get ⟨i+1, by omega⟩
-    · right; exact pol
+  have h_adj : ∀ i (hi : i < l.length), vertices[i] ≠ vertices[i+1] →
+      G.Adj vertices[i] vertices[i+1] := by
+    intro i hi hj
+    refine (SimpleGraph.fromRel_adj _ _ _).mpr ⟨hj, ?_⟩
     left
-    let τ := l.get ⟨i, by omega⟩
-    have hτE : τ ∈ E := hlE τ (List.get_mem l i (by omega))
+    let τ := l[i]
+    have hτE : τ ∈ E := hlE τ (l.get_mem i _)
     obtain ⟨a, b, _, hτ_eq⟩ := hE τ hτE
-    have h_next : vertices.get ⟨i+1, by omega⟩ = τ (vertices.get ⟨i, by omega⟩) := by
-      have hq : i + 1 < (l.scanl (fun a τ ↦ τ a) x).length := by
-        simp [vertices] at this
-        omega
-      exact List.getElem_succ_scanl hq
-    have h_swap_in_E : swap (vertices.get ⟨i, by omega⟩) (vertices.get ⟨i+1, by omega⟩) ∈ E := by
-      rw [h_next, hτ_eq]
-      by_cases h_case : vertices.get ⟨i, by omega⟩ = a
-      · rw [h_case, swap_apply_left]
+    have h_next : vertices[i+1] = τ vertices[i] := List.getElem_succ_scanl _
+    rw [h_next, hτ_eq]
+    by_cases h_case : vertices[i] = a
+    · rw [h_case, swap_apply_left]
+      exact Set.mem_of_eq_of_mem hτ_eq.symm hτE
+    · by_cases h_case' : vertices[i] = b
+      · rw [h_case', swap_apply_right, swap_comm]
         exact Set.mem_of_eq_of_mem hτ_eq.symm hτE
-      · by_cases h_case' : vertices.get ⟨i, by omega⟩ = b
-        · rw [h_case', swap_apply_right, swap_comm]
-          exact Set.mem_of_eq_of_mem hτ_eq.symm hτE
-        · rw [hτ_eq] at h_next
-          have := swap_apply_of_ne_of_ne h_case h_case'
-          simp_all
-    constructor
-    · exact pol
-    · left; exact h_swap_in_E
+      · rw [hτ_eq] at h_next
+        have := swap_apply_of_ne_of_ne h_case h_case'
+        simp_all
   -- Construct the path from x to y using the sequence of vertices
-  let rec build_walk (n : Nat) (hn : n ≤ l.length)
-      : G.Walk (vertices.get ⟨n, by omega⟩) (vertices.get ⟨l.length, by omega⟩) :=
+  let rec build_walk (n : Nat) (hn : n ≤ l.length) : G.Walk vertices[n] vertices[l.length] :=
     if h_eq : n = l.length then by
-      rewrite [Fin.mk.inj_iff.mpr h_eq]
-      exact Walk.nil
+      convert Walk.nil
+      exact h_eq.symm
     else
       let tail := build_walk (n + 1) (by omega)
-      if re : vertices.get ⟨n, by omega⟩ = vertices.get ⟨n + 1, by omega⟩ then by
-        rewrite [re]
-        exact tail
+      if v_eq : vertices[n] = vertices[n+1] then
+        v_eq ▸ tail
       else
-        have := h_adj n (by omega)
-        have edge : G.Adj (vertices.get ⟨n, by omega⟩) (vertices.get ⟨n + 1, by omega⟩) := by tauto
+        have edge : G.Adj vertices[n] vertices[n+1] := h_adj n (by omega) v_eq
         Walk.cons edge tail
   -- Build the walk starting from n = 0
-  let walk := build_walk 0 (by omega)
-  have h_start : vertices.get ⟨0, by omega⟩ = x := List.getElem_scanl_zero
-  have h_end : vertices.get ⟨l.length, by omega⟩ = y :=
-    graph_connected.aux1 l (fun τ a ↦ hE τ (hlE τ a)) hl_prod
-  rw [h_start, h_end] at walk
-  exact ⟨walk⟩
+  let walk := build_walk 0 l.length.zero_le
+  have h_start : vertices[0] = x := List.getElem_scanl_zero
+  have h_end : vertices[l.length] = y := graph_connected.aux1 (fun τ a ↦ hE τ (hlE τ a)) hl_prod
+  exact ⟨h_start ▸ h_end ▸ walk⟩
 
 /--
   **Lemma 1:** Let `E ⊆ Perm α` be a set of transpositions acting on a finite type `α`.
