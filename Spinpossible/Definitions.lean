@@ -150,16 +150,12 @@ def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
       let p := to2d pos
       if p.IsInside r then to1d (rotate180 p r) else pos
     )
-    (by
-      apply Function.leftInverse_iff_comp.mpr
-      funext x
+    (fun x => by
       by_cases h : (to2d x).IsInside r
       · simp [h, spin_stays_inside]
       · simp [h]
     )
-    (by
-      apply Function.leftInverse_iff_comp.mpr
-      funext x
+    (fun x => by
       by_cases h : (to2d x).IsInside r
       · simp [h, spin_stays_inside]
       · simp [h]

@@ -46,8 +46,8 @@ lemma rectangleSet_cond_iff {r : Rectangle m n} :
 /-- **Proposition 2.1**
     NOTE: The original conditions `i ≤ m`, `j ≤ n`, an `m ≤ n` are not necessary.
 -/
-theorem rectangleSet_card_val {m n i j : PNat}
-    : (RectangleSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
+theorem rectangleSet_card_val {m n i j : PNat} :
+    (RectangleSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
   rw [←Finset.card_range (m + 1 - i), ←Finset.card_range (n + 1 - j), ←Finset.card_product]
   apply Finset.card_bij (fun r _ => ⟨r.topLeft.row, r.topLeft.col⟩)
   · intro r hr
