@@ -1,6 +1,5 @@
-import Mathlib.Algebra.Group.Subgroup.Basic
 import Mathlib.Combinatorics.SimpleGraph.Path
-import Mathlib.GroupTheory.Perm.Support
+import Mathlib.GroupTheory.Perm.Sign
 
 -- HEAVILY inspired by Group.exists_list_of_mem_closure
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} (h : a ∈ Subgroup.closure s) :
@@ -118,12 +117,55 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Equiv.Perm α))
   Then `E` generates the symmetric group `Perm α` if and only if `G` is connected.
 -/
 theorem transpositions_generate_symm_group_iff_connected_graph
-    {α : Type*} [DecidableEq α] [Nonempty α]
+    {α : Type*} [DecidableEq α] [Finite α] [Nonempty α]
     (E : Set (Perm α))
     (hE : ∀ σ ∈ E, σ.IsSwap) :
     Subgroup.closure E = ⊤ ↔ (SimpleGraph.fromRel (λ x y => swap x y ∈ E)).Connected := by
   constructor
-  · apply graph_connected E hE
-  · intro h
-    obtain ⟨hl⟩ := h
-    sorry
+  · exact graph_connected E hE
+  · intro hG_connected
+    apply (Subgroup.eq_top_iff' _).mpr
+    intro σ
+    have swap_in_closure : ∀ a b : α, swap a b ∈ Subgroup.closure E := by
+      intros a b
+      have h_walk : (SimpleGraph.fromRel (λ x y => swap x y ∈ E)).Reachable a b := hG_connected a b
+      obtain ⟨p⟩ := h_walk
+      induction' p with _ x y z adj_edge _ IH
+      · rw [swap_self]
+        exact Subgroup.one_mem _
+      ·
+        by_cases h_eq : x = z
+        · have : swap x z = Equiv.refl _ := swap_eq_refl_iff.mpr h_eq
+          rw [this]
+          exact (Subgroup.mul_mem_cancel_right (Subgroup.closure E) IH).mp IH
+        have swap_xy_in_E : swap x y ∈ E := by
+          have := (SimpleGraph.fromRel_adj _ _ _).mp adj_edge |>.2
+          rcases this with h | h
+          · exact h
+          · rwa [swap_comm]
+        have swap_xy_in_closure : swap x y ∈ Subgroup.closure E :=
+          Subgroup.subset_closure swap_xy_in_E
+        have swap_xz_eq : swap z x = (swap y z) * (swap x y) * (swap y z) := by
+          symm
+          apply Equiv.swap_mul_swap_mul_swap ?_ h_eq
+          aesop
+        have swap_xz_in_closure : swap x z ∈ Subgroup.closure E := by
+          rw [swap_comm, swap_xz_eq]
+          exact Subgroup.mul_mem _ (Subgroup.mul_mem _ IH swap_xy_in_closure) IH
+        exact swap_xz_in_closure
+    have : σ ∈ Subgroup.closure {τ : Perm α | τ.IsSwap} := by
+      apply Equiv.Perm.swap_induction_on
+      · exact Subgroup.one_mem _
+      · intros τ a b hab hτ
+        have h_swap : swap a b ∈ Subgroup.closure { τ : Perm α | τ.IsSwap } := by
+          refine Subgroup.subset_closure ?_
+          refine Set.mem_setOf.mpr ?_
+          use a, b
+        exact Subgroup.mul_mem _ h_swap hτ
+    have : σ ∈ Subgroup.closure E := by
+      apply Equiv.Perm.swap_induction_on
+      · exact Subgroup.one_mem _
+      · intros τ a b _ hτ
+        have h_swap : swap a b ∈ Subgroup.closure E := swap_in_closure a b
+        exact Subgroup.mul_mem _ h_swap hτ
+    exact this
