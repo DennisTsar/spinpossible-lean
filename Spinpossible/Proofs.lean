@@ -383,7 +383,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 : s
     · exact Or.inl h1
     · apply Or.inr
       simp only [DisjointRect, not_forall, not_not] at h1
-      obtain ⟨p, ⟨hp_r1, hp_r2⟩⟩ := h1
+      obtain ⟨p, hp_r1, hp_r2⟩ := h1
       apply commonCenter_if_rotate_eq hp_r1 hp_r2
 
       have h1 : (rotate180 p r1).IsInside r2 := by
@@ -503,7 +503,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : Spin m n} (h_s1 : s1.IsSpinAbout r1) (h_s2 :
         omega
       exact h1 this
 
-    obtain ⟨r3, ⟨h3, -⟩⟩ := h
+    obtain ⟨r3, h3, -⟩ := h
     dsimp only [Spin.IsSpinAbout, Rectangle.toSpin] at h_s1 h_s2 h3
     simp only [h_s1, h_s2, Spin.mul_def, perm.mul_def, Spin.mk.injEq] at h3
     clear h_s1 h_s2
