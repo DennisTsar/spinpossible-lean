@@ -5,6 +5,7 @@ defaultTargets = ["Spinpossible"]
 [leanOptions]
 pp.unicode.fun = true
 relaxedAutoImplicit = false
+linter.haveLet = 2
 
 [[require]]
 name = "mathlib"
