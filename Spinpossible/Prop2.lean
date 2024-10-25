@@ -109,7 +109,7 @@ def SpinSet (i j : PNat) (m n : PNat) : Finset (Rectangle m n) :=
 
 /-- **Proposition 2.2** -/
 theorem prop2 {m n i j : PNat} :
-  (SpinSet i j m n ).card = if i = j then (RectangleSet i j m n).card
+  (SpinSet i j m n).card = if i = j then (RectangleSet i j m n).card
     else (RectangleSet i j m n).card + (RectangleSet j i m n).card := by
   rw [SpinSet]
   split
@@ -137,7 +137,7 @@ lemma validSpins_def2 : validSpins m n =
     use r.topLeft, r.bottomRight
     simp_all only [r.validRow, r.validCol, and_self, exists_const]
 
-lemma sum_m_minus_x1.aux1 {a b c : Nat} (h: (a : ℤ) = b - c) : a = b - c := by omega
+private lemma sum_m_minus_x1.aux1 {a b c : Nat} (h: (a : ℤ) = b - c) : a = b - c := by omega
 
 open Finset in
 lemma sum_m_minus_x1 (m : PNat) :

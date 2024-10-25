@@ -44,14 +44,14 @@ lemma isSwap_swap_ne [DecidableEq α] {x y : α} (h : (swap x y).IsSwap) : x ≠
   obtain ⟨_, _, h1, hswap⟩ := h
   exact h1 (swap_eq_refl_iff.mp hswap.symm)
 
-lemma graph_connected.aux1 [DecidableEq α]
+private lemma graph_connected.aux1 [DecidableEq α]
   {l : List (Perm α)} (hl : ∀ τ ∈ l, τ.IsSwap) (h : l.prod = swap x y) :
   (List.scanl (fun a τ ↦ τ a) x l)[l.length]'(by simp [List.length_scanl]) = y := by
   have h_prod_reverse : l.reverse.prod = l.prod⁻¹ := by
     have a1 : ∀ w ∈ l, w⁻¹ = w := fun w hw ↦ isSwap_inv_eq_self (hl w hw)|>.symm
     simpa [List.map_eq_map_iff.mpr a1, List.map_id] using l.prod_reverse_noncomm
-  rw [scanl_last_eq_foldl_perm, foldl_perm_eq_prod_rev, h_prod_reverse, h]
-  simp
+  rw [scanl_last_eq_foldl_perm, foldl_perm_eq_prod_rev,
+    h_prod_reverse, h, swap_inv, swap_apply_left]
 
 lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
     (hE : ∀ σ ∈ E, σ.IsSwap) (h_closure : Subgroup.closure E = ⊤) :

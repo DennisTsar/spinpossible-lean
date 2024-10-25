@@ -101,7 +101,7 @@ lemma rect_eq_if_corners_inside {r1 r2 : Rectangle m n}
     (_ : r2.bottomRight.IsInside r1)
     : r1 = r2 := by dsimp [Point.IsInside] at *; ext <;> omega
 
-lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
+private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
     (p_in_r1 : p.IsInside s1.r) (p_not_in_r2 : ¬p.IsInside s2.r)
     (hs3 : s1.toSpin * s2.toSpin = s3.toSpin)
     (r2_in_r1 : ∀ (p : Point m n), p.IsInside s2.r → p.IsInside s1.r)
@@ -144,7 +144,7 @@ lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
   have app_orient := congrFun hs3_orient (to1d r2.topLeft)
   simp [r2.corners_inside, r2.corners_rotate, r2_in_r1, r3_eq_r1] at app_orient
 
-lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
+private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
     -- This is implied by the last arg, but most of the proof needs only this weaker
     -- assumption, so we leave it to show intention
     (p_in_r2 : p.IsInside s2.r)
@@ -194,7 +194,7 @@ lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
   rw [app, rotate180_self_inverse p_in_r2] at r2_top_not_in_r3
   contradiction
 
-lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n}
+private lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n}
     (h_contains : r1.Contains r2) (h_r1_ne_r2 : r1 ≠ r2) :
     ¬r1.topLeft.IsInside r2 ∨ ¬r1.bottomRight.IsInside r2 := by
   let ⟨_, _, _⟩ : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
@@ -333,8 +333,10 @@ lemma spin_stays_inside_cent (h1 : CommonCenter r1 r2) (h2 : p.IsInside r1)
   rw [h1.rotate_eq _ ⟨h2, h3⟩]
   exact spin_stays_inside h2
 
-lemma rotate_eq_if_comm.aux1 {a b c d e : Nat} (h : d - (b - (e - a) - c) = b - (d - (e - c) - a))
-    (_ : a ≤ e) (_ : c ≤ e) (_ : e ≤ b) (_ : e ≤ d) : d - (e - c) = b - (e - a) := by omega
+private lemma rotate_eq_if_comm.aux1 {a b c d e : Nat}
+    (h : d - (b - (e - a) - c) = b - (d - (e - c) - a))
+    (_ : a ≤ e) (_ : c ≤ e) (_ : e ≤ b) (_ : e ≤ d) :
+    d - (e - c) = b - (e - a) := by omega
 
 lemma rotate_eq_if_comm (h1 : rotate180 (rotate180 p r1) r2 = rotate180 (rotate180 p r2) r1)
     (h2 : p.IsInside r1) (h3 : p.IsInside r2) :
@@ -443,7 +445,7 @@ def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
   (r1.bottomRight.col.val - r1.topLeft.col.val) = (r2.bottomRight.col.val - r2.topLeft.col.val)
 
-lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
+private lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
   (_ : r2t ≤ r2b) (_ : r1t ≤ r2t) (_ : r1b ≥ r2b)
   (_ : r1b - (r2b - r1t) ≤ p.val)
   (_ : p.val ≤ r1b - (r2t - r1t))
@@ -451,7 +453,7 @@ lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
     r1b.val - (r2t.val - r1t.val) - (p.val - (r1b.val - (r2b.val - r1t.val))) := by
   omega
 
-lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
+private lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
     (h_r3 : r3.topLeft = rotate180 r2.bottomRight r1 ∧ r3.bottomRight = rotate180 r2.topLeft r1) :
     ∀ (p : Point m n), p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
   intro p p_in_r1
