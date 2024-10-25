@@ -36,6 +36,10 @@ instance : Mul (Spin m n) := ⟨mul⟩
 
 lemma mul_def (x y : Spin m n) : x * y = ⟨x.α * y.α, fun i => x.u (y.α.invFun i) + y.u i⟩ := rfl
 
+instance : One (Spin m n) := ⟨Equiv.refl _, fun _ => 0⟩
+
+lemma one_def : (1 : Spin m n) = ⟨Equiv.refl _, fun _ => 0⟩ := rfl
+
 end Spin
 
 inductive orientation
