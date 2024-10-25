@@ -11,17 +11,6 @@ structure RectSpin (m n : PNat) extends Spin m n where
 
 instance : Coe (RectSpin m n) (Spin m n) := ⟨RectSpin.toSpin⟩
 
-lemma rect_spin_mul_eq_chain : ((Rectangle.toSpin r1) * (Rectangle.toSpin r2)).actionOnBoard b =
-    r2.toSpin.actionOnBoard (r1.toSpin.actionOnBoard b) := by
-  simp only [Spin.mul_def, perm.mul_def, Rectangle.toSpin]
-  unfold Spin.actionOnBoard
-  funext i j
-  by_cases h1 : Point.IsInside ⟨i, j⟩ r2
-  · simp only [to2d_to1d_inverse, h1, ite_true, add_left_eq_self, ite_eq_right_iff, one_ne_zero,
-      imp_false, Equiv.symm_trans_apply, Equiv.coe_fn_symm_mk, ite_eq_left_iff, zero_ne_one]
-    split <;> simp
-  · simp [h1]
-
 /-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse (s : RectSpin m n) : s.toSpin * s.toSpin = 1 := by
   rw [s.h, Spin.mul_def, Rectangle.toSpin, perm.mul_def, Equiv.trans]
@@ -47,13 +36,16 @@ theorem spin_is_own_inverse' : performSpin r (performSpin r b) = b := by
 /-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse'' (s : RectSpin _ _) :
     s.actionOnBoard (s.actionOnBoard b) = b := by
-  rw [s.h, ←performSpin, ←performSpin, spin_is_own_inverse']
+  rw [s.h, ← performSpin, ← performSpin, spin_is_own_inverse']
 
 /-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse''' (s : RectSpin _ _) : (s.toSpin * s).actionOnBoard b = b := by
-  have h1 : (s.toSpin * s).actionOnBoard b = s.actionOnBoard (s.actionOnBoard b) := by
-    rw [s.h, rect_spin_mul_eq_chain]
-  simp only [h1, spin_is_own_inverse'' s]
+  unfold Spin.actionOnBoard
+  simp only [s.h, Spin.mul_def, perm.mul_def, Rectangle.toSpin]
+  funext i j
+  by_cases h1 : Point.IsInside ⟨i, j⟩ s.r
+  · simp [h1, spin_stays_inside]
+  · simp [h1]
 
 lemma Rectangle.corners_inside (r : Rectangle m n) :
     r.topLeft.IsInside r ∧ r.bottomRight.IsInside r := by
@@ -95,11 +87,6 @@ lemma commonCenter_if_rotate_eq (h1 : p.IsInside  r1) (h2 : p.IsInside r2)
 /-- `r1` contains `r2` -/
 def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
   ∀ p : Point .., p.IsInside r2 → p.IsInside r1
-
-lemma s1_eq_s2_of_r1_eq_r2 {s1 s2 : RectSpin m n} : s1 = s2 ↔ s1.r = s2.r := by
-  constructor
-  · intro; congr
-  · intro h; ext : 1 <;> simp [s1.h, s2.h, h]
 
 lemma to1d_injective : Function.Injective (to1d : Point m n -> _)
   | p1, p2, h => by simpa only [to2d_to1d_inverse] using congr(to2d $h)
@@ -231,9 +218,9 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
   set r2 := s2.r
   set r3 := s3.r
 
-  have h_r1_ne_r2 : r1 ≠ r2 := by
+  have h_r1_ne_r2 : s1.r ≠ r2 := by
     by_contra h1
-    rw [s1_eq_s2_of_r1_eq_r2.mpr h1] at hs3
+    rw [RectSpin.h, h1, ← RectSpin.h] at hs3
     exact (spin_inverse_is_not_spin s3) s2 hs3
 
   let exists_p1_p2 :=
@@ -361,7 +348,7 @@ lemma spin_not_comm_if_outside (s1 s2 : RectSpin _ _)
     (h3 : p.IsInside s1.r) (h4 : p.IsInside s2.r)
     (h6 : ¬(rotate180 p s2.r).IsInside s1.r) :
     (fun i ↦ s1.u (s2.α.symm i) + s2.u i) ≠ (fun i ↦ s2.u (s1.α.symm i) + s1.u i) := by
-  refine Function.ne_iff.mpr ?_
+  apply Function.ne_iff.mpr
   use (to1d (rotate180 p s2.r))
   simp [RectSpin.h, Rectangle.toSpin, h3, h4, h6, spin_stays_inside]
 
