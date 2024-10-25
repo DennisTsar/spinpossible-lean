@@ -215,19 +215,16 @@ lemma s1s2_not_spin.aux2 {s1 s2 : Spin m n}
 lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n}
     (h_contains : r1.Contains r2) (h_r1_ne_r2 : r1 ≠ r2) :
     ¬r1.topLeft.IsInside r2 ∨ ¬r1.bottomRight.IsInside r2 := by
-  have r2_in_r1 : r2.topLeft.IsInside r1 ∧ r2.bottomRight.IsInside r1 :=
-    ⟨h_contains r2.topLeft r2.corners_inside.1, h_contains r2.bottomRight r2.corners_inside.2⟩
-  have : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
+  let ⟨_, _, _⟩ : ∃ p : Point .., p.IsInside r1 ∧ ¬p.IsInside r2 := by
     by_contra! h
     apply h_r1_ne_r2
-    refine rect_eq_if_corners_inside ?_ r2_in_r1.1 ?_ r2_in_r1.2
+    apply rect_eq_if_corners_inside
     · exact h r1.topLeft r1.corners_inside.1
+    · exact h_contains r2.topLeft r2.corners_inside.1
     · exact h r1.bottomRight r1.corners_inside.2
-  by_contra! h
-  have : ∀ (p : Point m n), p.IsInside r1 → p.IsInside r2 := by
-    dsimp [Point.IsInside] at h ⊢
-    omega
-  aesop
+    · exact h_contains r2.bottomRight r2.corners_inside.2
+  dsimp [Point.IsInside] at *
+  omega
 
 /-- **Proposition 1.2**: Let `s1` and `s2` be spins about rectangles `r1` and `r2` respectively.
     `s1 * s2` is not a spin. -/
