@@ -5,7 +5,7 @@ lemma to2d_injective {m n : PNat} : Function.Injective (to2d : Fin (m * n) -> _)
   | p1, p2, h => by simpa only [to1d_to2d_inverse] using congr(to1d $h)
 
 lemma to2d_surjective {m n : PNat} : Function.Surjective (to2d : Fin (m * n) -> _) :=
-  fun x => ⟨to1d x, by simp [to1d_to2d_inverse]⟩
+  fun x => ⟨to1d x, to2d_to1d_inverse⟩
 
 instance {m n : PNat} : Fintype (Point m n) :=
   Fintype.ofBijective to2d ⟨to2d_injective, to2d_surjective⟩
