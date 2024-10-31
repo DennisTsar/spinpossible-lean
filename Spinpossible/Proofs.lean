@@ -8,6 +8,7 @@ open scoped CharTwo -- useful since orient is in `ZMod 2` (specifically `CharTwo
 structure RectSpin (m n : PNat) extends Spin m n where
   r : Rectangle m n
   h : toSpin = r.toSpin
+  deriving DecidableEq
 
 instance : Coe (RectSpin m n) (Spin m n) := ⟨RectSpin.toSpin⟩
 
