@@ -413,13 +413,11 @@ private lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
 private lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
     (h_r3 : r3.topLeft = rotate180 r2.bottomRight r1 ∧ r3.bottomRight = rotate180 r2.topLeft r1) :
     ∀ (p : Point m n), p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
-  intro p p_in_r1
   have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
   have : r2.topLeft.IsInside r1 := h r2.topLeft r2.corners_inside.1
-  apply Iff.intro <;>
-  · dsimp [Point.IsInside, rotate180] at *
-    simp only [h_r3]
-    omega
+  dsimp [Point.IsInside, rotate180] at *
+  simp only [h_r3]
+  omega
 
 /-- **Proposition 1.4**: Let `s1` and `s2` be spins about rectangles `r1` and `r2` respectively.
     `s1 * s2 * s1` is a spin `s3` if and only if either `s1` and `s2` commute or `r1` contains `r2`.
