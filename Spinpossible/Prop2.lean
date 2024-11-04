@@ -35,22 +35,20 @@ lemma rectangleSet_cond_iff {r : Rectangle m n} :
     exact Finset.mem_filter.mp h |>.2
   · intro h
     refine Finset.mem_filter.mpr ⟨?_, h⟩
-    unfold validSpins
-    simp only [Finset.mem_filterMap, Finset.mem_univ, true_and, Prod.exists]
+    simp only [validSpins, Finset.mem_filterMap, Finset.mem_univ, true_and, Prod.exists]
     use r.topLeft, r.bottomRight
     simp [r.validRow, r.validCol]
 
 /-- "The set `R_i×j` is necessarily empty if `i > m` or `j > n`" -/
-lemma rectangleSet_empty_if {i j m n : PNat} : (i > m ∨ j > n) → (RectangleSet i j m n) = ∅ := by
+lemma rectangleSet_empty_if {i j m n : PNat} : (i > m.val ∨ j > n.val) → (RectangleSet i j m n) = ∅ := by
   intro h
   apply Finset.filter_eq_empty_iff.mpr
   intro r
-  simp only [←PNat.coe_lt_coe] at h
   omega
 
 /-- "we may have `R_i×j = ∅` even when `R_j×i ≠ ∅` (although this can occur only when `m ≠ n`)" -/
 lemma rectangleSet_empty_nonempty {m n : PNat} :
-  (m ≠ n → ∃ i j, RectangleSet i j m n = ∅ ∧ RectangleSet j i m n ≠ ∅) ∧
+  (m.val ≠ n → ∃ i j, RectangleSet i j m n = ∅ ∧ RectangleSet j i m n ≠ ∅) ∧
     (RectangleSet i j m n = ∅ ∧ RectangleSet j i m n ≠ ∅ → m ≠ n) := by
   constructor
   · intro h
@@ -60,8 +58,8 @@ lemma rectangleSet_empty_nonempty {m n : PNat} :
     · apply Finset.nonempty_iff_ne_empty.mp
       have : m.val > 0 ∧ n.val > 0 := ⟨m.2, n.2⟩
       use ⟨⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩, ⟨⟨m - 1, by omega⟩, ⟨n - 1, by omega⟩⟩, by simp, by simp⟩
-      apply rectangleSet_cond_iff.mpr
-      simp; omega
+      simp [rectangleSet_cond_iff]
+      omega
   · intro ⟨h1, h2⟩
     let ⟨_, _, hr⟩ := Finset.filter_nonempty_iff.mp (Finset.nonempty_iff_ne_empty.mpr h2)
     have : i.val > m.val ∨ j.val > n.val := by
@@ -69,8 +67,8 @@ lemma rectangleSet_empty_nonempty {m n : PNat} :
       absurd h1
       apply Finset.nonempty_iff_ne_empty.mp
       use ⟨⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩, ⟨⟨i.val - 1, by omega⟩, ⟨j.val - 1, by omega⟩⟩, by simp, by simp⟩
-      apply rectangleSet_cond_iff.mpr
-      simp; omega
+      simp [rectangleSet_cond_iff]
+      omega
     rw [ne_eq, ←PNat.coe_inj]
     omega
 
@@ -111,9 +109,8 @@ def SpinSet (i j : PNat) (m n : PNat) : Finset (Rectangle m n) :=
 theorem prop2 {m n i j : PNat} :
   (SpinSet i j m n).card = if i = j then (RectangleSet i j m n).card
     else (RectangleSet i j m n).card + (RectangleSet j i m n).card := by
-  rw [SpinSet]
   split
-  · simp_all only [Finset.union_idempotent]
+  · simp_all only [SpinSet, Finset.union_idempotent]
   rw [RectangleSet]
   apply Finset.card_union_of_disjoint
   apply Finset.disjoint_filter.mpr
@@ -143,8 +140,7 @@ lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
     ∑ x in range m, (n - x) = (∑ _i in range m, n) - (∑ i in range m, i) := by
   apply sum_nat_sub_distrib.aux1
   zify
-  convert Finset.sum_sub_distrib
-  rename_i a ha
+  convert Finset.sum_sub_distrib with a ha
   have : a < m := List.mem_range.mp ha
   omega
 
@@ -170,10 +166,8 @@ theorem total_valid_spins_card {m n : PNat} :
     intros
     apply Finset.disjoint_left.mpr
     intro r hr
-    by_contra hr2
-    have := rectangleSet_cond_iff.mp hr
-    have := rectangleSet_cond_iff.mp hr2
-    simp_all only [PNat.mk_coe, add_left_inj, not_true_eq_false, imp_false]
+    by_contra
+    simp_all only [rectangleSet_cond_iff, PNat.mk_coe, add_left_inj, not_true_eq_false, imp_false]
 
 -- More convenient version of `ne_of_mem_of_not_mem'`
 lemma ne_of_mem_of_not_mem'' {a b : Finset α} (x : α) : x ∈ a ∧ x ∉ b → a ≠ b := by
@@ -186,8 +180,7 @@ abbrev numsToSpinSet (i j : Nat) (m n : PNat) :=
 lemma spinSet_comm : SpinSet i j m n = SpinSet j i m n := by
   simp [SpinSet, Finset.union_comm]
 
-lemma numsToSpinSet_comm : numsToSpinSet i j m n = numsToSpinSet j i m n := by
-  simp [numsToSpinSet, SpinSet, Finset.union_comm]
+lemma numsToSpinSet_comm : numsToSpinSet i j m n = numsToSpinSet j i m n := spinSet_comm
 
 lemma sizes_eq_of_spinSet_eq (h : numsToSpinSet a b m n = numsToSpinSet c d m n)
   (h2 : a < m ∧ b < n) (h3 : ¬(a = d ∧ b = c)) : a = c ∧ b = d := by
@@ -269,15 +262,15 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
   refine Set.ext_iff.mpr ?_
   intro s
   constructor
-  · intro h1
+  · intro hs
     refine Finset.mem_map.mpr ?_
-    let ⟨x, y, _, _⟩ : ∃ (x y : Nat),
+    let ⟨x, y, _, _⟩ : ∃ x y : Nat,
         s = numsToSpinSet x y m n ∧ (numsToSpinSet x y m n).Nonempty := by
       simp [spinSetTypes] at *
       aesop
 
-    let ⟨c, d, hcd⟩ : ∃ c d : Nat, (c < m ∧ d < n) ∧
-        numsToSpinSet c d m n = numsToSpinSet x y m n := by
+    let ⟨c, d, hcd⟩ : ∃ c d : Nat,
+        (c < m ∧ d < n) ∧ numsToSpinSet c d m n = numsToSpinSet x y m n := by
       let a : PNat := ⟨x + 1, Nat.zero_lt_succ _⟩
       let b : PNat := ⟨y + 1, Nat.zero_lt_succ _⟩
       have : (RectangleSet a b m n).Nonempty ∨ (RectangleSet b a m n).Nonempty := by
