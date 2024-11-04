@@ -1,24 +1,23 @@
 import Mathlib.Combinatorics.SimpleGraph.Path
 import Mathlib.GroupTheory.Perm.Sign
 
--- HEAVILY inspired by Group.exists_list_of_mem_closure
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M}
     (h : a ∈ Subgroup.closure s) :
     ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
-  refine Subgroup.closure_induction h
-    (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, one_mul _⟩)
-    ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_
-  · intro a b ⟨La, HL1a, HL2a⟩ ⟨L, HL1, HL2⟩
-    use La ++ L
+  refine Subgroup.closure_induction
+    (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, List.prod_singleton⟩)
+    ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_ h
+  · intro a b ha hb ⟨La, HL1a, HL2a⟩ ⟨Lb, HL1b, HL2b⟩
+    use La ++ Lb
     aesop
-  · intro a ⟨L, HL1, HL2⟩
+  · intro a ha ⟨L, HL1, HL2⟩
     use L.reverse.map Inv.inv
     constructor
     · intro w hw
       have : w⁻¹ ∈ L := by simp_all
       have := HL1 _ this
       aesop
-    · simp [← congr($HL2⁻¹), List.prod_inv_reverse]
+    · simp [← HL2, List.prod_inv_reverse]
 
 open Equiv
 
