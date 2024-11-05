@@ -144,22 +144,22 @@ lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
   have : a < m := List.mem_range.mp ha
   omega
 
-lemma sum_m_minus_x1 (m : Nat) : (∑ x in Finset.range m, (m - x)) * 2 = m * (m + 1) := by
+lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x in Finset.range m, (m - x)) * 2 = (m + 1) * m := by
   rw [Finset.sum_nat_sub_distrib (by omega), Nat.sub_mul, Finset.sum_range_id_mul_two,
     Nat.mul_sub_one, Nat.sub_eq_of_eq_add]
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
   linarith [Nat.add_sub_of_le <| Nat.le_mul_self m]
 
 lemma sum_m_minus_x (m : PNat) :
-    ∑ i in Finset.range m, (m.val - i) = m.val * (m.val + 1) / 2 := by
-  have := sum_m_minus_x1 m
+    ∑ i in Finset.range m, (m - i) = (m + 1) * m / 2 := by
+  have := sum_m_minus_x_mul_two m
   omega
 
 /-- **Proposition 2.3** -/
 theorem total_valid_spins_card {m n : PNat} :
-  (validSpins m n).card = (m * (m + 1) / 2) * (n * (n + 1) / 2) := by
+  (validSpins m n).card = (m.val + 1).choose 2 * (n.val + 1).choose 2 := by
   rw [validSpins_def2, Finset.card_biUnion]
-  · simp only [rectangleSet_card_val, PNat.mk_coe, Nat.reduceSubDiff]
+  · simp only [rectangleSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]
     rw [Finset.sum_product, ←Finset.sum_mul_sum, sum_m_minus_x m, sum_m_minus_x n]
   · simp only [Finset.mem_product, Finset.mem_range, ne_eq, and_imp, Prod.forall,
       Prod.mk.injEq, not_and]
@@ -288,7 +288,7 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
         have : b > m.val ∨ a > n.val := by simp [a,b]; omega
         exact Finset.nonempty_iff_ne_empty.mp h5 (rectangleSet_empty_if this)
 
-    simp only [Finset.mem_attach, numsToSpinSet, Function.Embedding.coeFn_mk, true_and,
+    simp only [Finset.mem_attach, Function.Embedding.coeFn_mk, true_and,
       Subtype.exists, Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]
     dsimp only [numsToSpinSet] at hcd
     by_cases h8 : c ≤ d
@@ -314,10 +314,10 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
         Prod.exists, not_exists, not_and, and_imp]
       intros
       split_ifs
-      · by_contra! h
+      · by_contra h
         have := Prod.ext_iff.mp h
         omega
-      · by_contra! h
+      · by_contra h
         have := Prod.ext_iff.mp h
         omega
 
