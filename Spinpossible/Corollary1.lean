@@ -36,21 +36,14 @@ open scoped CharTwo
 
 lemma feelsomething {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.refl _) :
     l.prod.α = Equiv.refl _  := by
-  have : ∀ j : List (Spin m n), j.prod.α = (j.map (fun x => (x.α : Equiv.Perm _))).reverse.prod := by
-    intro j
-    induction' j with head tail ih
-    · rfl
-    · simp [List.map_cons, List.prod_cons, ih, Spin.mul_def]
-      rfl
-  rw [this l, List.map_eq_map_iff.mpr h]
-  simp only [List.map_const', List.reverse_replicate, List.prod_replicate]
-  have : IsIdempotentElem (Equiv.refl (Fin (↑m * ↑n))) := rfl
-  exact IsIdempotentElem.pow_succ_eq _ this
+  induction' l with head tail ih
+  · rfl
+  · simp_all [Spin.mul_def, perm.mul_def]
 
-lemma cmon (a : ZMod 2) : a = 0 ∨ a = 1 := by
+lemma ZMod.cases_two (a : ZMod 2) : a = 0 ∨ a = 1 :=
   match a with
-  | 0 => exact Or.inl rfl
-  | 1 => exact Or.inr rfl
+  | 0 => Or.inl rfl
+  | 1 => Or.inr rfl
 
 lemma sum_eq_sum_take_add_nthLe_add_sum_drop_succ
   [AddCommMonoid α] (l : List α) (i : ℕ) (h : i < l.length) :
@@ -88,126 +81,94 @@ example {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s.α)
   · funext i
     simp only [hl, Equiv.refl_symm, Equiv.refl_apply]
     have bam : k.prod.u i = (k.map (fun x => x.u i)).sum := by
-      clear hk
+      clear hk asd
       induction' k with head tail ih
-      · simp [List.map_cons, List.prod_cons, Spin.mul_def]
-        rfl
-      · simp [List.map_cons, List.prod_cons, ih, Spin.mul_def]
-        have : ∀ w ∈ tail, w.α = Equiv.refl _ := by
+      · rw [List.prod_nil, Spin.one_def, List.map_nil, List.sum_nil]
+      · have : ∀ w ∈ tail, w.α = Equiv.refl _ := by
           intro w hw
           exact zx _ (List.mem_cons_of_mem head hw)
-        have : tail.prod.α = Equiv.refl _ := feelsomething this
-        simp_all
+        simp [Spin.mul_def, feelsomething this, ih this]
     have : l.prod.u i = s.u i ∨ l.prod.u i = s.u i + 1 := by
-      cases cmon (l.prod.u i) <;> cases cmon (s.u i) <;> simp_all
+      cases (l.prod.u i).cases_two <;> cases (s.u i).cases_two <;> simp [*]
     rcases this with h2 | h2
-    · have qq : ∀ e ∈ k, e.u i = 0 := by
-        intro e he
-        simp [hk] at he
-        aesop
-      have : k.prod.u i = 0 := by
-        simp [bam, List.map_eq_map_iff.mpr qq]
-      simp_all
-    ·
-      simp_all [-hk]
-      have : (List.map (fun x ↦ x.u i) k).sum = 1 := by
-        let ⟨p1, p2, p3⟩ : ∃! f : Fin k.length, (List.map (fun x ↦ x.u i) k)[f] = 1 := by
-          let x_i_def : Spin m n :=
-            { α := Equiv.refl _, u := fun j ↦ if i = j then 1 else 0 }
-          have x_i_in_k : x_i_def ∈ k := by
-            rw [hk]
-            apply List.mem_filterMap.mpr
-            use ⟨i, by simp⟩
-            simp [h2]
-          have knodup : k.Nodup := by
-            rw [hk]
-            refine List.Nodup.filterMap ?_ ?_
-            · intro a1 a2 s hs1 hs2
-              simp only [ne_eq, ite_not, Option.mem_def, Option.ite_none_left_eq_some,
-                Option.some.injEq] at hs1 hs2
-              obtain ⟨-, right⟩ := hs1
-              obtain ⟨-, right_1⟩ := hs2
-              subst right
-              simp only [Spin.mk.injEq, true_and] at right_1
-              have := congr($right_1 a1)
-              by_contra! h
-              simp [h.symm] at this
-            · exact List.nodup_finRange _
-          have important : ∀ s : Fin k.length, k[s].u i = 1 → k[s] = x_i_def := by
-            intro s hs
-            have : k[s] ∈ k := by simp
-            set hh := k[s]
-            simp [hk] at this
-            obtain ⟨b1, -, b3⟩ := this
-            ext
-            · simp [x_i_def, ←b3]
-            · simp [x_i_def]
+    · have : ∀ e ∈ k, e.u i = 0 := by aesop
+      simp [asd, h2, bam, List.map_eq_map_iff.mpr this]
+    · simp only [asd, Equiv.refl_symm, Equiv.refl_apply, h2, bam]
+      apply add_eq_of_eq_add_neg
+      simp only [CharTwo.neg_eq, add_right_inj]
+
+      have knodup : k.Nodup := by
+        rw [hk]
+        refine List.Nodup.filterMap ?_ (List.nodup_finRange _)
+        intro a1 a2 s hs1 hs2
+        simp only [ne_eq, ite_not, Option.mem_def, Option.ite_none_left_eq_some,
+          Option.some.injEq] at hs1 hs2
+        have := hs1.2 ▸ hs2.2
+        simp only [Spin.mk.injEq, true_and] at this
+        replace := congr($this a1)
+        symm; simpa
+
+      let x_i_def : Spin m n :=
+        { α := Equiv.refl _, u := fun j ↦ if i = j then 1 else 0 }
+      have x_i_in_k : x_i_def ∈ k := by
+        rw [hk]
+        apply List.mem_filterMap.mpr
+        use ⟨i, by simp⟩
+        simp [h2]
+
+      obtain ⟨p1, ha1, ha2⟩ := List.getElem_of_mem x_i_in_k
+
+      set l3 := List.map (fun x ↦ x.u i) k
+      have klength : l3.length = k.length := by simp [l3]
+      have cc2 : ∀ (y : Fin k.length), l3[y] = 1 → y = p1 := by
+        intro y hy
+        have : k[y] = x_i_def := by
+          simp [l3] at hy
+          have : k[y] ∈ k := by simp
+          set hh := k[y]
+          simp [hy, hk] at this
+          obtain ⟨b1, -, b3⟩ := this
+          ext
+          · simp [x_i_def, ←b3]
+          · simp [x_i_def]
+            have := congr(Spin.u $b3)
+            simp only at this
+            have asd : b1 = i := by
               have := congr(Spin.u $b3)
-              simp only at this
-              have asd : b1 = i := by
-                have := congr(Spin.u $b3)
-                rw [funext_iff] at this
-                have := this i
-                simpa [hs] using this
-              exact asd ▸ this.symm
-          obtain ⟨fi, fi_eq⟩ := List.get_of_mem x_i_in_k
-          use ⟨fi, by simp⟩
-          simp
-          constructor
-          · have : k.get fi = k[fi.val] := rfl
-            rw [←this, fi_eq]
-            simp
-          · intro fi' hfi'
-            by_contra! hg
-            have ee1 : k[fi'] = x_i_def := important fi' hfi'
-            have : ¬ k.Nodup := by
-              refine List.not_nodup_of_get_eq_of_ne k fi fi' ?_ hg.symm
-              simp_all
-            exact this knodup
-        set l3 := List.map (fun x ↦ x.u i) k
-        simp at p2 p3
-        set l3 := List.map (fun x ↦ x.u i) k
-        have : l3.length = k.length := by simp [l3]
-        let p1' : Fin l3.length := ⟨p1.val, by omega⟩
-        have : l3.sum = (l3[p1'] :: l3.eraseIdx p1').sum := hou2 l3 p1'
-        rw [this, List.sum_cons]
-        have sa : l3[p1'] = 1 := by simp_all [l3, p1']
-        set l4 := l3.eraseIdx p1'
-        have : ∀ e ∈ l4, e = 0 := by
-          intro e he
-          let o := List.indexOf e l3
-          have re : o < l3.length := List.indexOf_lt_length.mpr (List.mem_of_mem_eraseIdx he)
-          have : k[o].u i = 0 := by
-            have ew2 : l3[p1] ∉ l4 := by
-              by_contra! h
-              let ⟨y1, y2, y3, y4⟩ := List.mem_eraseIdx_iff_getElem.mp h
-              have ew : y1 ≠ p1 := y3
-              have : k[p1].u i = k[y1].u i := by
-                simp [l3] at y4
-                exact y4.symm
-              have : k[y1].u i = 1 := this ▸ p2
-              have := p3 ⟨y1, by omega⟩ this
-              have := congr(Fin.val $this)
+              rw [funext_iff] at this
+              have := this i
               simp at this
-              exact ew this
-            have : l3[o] ∈ l4 := by rw [List.getElem_indexOf re]; exact he
-            have qwe : o ≠ p1 := by by_contra! h; simp [h] at this; absurd ew2; exact this
-            by_contra! h
-            have ww : k[o].u i = 1 := by
-              by_contra! h2
-              have := cmon (k[o].u i)
-              simp_all only [Fin.getElem_fin, List.getElem_map, List.sum_cons, ne_eq, or_self]
-            have := p3 ⟨o, by omega⟩
-            simp at this
-            have := this ww
-            absurd qwe
-            rw [←this]
-          have : k[o].u i = e := by
-            have : l3[o] = e := List.getElem_indexOf re
-            have : e = l3[o] := this.symm
-            simp_rw [this] -- why doesn't `rw` work here?
-            simp [l3]
-          simp_all
-        rw [sa, List.sum_eq_zero this, add_zero]
-      rw [this]
-      exact add_eq_of_eq_add_neg rfl
+              simpa [hy, hh] using this
+            exact asd ▸ this.symm
+        by_contra! hg
+        absurd knodup
+        refine List.not_nodup_of_get_eq_of_ne k ⟨p1, ha1⟩ y ?_ (Fin.ne_of_val_ne hg.symm)
+        simp [ha2, ← Fin.getElem_fin, this]
+      have cc3 : ∀ e ∈ l3, e = 1 → e = l3[p1] := by simp_all [l3]
+      rw [@Finset.sum_list_count]
+      simp
+      set u := l3[p1] with hu
+      have hu : u = 1 := by simp [hu, l3, ha2]
+      have : ¬List.Duplicate u l3 := by
+        by_contra! h
+        rw [@List.duplicate_iff_exists_distinct_get] at h
+        obtain ⟨u1, u2, u3, u4⟩ := h
+        simp [hu] at u4
+        have : u1.val < u2.val := by omega
+        have q1 := cc2 ⟨u1, klength ▸ u1.2⟩ (by rw [Fin.getElem_fin, u4.1])
+        have q2 := cc2 ⟨u2, klength ▸ u2.2⟩ (by rw [Fin.getElem_fin, u4.2])
+        simp only at q1 q2
+        omega
+      have : List.count u l3 = 1 := by
+        have := List.duplicate_iff_two_le_count.mpr.mt this
+        have : List.count u l3 > 0 := List.count_pos_iff.mpr (List.getElem_mem _)
+        omega
+      rw [Finset.sum_eq_single u]
+      · rw [this, hu]; decide
+      · intro b hb hb2
+        have ff := cc3 b (List.mem_dedup.mp hb) |>.mt hb2
+        have : b = 0 := not_not.mp ((or_iff_not_imp_left.mp b.cases_two).mt ff)
+        rw [this, mul_zero]
+      · intro h
+        absurd h
+        exact List.mem_toFinset.mpr (List.getElem_mem _)
