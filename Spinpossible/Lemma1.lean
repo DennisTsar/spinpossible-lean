@@ -19,6 +19,19 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M}
       aesop
     · simp [← HL2, List.prod_inv_reverse]
 
+theorem Subgroup.exists_list_of_mem_closure2 [Group M] {s : Set M} {a : M}
+    (h : ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a) :
+    a ∈ Subgroup.closure s
+     := by
+  obtain ⟨l, hl1, hl2⟩ := h
+  rw [← hl2]
+  apply list_prod_mem
+  intro x hx
+  rcases hl1 x hx with h1 | h1
+  · apply mem_closure.mpr fun K a ↦ a h1
+  · refine (Subgroup.inv_mem_iff (closure s)).mp ?_
+    exact mem_closure.mpr fun K a ↦ a h1
+
 open Equiv
 
 lemma scanl_last_eq_foldl_perm {α β : Type*} (l : List (Perm α)) (f : β → Perm α → β) (x : β) :
@@ -36,6 +49,12 @@ lemma foldl_perm_eq_prod_rev {α : Type*} (l : List (Perm α)) (x : α) :
 lemma isSwap_inv_eq_self [DecidableEq α] {x : Perm α} (h : x.IsSwap) : x = x⁻¹ := by
   let ⟨_, _, _, hswap⟩ := h
   rw [hswap, swap_inv]
+
+lemma isSwap_inv_eq_self' [DecidableEq α] {x : Perm α} (h : x⁻¹.IsSwap) : x = x⁻¹ := by
+  let ⟨_, _, _, hswap⟩ := h
+  have := congr($hswap ⁻¹)
+  simp only [inv_inv, swap_inv] at this
+  rw [hswap, this]
 
 lemma isSwap_swap_ne [DecidableEq α] {x y : α} (h : (swap x y).IsSwap) : x ≠ y := by
   by_contra h_eq
@@ -117,7 +136,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
 -/
 theorem transpositions_generate_symm_group_iff_connected_graph
     {α : Type*} [DecidableEq α] [Finite α] [Nonempty α]
-    (E : Set (Perm α))
+    {E : Set (Perm α)}
     (hE : ∀ σ ∈ E, σ.IsSwap) :
     Subgroup.closure E = ⊤ ↔ (SimpleGraph.fromRel (fun x y => swap x y ∈ E)).Connected := by
   refine ⟨graph_connected E hE, ?_⟩
