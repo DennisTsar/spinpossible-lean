@@ -206,13 +206,11 @@ lemma spinSetNums_card (m n : PNat) (h : m.val ≤ n) :
       use x.1
       split_ifs at hx
       · have := Prod.ext_iff.mp hx
-        refine ⟨by omega, ?_⟩
-        use x.2
+        refine ⟨by omega, x.2, ?_⟩
         simp_all
       · have := Prod.ext_iff.mp hx
-        refine ⟨by omega, ?_⟩
-        use x.2
-        simp_all [-h]
+        refine ⟨by omega, x.2, ?_⟩
+        simp
         omega
     · intro hx
       simp [s] at hx ⊢
@@ -313,13 +311,7 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
       simp only [Prod.mk.eta, Finset.mem_image, Finset.mem_product, Finset.mem_range,
         Prod.exists, not_exists, not_and, and_imp]
       intros
-      split_ifs
-      · by_contra h
-        have := Prod.ext_iff.mp h
-        omega
-      · by_contra h
-        have := Prod.ext_iff.mp h
-        omega
+      split_ifs <;> (simp; omega)
 
     rcases this with hmn | hmn
     · refine Finset.Nonempty.inl ?_

@@ -116,10 +116,7 @@ private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
   set r2 := s2.r
   set r3 := s3.r
 
-  have : p.IsInside r3 := by
-    by_contra! h
-    absurd hs3_orient (to1d p)
-    simp [p_not_in_r2, p_in_r1, h]
+  have : p.IsInside r3 := by simpa [p_not_in_r2, p_in_r1, eq_ite_iff] using hs3_orient (to1d p)
   have r2_bot_in_r3 : (rotate180 p r1).IsInside r3 := by
     by_contra! h
     have r1_bot_in_r2 : (rotate180 p r1).IsInside r2 := by
@@ -172,9 +169,7 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
     simp_all [r3.corners_inside]
 
   have r2_bot_in_r3 : p.IsInside r3 := by
-    by_contra! h
-    absurd congr($hs3_orient (to1d p))
-    simp [p_rot_not_in_r1, h, p_in_r2]
+    simpa [p_rot_not_in_r1, p_in_r2, eq_ite_iff] using congr($hs3_orient (to1d p))
 
   have r2_top_not_in_r3 : ¬(rotate180 p r2).IsInside r3 := by
     by_contra! h
@@ -260,9 +255,8 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
       omega
 
     have r1_top_in_r3 : r1.topLeft.IsInside r3 := by
-      by_contra! h
-      absurd hs3_orient (to1d r1.topLeft)
-      simp [r1.corners_inside, r1_top_not_in_r2, h]
+      have := hs3_orient (to1d r1.topLeft)
+      simpa [r1.corners_inside, r1_top_not_in_r2, eq_ite_iff]
     have r3_top_in_r1 : r3.topLeft.IsInside r1 := by
       have : ¬r3.topLeft.IsInside r2 := by
         dsimp [Point.IsInside] at r1_top_not_in_r2 r1_top_in_r3 ⊢

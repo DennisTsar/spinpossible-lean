@@ -1,36 +1,31 @@
 import Mathlib.Combinatorics.SimpleGraph.Path
 import Mathlib.GroupTheory.Perm.Sign
 
-theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M}
-    (h : a ∈ Subgroup.closure s) :
-    ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
-  refine Subgroup.closure_induction
-    (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, List.prod_singleton⟩)
-    ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_ h
-  · intro a b ha hb ⟨La, HL1a, HL2a⟩ ⟨Lb, HL1b, HL2b⟩
-    use La ++ Lb
-    aesop
-  · intro a ha ⟨L, HL1, HL2⟩
-    use L.reverse.map Inv.inv
-    constructor
-    · intro w hw
-      have : w⁻¹ ∈ L := by simp_all
-      have := HL1 _ this
+theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
+    a ∈ Subgroup.closure s ↔ ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
+  refine ⟨fun h => ?_, fun h => ?_⟩
+  · refine Subgroup.closure_induction
+      (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, List.prod_singleton⟩)
+      ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_ h
+    · intro a b ha hb ⟨La, HL1a, HL2a⟩ ⟨Lb, HL1b, HL2b⟩
+      use La ++ Lb
       aesop
-    · simp [← HL2, List.prod_inv_reverse]
-
-theorem Subgroup.exists_list_of_mem_closure2 [Group M] {s : Set M} {a : M}
-    (h : ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a) :
-    a ∈ Subgroup.closure s
-     := by
-  obtain ⟨l, hl1, hl2⟩ := h
-  rw [← hl2]
-  apply list_prod_mem
-  intro x hx
-  rcases hl1 x hx with h1 | h1
-  · apply mem_closure.mpr fun K a ↦ a h1
-  · refine (Subgroup.inv_mem_iff (closure s)).mp ?_
-    exact mem_closure.mpr fun K a ↦ a h1
+    · intro a ha ⟨L, HL1, HL2⟩
+      use L.reverse.map Inv.inv
+      constructor
+      · intro w hw
+        have : w⁻¹ ∈ L := by simp_all
+        have := HL1 _ this
+        aesop
+      · simp [← HL2, List.prod_inv_reverse]
+  · obtain ⟨l, hl1, hl2⟩ := h
+    rw [← hl2]
+    apply list_prod_mem
+    intro x hx
+    rcases hl1 x hx with h1 | h1
+    · apply mem_closure.mpr fun K a ↦ a h1
+    · apply (Subgroup.inv_mem_iff _).mp
+      exact mem_closure.mpr fun K a ↦ a h1
 
 open Equiv
 
@@ -83,10 +78,9 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
   have h_swap_in_H : swap x y ∈ H := by rw [hH_top]; exact Subgroup.mem_top _
   -- Express swap x y as a product of elements from E
   let ⟨l, hlE, hl_prod⟩ : ∃ l : List (Perm α), (∀ τ ∈ l, τ ∈ E) ∧ l.prod = swap x y := by
-    let ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure h_swap_in_H
+    let ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure.mp h_swap_in_H
     use l
-    refine ⟨?_, h2⟩
-    intro τ a
+    refine ⟨fun τ a => ?_, h2⟩
     rcases (h1 _ a) with h | h
     · exact h
     · rwa [isSwap_inv_eq_self (hE _ h)] at h
@@ -96,8 +90,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
   have h_adj : ∀ i (hi : i < l.length), vertices[i] ≠ vertices[i+1] →
       G.Adj vertices[i] vertices[i+1] := by
     intro i hi hj
-    refine (SimpleGraph.fromRel_adj _ _ _).mpr ⟨hj, ?_⟩
-    left
+    refine (SimpleGraph.fromRel_adj ..).mpr ⟨hj, Or.inl ?_⟩
     let τ := l[i]
     have hτE : τ ∈ E := hlE τ (l.get_mem i _)
     obtain ⟨a, b, _, hτ_eq⟩ := hE τ hτE
