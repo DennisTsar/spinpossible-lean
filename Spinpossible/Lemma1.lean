@@ -79,7 +79,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
     let ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure.mp h_swap_in_H
     use l
     refine ⟨fun τ a => ?_, h2⟩
-    rcases (h1 _ a) with h | h
+    rcases h1 _ a with h | h
     · exact h
     · rwa [isSwap_inv_eq_self (hE _ h)] at h
   -- Build the sequence of vertices starting from x by applying the permutations in l
@@ -146,10 +146,8 @@ theorem transpositions_generate_symm_group_iff_connected_graph
       · rw [swap_eq_refl_iff.mpr h_eq]
         exact Subgroup.one_mem _
       have swap_xy_in_E : swap x y ∈ E := by
-        have := (SimpleGraph.fromRel_adj _ _ _).mp adj_edge
-        rcases this.2 with h | h
-        · exact h
-        · rwa [swap_comm]
+        have := (SimpleGraph.fromRel_adj _ _ _).mp adj_edge |>.2
+        rwa [swap_comm y x, or_self] at this
       have swap_xz_eq : (swap y z) * (swap x y) * (swap y z) = swap z x :=
         swap_mul_swap_mul_swap (isSwap_swap_ne (hE _ swap_xy_in_E)) h_eq
       rw [swap_comm, ← swap_xz_eq,

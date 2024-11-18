@@ -8,7 +8,7 @@ instance : Inv (Spin m n) := ⟨Spin.inv⟩
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
   ext
   · rfl
-  · funext; exact add_assoc ..
+  · funext; apply add_assoc
 
 theorem Spin.one_mul (x : Spin m n) : 1 * x = x := by
   ext
@@ -18,7 +18,7 @@ theorem Spin.one_mul (x : Spin m n) : 1 * x = x := by
 theorem Spin.mul_one (x : Spin m n) : x * 1 = x := by
   ext
   · rfl
-  · funext; exact ((self_eq_add_right.mpr) rfl).symm
+  · funext; exact (self_eq_add_right.mpr rfl).symm
 
 theorem Spin.inv_mul_cancel (x : Spin m n) : x⁻¹ * x = 1 := by
   ext
@@ -450,8 +450,7 @@ example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
   let k : List (Spin m n) := List.finRange (m * n)
     |>.filterMap (fun isp =>
     if l.prod.u isp ≠ s.u isp then
-      letI x : VN (m * n) := fun j => if isp = j then 1 else 0
-      some ⟨Equiv.refl _, x⟩
+      some ⟨Equiv.refl _, fun j => if isp = j then 1 else 0⟩
     else
       none
     )

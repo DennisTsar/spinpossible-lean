@@ -290,10 +290,10 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
       · exact s1s2_not_spin.aux1 r1.corners_inside.1 h_corner hs3 h (Or.inl rfl)
       · exact s1s2_not_spin.aux1 r1.corners_inside.2 h_corner hs3 h (Or.inr rfl)
     · rcases s1s2_not_spin.aux3 h h_r1_ne_r2.symm with h_corner | h_corner
-      · apply s1s2_not_spin.aux2 r2.corners_inside.2 hs3 h
-        simp [r2.corners_rotate, h_corner]; exact Or.inr rfl
-      · apply s1s2_not_spin.aux2 r2.corners_inside.1 hs3 h
-        simp [r2.corners_rotate, h_corner]; exact Or.inl rfl
+      · apply s1s2_not_spin.aux2 r2.corners_inside.2 hs3 h ?_ (Or.inr rfl)
+        exact r2.corners_rotate.2 ▸ h_corner
+      · apply s1s2_not_spin.aux2 r2.corners_inside.1 hs3 h ?_ (Or.inl rfl)
+        exact r2.corners_rotate.1 ▸ h_corner
 
 def DisjointRect (r1 r2 : Rectangle m n) : Prop :=
   ∀ p : Point .., p.IsInside r1 → ¬p.IsInside r2
@@ -422,14 +422,12 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
   set r1 := s1.r
   set r2 := s2.r
   apply Iff.intro
-  · by_cases h1 : r1.Contains r2
-    · exact fun _ => Or.inr h1
-    intro h
-    apply Or.inl
-    rw [s1s2_eq_s2s1_iff.mpr]
-    by_cases h2 : DisjointRect r1 r2
-    · exact Or.inl h2
-    apply Or.inr
+  · intro h
+    rw [or_iff_not_imp_right]
+    intro h1
+    apply s1s2_eq_s2s1_iff.mpr
+    rw [or_iff_not_imp_left]
+    intro h2
     have r2_corner_not_in_r1 : ¬r2.topLeft.IsInside r1 ∨ ¬r2.bottomRight.IsInside r1 := by
       by_contra! h
       have : ∀ (p : Point m n), p.IsInside r2 → p.IsInside r1 := by
@@ -461,7 +459,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         have : CommonCenter s3.r r2 :=
           commonCenter_if_rotate_eq h_orient r2.corners_inside.1 h_perm
         refine ⟨this, ?_⟩
-        dsimp [Point.IsInside, CommonCenter] at *
+        dsimp [Point.IsInside, CommonCenter, r1, r2] at *
         omega
       · specialize h_perm (to1d r2.bottomRight)
         specialize h_orient (to1d r2.bottomRight)
@@ -476,7 +474,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         have : CommonCenter s3.r r2 :=
           commonCenter_if_rotate_eq h_orient r2.corners_inside.2 h_perm
         refine ⟨this, ?_⟩
-        dsimp [Point.IsInside, CommonCenter] at *
+        dsimp [Point.IsInside, CommonCenter, r1, r2] at *
         omega
 
     specialize h_perm (to1d p)

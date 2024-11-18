@@ -238,7 +238,7 @@ def spinSetsFromNums (m n : PNat) : Finset (Finset (Rectangle m n)) :=
   (spinSetNums m n)|>.attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
     intro ⟨⟨a1, a2⟩, ha⟩ ⟨⟨b1, b2⟩, hb⟩ h_eq
     simp only at h_eq
-    rw [@Subtype.mk_eq_mk, Prod.mk.injEq]
+    rw [Subtype.mk_eq_mk, Prod.mk.injEq]
     by_cases op_eq : (a1 = b2 ∧ a2 = b1)
     · let ⟨_, _, hc2⟩:= Finset.mem_image.mp ha
       let ⟨_, _, hc4⟩:= Finset.mem_image.mp hb
@@ -248,7 +248,7 @@ def spinSetsFromNums (m n : PNat) : Finset (Finset (Rectangle m n)) :=
       rcases this with h | h
       · exact sizes_eq_of_spinSet_eq h_eq h op_eq
       · rw [numsToSpinSet_comm, numsToSpinSet_comm (i := b1)] at h_eq
-        exact sizes_eq_of_spinSet_eq h_eq ⟨h.2, h.1⟩ (by omega) |>.symm
+        exact sizes_eq_of_spinSet_eq h_eq h.symm (by omega) |>.symm
   ⟩
 
 def spinSetTypes (m n : PNat) :=
@@ -275,13 +275,11 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
         by_contra
         simp_all [SpinSet]
       rcases this with h5 | h5
-      · use x, y
-        refine ⟨?_, rfl⟩
+      · use x, y, ?_
         by_contra
         have : a > m.val ∨ b > n.val := by simp [a,b]; omega
         exact Finset.nonempty_iff_ne_empty.mp h5 (rectangleSet_empty_if this)
-      · use y, x
-        refine ⟨?_, spinSet_comm⟩
+      · use y, x, ?_, spinSet_comm
         by_contra
         have : b > m.val ∨ a > n.val := by simp [a,b]; omega
         exact Finset.nonempty_iff_ne_empty.mp h5 (rectangleSet_empty_if this)
