@@ -7,7 +7,7 @@ instance : Inv (Spin m n) := ⟨Spin.inv⟩
 
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
   ext
-  · rw [Equiv.ext_iff]; exact fun _ ↦ rfl
+  · rfl
   · funext; exact add_assoc ..
 
 theorem Spin.one_mul (x : Spin m n) : 1 * x = x := by
@@ -36,13 +36,13 @@ instance : Group (Spin m n) where
 open scoped CharTwo
 
 lemma spin_prod_perm_eq_perm_prod {l : List (Spin m n)} :
-    l.prod.α = (l.map (fun s => (s.α : Equiv.Perm _))).reverse.prod  := by
+    l.prod.α = (l.map (fun s => (s.α : Equiv.Perm _))).reverse.prod := by
   induction' l with head tail ih
   · rfl
   · simp_all [Spin.mul_def, perm.mul_def, Equiv.Perm.mul_def]
 
 lemma prod_eq_refl_of_refl {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.refl _) :
-    l.prod.α = Equiv.refl _  := by
+    l.prod.α = Equiv.refl _ := by
   induction' l with head tail ih
   · rfl
   · simp_all [Spin.mul_def, perm.mul_def]
@@ -71,7 +71,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
     have bam : k.prod.u i = (k.map (fun x => x.u i)).sum := by
       clear hk k_prod_refl
       induction' k with head tail ih
-      · rw [List.prod_nil, Spin.one_def, List.map_nil, List.sum_nil]
+      · rfl
       · have : ∀ w ∈ tail, w.α = Equiv.refl _ := by
           intro w hw
           exact k_refl _ (List.mem_cons_of_mem head hw)
@@ -180,9 +180,9 @@ def Equiv.Perm.IsAdjacentSwap {m n : PNat} (p : Equiv.Perm (Fin (m * n))) : Prop
 lemma Equiv.Perm.IsAdjacentSwap.list_card {m n : PNat} {p : Equiv.Perm (Fin (m * n))}
     (h : p.IsAdjacentSwap) : p.support.toList.length = 2 := by
   simp [Equiv.Perm.IsAdjacentSwap] at h
-  exact Equiv.Perm.card_support_eq_two.mpr (h).choose ▸ Finset.length_toList _
+  exact Equiv.Perm.card_support_eq_two.mpr h.choose ▸ Finset.length_toList _
 
-lemma Equiv.Perm.IsAdjacentSwap.isAdjacent {m n : PNat} {p: Equiv.Perm (Fin (m * n))}
+lemma Equiv.Perm.IsAdjacentSwap.isAdjacent {m n : PNat} {p : Equiv.Perm (Fin (m * n))}
     (h : p.IsAdjacentSwap) :
     have := h.list_card
     (to2d p.support.toList[0]).IsAdjacent (to2d p.support.toList[1]) := by
@@ -213,7 +213,7 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {r : Rectangle m n} (h : p1.IsAdja
     · simp [h8]
     · cases r
       simp only [h9, to2d_to1d_inverse, to1d_inj]
-      ext <;> (simp only; omega)
+      ext <;> exact Nat.sub_sub_self ‹_›
     · simp_rw [← to2d_injective.ne_iff] at h8 h9
       have : r ∈ SpinSet 1 2 m n := Rectangle.swap_iff.mpr h
       simp [SpinSet, rectangleSet_cond_iff] at this
@@ -240,13 +240,13 @@ lemma exists_swap_spin_of_adj {p1 p2 : Point m n} (h : p1.IsAdjacent p2) :
     · rw [Equiv.swap_comm]
       exact spin_eq_swap_of_adj h.symm (by simp)
 
-lemma List.eq_one_of_two {l : List α} {x : α} (h : l.length = 2) (h2 : x ∈ l) : x = l[0] ∨ x = l[1] := by
+lemma List.eq_one_of_two {l : List α} (h1 : l.length = 2) (h2 : x ∈ l) : x = l[0] ∨ x = l[1] := by
   let k := [l[0], l[1]]
   have l_eq : l = k := by
     refine List.ext_getElem? fun y => ?_
     match y with
     | 0 | 1 => simp [k]
-    | _ + 2 => simp [k, h]
+    | _ + 2 => simp [k, h1]
   have : ∀ e ∈ k, e = l[0] ∨ e = l[1] := fun e a ↦ List.mem_pair.mp a
   exact this _ (l_eq ▸ h2)
 
@@ -319,7 +319,7 @@ example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
     let rec build_walk_full (z : Nat) (hz : z ≤ v.val := by omega) : x1.Walk ⟨z, by omega⟩ v :=
       have hzLt : z < m.val * n.val := by omega
       if ht : z = v.val then
-        SimpleGraph.Walk.nil.copy rfl (by simp [ht])
+        SimpleGraph.Walk.nil.copy rfl (Fin.eq_of_val_eq ht)
       else if hcol : ¬n.val ∣ z + 1 then
         have : (z + 1) % n.val = z % n.val + 1 := Nat.mod_succ_of_not_dvd hcol n.2
         let edge := build_walk_horiz (z / n.val) (z % n) ((z + 1) % n)
@@ -366,8 +366,8 @@ example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
   let ⟨l, hl, hl2⟩ : ∃ l : List (Equiv.Perm (Fin (m * n))), (∀ x ∈ l, x.IsAdjacentSwap) ∧ l.prod = s.α := by
     have : (s.α : Equiv.Perm _) ∈ Subgroup.closure set1 := by rw [top]; trivial
     let ⟨l, hl1, hl2⟩ := Subgroup.exists_list_of_mem_closure (s := set1) |>.mp this
-    use l
-    refine ⟨fun x hx => ?_, hl2⟩
+    use l, ?_, hl2
+    intro x hx
     have : x ∈ set1 := by
       by_contra k
       have := (hl1 x hx).resolve_left k
@@ -400,7 +400,7 @@ example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
       have := ne_of_ne_of_eq this.symm htop
       exact bot_eq.resolve_right this ▸ to2d_to1d_inverse ▸ adj.symm
 
-  have ⟨l, hl1, hl2⟩ : ∃ l : List (Spin m n), l.prod.α = s.α ∧ (∀ x ∈ l, x ∈ mySet m n) := by
+  let ⟨l, hl1, hl2⟩ : ∃ l : List (Spin m n), l.prod.α = s.α ∧ (∀ x ∈ l, x ∈ mySet m n) := by
     let y' : List (Rectangle m n) := l.attach.map (fun ⟨i, hi⟩ =>
       have := (hl _ hi).list_card
       let a := to2d i.support.toList[0]
@@ -438,8 +438,7 @@ example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
       simp only [mySet, Finset.mem_map, Finset.mem_union]
       simp only [List.mem_reverse, List.mem_map, y] at hx
       obtain ⟨a, ha1, ha2⟩ := hx
-      use a
-      refine ⟨Or.inr ?_, ha2⟩
+      use a, Or.inr ?_, ha2
       simp only [to1d_to2d_inverse, id_eq,
         List.mem_map, List.mem_attach, true_and, Subtype.exists, y'] at ha1
       obtain ⟨b, hb1, hb2⟩ := ha1
@@ -457,8 +456,7 @@ example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
       none
     )
 
-  use l ++ k
-  refine ⟨fun x hx => Or.inl ?_, Corollary1.aux1 hl1 rfl⟩
+  use l ++ k, fun x hx => Or.inl ?_, Corollary1.aux1 hl1 rfl
   rcases List.mem_append.mp hx with hx | hx
   · exact hl2 x hx
   · simp only [mySet, Finset.map_union, Finset.coe_union, Finset.coe_map,

@@ -195,7 +195,7 @@ abbrev spinSetNums (m n : PNat) :=
 lemma spinSetNums_card (m n : PNat) (h : m.val ≤ n) :
     (spinSetNums m n).card = m * (2 * n - m + 1) / 2 := by
   let s := (Finset.range m).biUnion (fun i => (Finset.Ico i n)
-    |>.map ⟨fun j => (i, j), by intros a1 a2 ha; aesop⟩)
+    |>.map ⟨fun j => (i, j), Prod.mk.inj_left i⟩)
   have : spinSetNums m n = s := by
     refine Finset.ext_iff.mpr ?_
     intro x

@@ -10,22 +10,21 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
     · intro a b ha hb ⟨La, HL1a, HL2a⟩ ⟨Lb, HL1b, HL2b⟩
       use La ++ Lb
       aesop
-    · intro a ha ⟨L, HL1, HL2⟩
+    · intro a _ ⟨L, HL1, HL2⟩
       use L.reverse.map Inv.inv
       constructor
       · intro w hw
-        have : w⁻¹ ∈ L := by simp_all
-        have := HL1 _ this
-        aesop
+        have : w⁻¹ ∈ L := by simpa using hw
+        have := HL1 _ this |>.symm
+        rwa [inv_inv] at this
       · simp [← HL2, List.prod_inv_reverse]
-  · obtain ⟨l, hl1, hl2⟩ := h
-    rw [← hl2]
+  · obtain ⟨l, hl, rfl⟩ := h
     apply list_prod_mem
     intro x hx
-    rcases hl1 x hx with h1 | h1
-    · apply mem_closure.mpr fun K a ↦ a h1
+    rcases hl x hx with hs | hs
+    · exact mem_closure.mpr fun K a ↦ a hs
     · apply (Subgroup.inv_mem_iff _).mp
-      exact mem_closure.mpr fun K a ↦ a h1
+      exact mem_closure.mpr fun K a ↦ a hs
 
 open Equiv
 
@@ -37,9 +36,9 @@ lemma scanl_last_eq_foldl_perm {α β : Type*} (l : List (Perm α)) (f : β → 
 
 lemma foldl_perm_eq_prod_rev {α : Type*} (l : List (Perm α)) (x : α) :
   List.foldl (fun a τ ↦ τ a) x l = l.reverse.prod x := by
-  induction' l generalizing x
+  induction l generalizing x
   · rfl
-  · simp_all [List.foldl]
+  · simp_all
 
 lemma isSwap_inv_eq_self [DecidableEq α] {x : Perm α} (h : x.IsSwap) : x = x⁻¹ := by
   let ⟨_, _, _, hswap⟩ := h
@@ -48,8 +47,7 @@ lemma isSwap_inv_eq_self [DecidableEq α] {x : Perm α} (h : x.IsSwap) : x = x�
 lemma isSwap_inv_eq_self' [DecidableEq α] {x : Perm α} (h : x⁻¹.IsSwap) : x = x⁻¹ := by
   let ⟨_, _, _, hswap⟩ := h
   have := congr($hswap ⁻¹)
-  simp only [inv_inv, swap_inv] at this
-  rw [hswap, this]
+  rwa [inv_inv, swap_inv, ← hswap] at this
 
 lemma isSwap_swap_ne [DecidableEq α] {x y : α} (h : (swap x y).IsSwap) : x ≠ y := by
   by_contra h_eq
@@ -61,8 +59,8 @@ private lemma graph_connected.aux1 [DecidableEq α]
   {l : List (Perm α)} (hl : ∀ τ ∈ l, τ.IsSwap) (h : l.prod = swap x y) :
   (List.scanl (fun a τ ↦ τ a) x l)[l.length]'(by simp [List.length_scanl]) = y := by
   have h_prod_reverse : l.reverse.prod = l.prod⁻¹ := by
-    have a1 : ∀ w ∈ l, w⁻¹ = w := fun w hw ↦ isSwap_inv_eq_self (hl w hw)|>.symm
-    simpa [List.map_eq_map_iff.mpr a1, List.map_id] using l.prod_reverse_noncomm
+    have : ∀ w ∈ l, w⁻¹ = w := fun w hw ↦ isSwap_inv_eq_self (hl w hw) |>.symm
+    simpa [List.map_eq_map_iff.mpr this, List.map_id] using l.prod_reverse_noncomm
   rw [scanl_last_eq_foldl_perm, foldl_perm_eq_prod_rev,
     h_prod_reverse, h, swap_inv, swap_apply_left]
 
