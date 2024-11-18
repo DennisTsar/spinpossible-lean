@@ -1,4 +1,3 @@
-import Mathlib.Data.Matrix.Basic
 import Mathlib.Data.ZMod.Basic
 
 def perm (N : Nat) := Equiv.Perm (Fin N)
@@ -42,20 +41,6 @@ lemma one_def : (1 : Spin m n) = ⟨Equiv.refl _, fun _ => 0⟩ := rfl
 
 end Spin
 
-inductive orientation
-  | positive
-  | negative
-  deriving DecidableEq, Repr
-
-structure tile where
-  id : Nat
-  orient : orientation
-  deriving DecidableEq, Repr
-
-def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
-
--- Step 2: Action of Spin m x n on board
-
 @[ext, pp_using_anonymous_constructor]
 structure Point (m n : PNat) where
   row : Fin m
@@ -88,29 +73,6 @@ lemma to2d_to1d_inverse : to2d (to1d p) = p := by
 @[simp]
 lemma to1d_to2d_inverse : (to1d (to2d p)) = p := by
   simp only [to1d, to2d, Nat.mod_add_div']
-
-def standardBoard (m n : PNat) : board m n :=
-  fun i j => {id := to1d ⟨i, j⟩ + 1, orient := orientation.positive}
-
-def orientation.other (o : orientation) : orientation :=
-  match o with
-  | orientation.positive => orientation.negative
-  | orientation.negative => orientation.positive
-
-@[simp]
-lemma orientation.other_self (o : orientation) : o.other.other = o :=
-  match o with
-  | orientation.positive => rfl
-  | orientation.negative => rfl
-
--- Action of Spin(m x n) on a board
-def Spin.actionOnBoard {m n : PNat} (s : Spin m n) (b : board m n) : board m n :=
-  fun i j =>
-    let origPos := to1d ⟨i, j⟩
-    let newPos := s.α.symm origPos
-    let ⟨newI, newJ⟩ := to2d newPos
-    let tile := b newI newJ
-    if s.u origPos = 1 then { tile with orient := tile.orient.other } else tile
 
 @[ext, pp_using_anonymous_constructor]
 structure Rectangle (m n : PNat) where
@@ -165,7 +127,3 @@ def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
       · simp [h]
     )
   u := fun pos => if (to2d pos).IsInside r then 1 else 0
-
--- Function to perform a spin on a board using the defined Spin action
-def performSpin (r : Rectangle m n) (b : board m n) : board m n :=
-  r.toSpin.actionOnBoard b

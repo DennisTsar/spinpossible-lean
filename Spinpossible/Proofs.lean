@@ -26,28 +26,6 @@ theorem spin_is_own_inverse (s : RectSpin m n) : s.toSpin * s.toSpin = 1 := by
     · simp [h1, spin_stays_inside]
     · simp [h1]
 
-/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
-theorem spin_is_own_inverse' : performSpin r (performSpin r b) = b := by
-  funext i j
-  unfold performSpin Rectangle.toSpin Spin.actionOnBoard
-  by_cases h : Point.IsInside ⟨i, j⟩ r
-  · simp [h, spin_stays_inside, rotate180_self_inverse, orientation.other_self]
-  · simp [h]
-
-/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
-theorem spin_is_own_inverse'' (s : RectSpin ..) :
-    s.actionOnBoard (s.actionOnBoard b) = b := by
-  rw [s.h, ← performSpin, ← performSpin, spin_is_own_inverse']
-
-/-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
-theorem spin_is_own_inverse''' (s : RectSpin ..) : (s.toSpin * s).actionOnBoard b = b := by
-  unfold Spin.actionOnBoard
-  simp only [s.h, Spin.mul_def, perm.mul_def, Rectangle.toSpin]
-  funext i j
-  by_cases h1 : Point.IsInside ⟨i, j⟩ s.r
-  · simp [h1, spin_stays_inside]
-  · simp [h1]
-
 lemma Rectangle.corners_inside (r : Rectangle m n) :
     r.topLeft.IsInside r ∧ r.bottomRight.IsInside r := by
   simp [Point.IsInside, r.validRow, r.validCol]
