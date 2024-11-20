@@ -107,23 +107,10 @@ lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
 
 -- Define a function to create a Spin element for a rectangle spin
 def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
-  α := Equiv.mk
+  α := Function.Involutive.toPerm
     (fun pos =>
       let p := to2d pos
       if p.IsInside r then to1d (rotate180 p r) else pos
     )
-    (fun pos =>
-      let p := to2d pos
-      if p.IsInside r then to1d (rotate180 p r) else pos
-    )
-    (fun x => by
-      by_cases h : (to2d x).IsInside r
-      · simp [h, spin_stays_inside]
-      · simp [h]
-    )
-    (fun x => by
-      by_cases h : (to2d x).IsInside r
-      · simp [h, spin_stays_inside]
-      · simp [h]
-    )
+    (fun _ => by simp only; split_ifs <;> simp_all [spin_stays_inside])
   u := fun pos => if (to2d pos).IsInside r then 1 else 0

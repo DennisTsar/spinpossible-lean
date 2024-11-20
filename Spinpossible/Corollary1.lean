@@ -206,7 +206,7 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {r : Rectangle m n} (h : p1.IsAdja
   rw [hr.1, hr.2] at h ⊢
   rw [Equiv.ext_iff]
   intro j
-  simp only [Rectangle.toSpin, Equiv.coe_fn_mk]
+  simp only [Rectangle.toSpin, Function.Involutive.coe_toPerm]
   split_ifs with h7
   · simp [Equiv.swap, Equiv.swapCore, rotate180, rotateCalc]
     split_ifs with h8 h9
