@@ -141,17 +141,6 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
       · apply absurd
         exact List.mem_toFinset.mpr k'_one
 
-lemma rectangle_toSpin_injective {m n : PNat}
-    : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
-  | r1, r2, h => by
-    have app := congr(Spin.u $h)
-    simp only [Rectangle.toSpin, Spin.mul_def, VN, funext_iff] at app
-    apply rect_eq_if_corners_inside
-    · simpa [r1.corners_inside, eq_ite_iff] using app (to1d r1.topLeft)
-    · simpa [r2.corners_inside, eq_ite_iff] using app (to1d r2.topLeft)
-    · simpa [r1.corners_inside, eq_ite_iff] using app (to1d r1.bottomRight)
-    · simpa [r2.corners_inside, eq_ite_iff] using app (to1d r2.bottomRight)
-
 def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
   |>.map ⟨fun x => x.toSpin, rectangle_toSpin_injective⟩
 

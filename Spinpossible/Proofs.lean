@@ -9,7 +9,7 @@ open Function.Involutive -- to make theorem names shorter
 structure RectSpin (m n : PNat) extends Spin m n where
   r : Rectangle m n
   h : toSpin = r.toSpin
-  deriving DecidableEq
+  deriving DecidableEq, Fintype
 
 instance : Coe (RectSpin m n) (Spin m n) := ⟨RectSpin.toSpin⟩
 

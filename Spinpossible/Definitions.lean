@@ -1,4 +1,7 @@
-import Mathlib.Data.ZMod.Basic
+import Mathlib.Data.Fintype.Perm
+import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.ZMod.Defs
+import Mathlib.Tactic.DeriveFintype
 
 def perm (N : Nat) := Equiv.Perm (Fin N)
 
@@ -16,14 +19,16 @@ end perm
 def VN (N : Nat) := Fin N → ZMod 2
 
 instance : DecidableEq (VN N) := inferInstanceAs (DecidableEq (Fin N → ZMod 2))
+instance : Fintype (VN N) := inferInstanceAs (Fintype (Fin N → ZMod 2))
 
 instance : DecidableEq (perm N) := inferInstanceAs (DecidableEq (Fin N ≃ Fin N))
+instance : Fintype (perm n) := inferInstanceAs (Fintype (Equiv.Perm (Fin n)))
 
 @[ext]
 structure Spin (m n : PNat) where
   α : perm (m * n)
   u : VN (m * n)
-  deriving DecidableEq
+  deriving DecidableEq, Fintype
 
 namespace Spin
 
@@ -45,7 +50,7 @@ end Spin
 structure Point (m n : PNat) where
   row : Fin m
   col : Fin n
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Fintype, Repr
 
 @[simp]
 lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
@@ -80,7 +85,7 @@ structure Rectangle (m n : PNat) where
   bottomRight : Point m n
   validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Fintype, Repr
 
 def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
   r.topLeft.row.val ≤ p.1.val ∧ p.1.val ≤ r.bottomRight.row.val ∧
