@@ -82,7 +82,7 @@ lemma rect_eq_if_corners_inside {r1 r2 : Rectangle m n}
 private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
     (p_in_r1 : p.IsInside s1.r) (p_not_in_r2 : ¬p.IsInside s2.r)
     (hs3 : s1.toSpin * s2.toSpin = s3.toSpin)
-    (r2_in_r1 : ∀ (p : Point m n), p.IsInside s2.r → p.IsInside s1.r)
+    (r2_in_r1 : ∀ p : Point m n, p.IsInside s2.r → p.IsInside s1.r)
     -- This arg is only needed for the final parts
     (p_is_corner : p = s1.r.topLeft ∨ p = s1.r.bottomRight)
     : False := by
@@ -126,7 +126,7 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
     -- assumption, so we leave it to show intention
     (p_in_r2 : p.IsInside s2.r)
     (hs3 : s1.toSpin * s2.toSpin = s3.toSpin)
-    (r1_in_r2 : ∀ (p : Point m n), p.IsInside s1.r → p.IsInside s2.r)
+    (r1_in_r2 : ∀ p : Point m n, p.IsInside s1.r → p.IsInside s2.r)
     (p_rot_not_in_r1 : ¬(rotate180 p s2.r).IsInside s1.r)
     (p_is_corner : p = s2.r.topLeft ∨ p = s2.r.bottomRight)
     : False := by
@@ -385,7 +385,7 @@ private lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
 
 private lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contains r2)
     (h_r3 : r3.topLeft = rotate180 r2.bottomRight r1 ∧ r3.bottomRight = rotate180 r2.topLeft r1) :
-    ∀ (p : Point m n), p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
+    ∀ p : Point m n, p.IsInside r1 → (p.IsInside r3 ↔ (rotate180 p r1).IsInside r2) := by
   have : _ ∧ _ := ⟨r2.validRow, r2.validCol⟩
   have : r2.topLeft.IsInside r1 := h r2.topLeft r2.corners_inside.1
   dsimp [Point.IsInside, rotate180] at *
@@ -409,7 +409,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     intro h2
     have r2_corner_not_in_r1 : ¬r2.topLeft.IsInside r1 ∨ ¬r2.bottomRight.IsInside r1 := by
       by_contra! h
-      have : ∀ (p : Point m n), p.IsInside r2 → p.IsInside r1 := by
+      have : ∀ p : Point m n, p.IsInside r2 → p.IsInside r1 := by
         dsimp [Point.IsInside] at h ⊢
         omega
       exact h1 this

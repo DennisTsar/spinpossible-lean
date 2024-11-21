@@ -99,7 +99,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
 
       let k' := List.map (fun x ↦ x.u i) k
       have k_length : k'.length = k.length := List.length_map k _
-      have k'_cond : ∀ (y : Fin k'.length), k'[y.val] = 1 → y = a := by
+      have k'_cond : ∀ y : Fin k'.length, k'[y.val] = 1 → y = a := by
         intro y hy
         have : k[y] = x_i_def := by
           unfold x_i_def
@@ -279,7 +279,7 @@ lemma List.map_attach_of_unattach {l : List α} {f : { x // x ∈ l } -> α} :
   intro a
   simp only [a, map_subtype, unattach_attach, map_id_fun', id_eq]
 
-example (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
+lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
   let set1 : Set (Equiv.Perm (Fin (m * n))) := (SpinSet 1 2 m n).image (fun x => x.toSpin.α) |>.toSet
 
   have set1_swap : ∀ e ∈ set1, e.IsSwap := by

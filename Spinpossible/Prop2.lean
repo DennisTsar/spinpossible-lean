@@ -69,7 +69,7 @@ lemma rectangleSet_empty_nonempty {m n : PNat} :
       use ⟨⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩, ⟨⟨i.val - 1, by omega⟩, ⟨j.val - 1, by omega⟩⟩, by simp, by simp⟩
       simp [rectangleSet_cond_iff]
       omega
-    rw [ne_eq, ←PNat.coe_inj]
+    rw [ne_eq, ← PNat.coe_inj]
     omega
 
 /-- **Proposition 2.1**
@@ -219,7 +219,7 @@ lemma spinSetNums_card (m n : PNat) (h : m.val ≤ n) :
   rw [this, Finset.card_biUnion]
   · simp_all only [Finset.card_map, Finset.card_attach, Prod.mk.eta, PNat.coe_le_coe,
       Nat.card_Ico, -h]
-    refine Nat.eq_div_of_mul_eq_right (by omega) ?_
+    apply Nat.eq_div_of_mul_eq_right (by omega)
     rw [Finset.sum_nat_sub_distrib h, Finset.sum_const, Finset.card_range, smul_eq_mul,
       Finset.sum_range_id]
     set x1 := m.val
@@ -229,13 +229,13 @@ lemma spinSetNums_card (m n : PNat) (h : m.val ≤ n) :
       show 2 * x2 - x1 + 1 = 2 * x2 - (x1 - 1) by omega,
       Nat.mul_sub_left_distrib x1 (2 * x2) _, Nat.mul_left_comm]
   · intro x _ y _ hxy
-    refine Finset.disjoint_left.mpr ?_
+    apply Finset.disjoint_left.mpr
     intro k _ _
     have : k.1 = x ∧ k.1 = y := by aesop
     exact hxy (this.1 ▸ this.2)
 
 def spinSetsFromNums (m n : PNat) : Finset (Finset (Rectangle m n)) :=
-  (spinSetNums m n)|>.attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
+  (spinSetNums m n).attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
     intro ⟨⟨a1, a2⟩, ha⟩ ⟨⟨b1, b2⟩, hb⟩ h_eq
     simp only at h_eq
     rw [Subtype.mk_eq_mk, Prod.mk.injEq]
@@ -257,14 +257,13 @@ def spinSetTypes (m n : PNat) :=
 
 lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
     spinSetTypes m n = spinSetsFromNums m n := by
-  refine Set.ext_iff.mpr ?_
-  intro s
+  ext s
   constructor
   · intro hs
     refine Finset.mem_map.mpr ?_
     let ⟨x, y, _, _⟩ : ∃ x y : Nat,
         s = numsToSpinSet x y m n ∧ (numsToSpinSet x y m n).Nonempty := by
-      simp [spinSetTypes] at *
+      simp [spinSetTypes] at hs
       aesop
 
     let ⟨c, d, hcd⟩ : ∃ c d : Nat,
