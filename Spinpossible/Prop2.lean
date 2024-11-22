@@ -14,19 +14,16 @@ lemma rectangle_toSpin_injective : Function.Injective (Rectangle.toSpin : Rectan
     · simpa [r1.corners_inside] using app (to1d r1.bottomRight)
     · simpa [r2.corners_inside] using app (to1d r2.bottomRight)
 
-lemma rectSpin_toSpin_injective : Function.Injective (RectSpin.toSpin : RectSpin m n -> _)
-  | s1, s2, h => by
-    rw [s1.h, s2.h] at h
+lemma rectSpin_rect_bijective : Function.Bijective (RectSpin.r : RectSpin m n -> _) where
+  left := fun s1 s2 h => by
     ext : 1
     · rw [s1.h, s2.h, h]
     · rw [s1.h, s2.h, h]
-    · exact rectangle_toSpin_injective h
-
-lemma rectSpin_rect_bijective : Function.Bijective (RectSpin.r : RectSpin m n -> _) where
-  left := fun s1 s2 h => by
-    apply rectSpin_toSpin_injective
-    rw [s1.h, s2.h, h]
+    · exact h
   right := fun r => ⟨⟨r.toSpin, r, rfl⟩, rfl⟩
+
+lemma rectSpin_toSpin_injective : Function.Injective (RectSpin.toSpin : RectSpin m n -> _)
+  | s1, s2, h => rectSpin_rect_bijective.1 (rectangle_toSpin_injective (s1.h ▸ s2.h ▸ h))
 
 def allMoves (m n : PNat) : Finset (RectSpin m n) := Finset.univ
 
