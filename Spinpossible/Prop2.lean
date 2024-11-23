@@ -33,13 +33,13 @@ def validSpins (m n : PNat) : Finset (RectSpin m n) := Finset.univ
 lemma validSpins_eq_univ {m n : PNat} : validSpins m n = Finset.univ := rfl
 
 -- Define the set of spins R(i x j), which are the spins about i x j rectangles
--- Not sure this is a helpful definition since the return type is too broad
-def RectangleSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
+-- Technically the return type is over-broad, but it works for now
+def RectSpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
   (validSpins m n).filter (fun s => s.r.bottomRight.row.val - s.r.topLeft.row.val + 1 = i ∧
                                     s.r.bottomRight.col.val - s.r.topLeft.col.val + 1 = j)
 
-lemma rectangleSet_cond_iff {s : RectSpin m n} :
-  s ∈ RectangleSet i j m n ↔
+lemma rectSpinSet_cond_iff {s : RectSpin m n} :
+  s ∈ RectSpinSet i j m n ↔
     s.r.bottomRight.row.val - s.r.topLeft.row.val + 1 = i ∧
     s.r.bottomRight.col.val - s.r.topLeft.col.val + 1 = j := by
   apply Iff.intro
@@ -49,24 +49,24 @@ lemma rectangleSet_cond_iff {s : RectSpin m n} :
     exact Finset.mem_filter.mpr ⟨by simp, h⟩
 
 /-- "The set `R_i×j` is necessarily empty if `i > m` or `j > n`" -/
-lemma rectangleSet_empty_if {i j m n : PNat} : (i > m.val ∨ j > n.val) → (RectangleSet i j m n) = ∅ := by
+lemma rectSpinSet_empty_if {i j m n : PNat} : (i > m.val ∨ j > n.val) → (RectSpinSet i j m n) = ∅ := by
   intro
   apply Finset.filter_eq_empty_iff.mpr
   omega
 
 /-- "we may have `R_i×j = ∅` even when `R_j×i ≠ ∅` (although this can occur only when `m ≠ n`)" -/
-lemma rectangleSet_empty_nonempty {m n : PNat} :
-  (m.val ≠ n → ∃ i j, RectangleSet i j m n = ∅ ∧ RectangleSet j i m n ≠ ∅) ∧
-    (RectangleSet i j m n = ∅ ∧ RectangleSet j i m n ≠ ∅ → m ≠ n) := by
+lemma rectSpinSet_empty_nonempty {m n : PNat} :
+  (m.val ≠ n → ∃ i j, RectSpinSet i j m n = ∅ ∧ RectSpinSet j i m n ≠ ∅) ∧
+    (RectSpinSet i j m n = ∅ ∧ RectSpinSet j i m n ≠ ∅ → m ≠ n) := by
   constructor
   · intro h
     use n, m
     constructor
-    · exact rectangleSet_empty_if (lt_or_gt_of_ne h)
+    · exact rectSpinSet_empty_if (lt_or_gt_of_ne h)
     · apply Finset.nonempty_iff_ne_empty.mp
       have : m.val > 0 ∧ n.val > 0 := ⟨m.2, n.2⟩
       use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨m.val - 1, by omega⟩, ⟨n.val - 1, by omega⟩⟩, by simp, by simp⟩
-      simp [rectangleSet_cond_iff]
+      simp [rectSpinSet_cond_iff]
       omega
   · intro ⟨h1, h2⟩
     have := Finset.filter_nonempty_iff.mp (Finset.nonempty_iff_ne_empty.mpr h2)
@@ -78,7 +78,7 @@ lemma rectangleSet_empty_nonempty {m n : PNat} :
         ⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩,
         ⟨⟨i.val - 1, by omega⟩, ⟨j.val - 1, by omega⟩⟩,
         by simp, by simp⟩
-      simp [rectangleSet_cond_iff]
+      simp [rectSpinSet_cond_iff]
       omega
     rw [ne_eq, ← PNat.coe_inj]
     omega
@@ -86,19 +86,19 @@ lemma rectangleSet_empty_nonempty {m n : PNat} :
 /-- **Proposition 2.1**
     NOTE: The original conditions `i ≤ m`, `j ≤ n`, an `m ≤ n` are not necessary.
 -/
-theorem rectangleSet_card_val {m n i j : PNat} :
-    (RectangleSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
+theorem rectSpinSet_card_val {i j m n : PNat} :
+    (RectSpinSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
   rw [←Finset.card_range (m + 1 - i), ←Finset.card_range (n + 1 - j), ←Finset.card_product]
   apply Finset.card_bij (fun s _ => ⟨s.r.topLeft.row, s.r.topLeft.col⟩)
   · intro s hs
-    have := rectangleSet_cond_iff.mp hs
+    have := rectSpinSet_cond_iff.mp hs
     have : s.r.topLeft.row.val < m + 1 - i := by omega
     have : s.r.topLeft.col.val < n + 1 - j := by omega
     simp only [Finset.mem_range, and_self, Finset.mem_product.mpr, *]
   · intro s1 hs1 s2 hs2 h3
     rw [Prod.mk.injEq] at h3
-    have := rectangleSet_cond_iff.mp hs1
-    have := rectangleSet_cond_iff.mp hs2
+    have := rectSpinSet_cond_iff.mp hs1
+    have := rectSpinSet_cond_iff.mp hs2
     have : _ ∧ _ := ⟨s1.r.validRow, s1.r.validCol⟩
     have : _ ∧ _ := ⟨s2.r.validRow, s2.r.validCol⟩
     apply rectSpin_rect_bijective.1
@@ -112,15 +112,15 @@ theorem rectangleSet_card_val {m n i j : PNat} :
       ⟨⟨p1, by omega⟩, ⟨p2, by omega⟩⟩,
       ⟨⟨i - 1 + p1, by omega⟩, ⟨j - 1 + p2, by omega⟩⟩,
       by simp, by simp⟩
-    simp [rectangleSet_cond_iff.mpr, *]
+    simp [rectSpinSet_cond_iff.mpr, *]
 
 def SpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
-  RectangleSet i j m n ∪ RectangleSet j i m n
+  RectSpinSet i j m n ∪ RectSpinSet j i m n
 
 /-- **Proposition 2.2** -/
-theorem prop2 {m n i j : PNat} :
-  (SpinSet i j m n).card = if i = j then (RectangleSet i j m n).card
-    else (RectangleSet i j m n).card + (RectangleSet j i m n).card := by
+theorem prop2 {i j m n : PNat} :
+  (SpinSet i j m n).card = if i = j then (RectSpinSet i j m n).card
+    else (RectSpinSet i j m n).card + (RectSpinSet j i m n).card := by
   split
   · simp_all only [SpinSet, Finset.union_idempotent]
   apply Finset.card_union_of_disjoint
@@ -128,10 +128,10 @@ theorem prop2 {m n i j : PNat} :
   intros
   simp_all only [PNat.coe_inj, false_and, not_false_eq_true]
 
-lemma validSpins_union_rectangleSet : validSpins m n =
+lemma validSpins_union_rectSpinSet : validSpins m n =
   ((Finset.range m) ×ˢ (Finset.range n)).biUnion
-    (fun p => RectangleSet ⟨p.1 + 1, by omega⟩ ⟨p.2 + 1, by omega⟩ m n) := by
-  simp [Finset.ext_iff, rectangleSet_cond_iff]
+    (fun p => RectSpinSet ⟨p.1 + 1, by omega⟩ ⟨p.2 + 1, by omega⟩ m n) := by
+  simp [Finset.ext_iff, rectSpinSet_cond_iff]
   omega
 
 private lemma sum_nat_sub_distrib.aux1 {a b c : Nat} (h: (a : ℤ) = b - c) : a = b - c := by omega
@@ -158,8 +158,8 @@ lemma sum_m_minus_x (m : PNat) :
 /-- **Proposition 2.3** -/
 theorem total_valid_spins_card {m n : PNat} :
   (validSpins m n).card = (m.val + 1).choose 2 * (n.val + 1).choose 2 := by
-  rw [validSpins_union_rectangleSet, Finset.card_biUnion]
-  · simp only [rectangleSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]
+  rw [validSpins_union_rectSpinSet, Finset.card_biUnion]
+  · simp only [rectSpinSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]
     rw [Finset.sum_product, ←Finset.sum_mul_sum, sum_m_minus_x m, sum_m_minus_x n]
   · simp only [Finset.mem_product, Finset.mem_range, ne_eq, and_imp, Prod.forall,
       Prod.mk.injEq, not_and]
@@ -167,7 +167,7 @@ theorem total_valid_spins_card {m n : PNat} :
     apply Finset.disjoint_left.mpr
     intro r hr
     by_contra
-    simp_all only [rectangleSet_cond_iff, PNat.mk_coe, add_left_inj, not_true_eq_false, imp_false]
+    simp_all only [rectSpinSet_cond_iff, PNat.mk_coe, add_left_inj, not_true_eq_false, imp_false]
 
 -- More convenient version of `ne_of_mem_of_not_mem'`
 lemma ne_of_mem_of_not_mem'' {a b : Finset α} (x : α) : x ∈ a ∧ x ∉ b → a ≠ b := by
@@ -188,7 +188,7 @@ lemma sizes_eq_of_spinSet_eq (h : numsToSpinSet a b m n = numsToSpinSet c d m n)
   absurd h
   apply ne_of_mem_of_not_mem''
    <| RectSpin.fromRect ⟨⟨0, 0⟩, ⟨⟨a, h2.1⟩, ⟨b, h2.2⟩⟩, Fin.zero_le' _, Fin.zero_le' _⟩
-  simp [SpinSet, rectangleSet_cond_iff, hc, h3]
+  simp [SpinSet, rectSpinSet_cond_iff, hc, h3]
 
 abbrev spinSetNums (m n : PNat) :=
   ((Finset.range m) ×ˢ (Finset.range n)).image (fun (a,b) => if a ≤ b then (a,b) else (b, a))
@@ -267,18 +267,18 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
         (c < m ∧ d < n) ∧ numsToSpinSet c d m n = numsToSpinSet x y m n := by
       let a : PNat := ⟨x + 1, Nat.zero_lt_succ _⟩
       let b : PNat := ⟨y + 1, Nat.zero_lt_succ _⟩
-      have : (RectangleSet a b m n).Nonempty ∨ (RectangleSet b a m n).Nonempty := by
+      have : (RectSpinSet a b m n).Nonempty ∨ (RectSpinSet b a m n).Nonempty := by
         by_contra
         simp_all [SpinSet]
       rcases this with h5 | h5
       · use x, y, ?_
         by_contra
         have : a > m.val ∨ b > n.val := by simp [a,b]; omega
-        exact Finset.nonempty_iff_ne_empty.mp h5 (rectangleSet_empty_if this)
+        exact Finset.nonempty_iff_ne_empty.mp h5 (rectSpinSet_empty_if this)
       · use y, x, ?_, spinSet_comm
         by_contra
         have : b > m.val ∨ a > n.val := by simp [a,b]; omega
-        exact Finset.nonempty_iff_ne_empty.mp h5 (rectangleSet_empty_if this)
+        exact Finset.nonempty_iff_ne_empty.mp h5 (rectSpinSet_empty_if this)
 
     simp only [Finset.mem_attach, Function.Embedding.coeFn_mk, true_and,
       Subtype.exists, Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]
@@ -310,10 +310,10 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
     rcases this with hmn | hmn
     · refine Finset.Nonempty.inl ?_
       use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨x, hmn.1⟩, ⟨y, hmn.2⟩⟩, Fin.zero_le' _, Fin.zero_le' _⟩
-      simp [RectangleSet]
+      simp [RectSpinSet]
     · refine Finset.Nonempty.inr ?_
       use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨y, hmn.1⟩, ⟨x, hmn.2⟩⟩, Fin.zero_le' _, Fin.zero_le' _⟩
-      simp [RectangleSet]
+      simp [RectSpinSet]
 
 lemma spinSetTypes_finite {m n : PNat} (h : m.val ≤ n) : (spinSetTypes m n).Finite :=
   spinSetTypes_eq h ▸ Finset.finite_toSet _

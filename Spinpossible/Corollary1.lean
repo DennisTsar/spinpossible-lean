@@ -183,7 +183,7 @@ lemma Point.IsAdjacent.lt_of_1d_lt {a b : Point m n} (h : (to1d a) ≤ (to1d b))
 lemma Rectangle.swap_iff {s : RectSpin m n} :
     s ∈ SpinSet 1 2 m n ↔ s.r.topLeft.IsAdjacent s.r.bottomRight := by
   have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
-  simp [SpinSet, rectangleSet_cond_iff, Point.IsAdjacent]
+  simp [SpinSet, rectSpinSet_cond_iff, Point.IsAdjacent]
   omega
 
 lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjacent p2)
@@ -202,7 +202,7 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjac
       ext <;> exact Nat.sub_sub_self (by omega)
     · simp_rw [← to2d_injective.ne_iff] at h8 h9
       have : s ∈ SpinSet 1 2 m n := Rectangle.swap_iff.mpr h
-      simp [SpinSet, rectangleSet_cond_iff] at this
+      simp [SpinSet, rectSpinSet_cond_iff] at this
       simp [Point.ext_iff, Point.IsInside] at *
       omega
   · rw [Equiv.swap_apply_of_ne_of_ne]
@@ -276,7 +276,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
     simp [set1, SpinSet] at he
     obtain ⟨s, hs1, hs2⟩ := he
     use (to1d s.r.topLeft), (to1d s.r.bottomRight)
-    simp [rectangleSet_cond_iff] at hs1
+    simp [rectSpinSet_cond_iff] at hs1
     have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
     constructor
     · simp [to1d_inj, Point.ext_iff]
@@ -453,7 +453,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
     let ⟨c1, _, c3⟩ := List.mem_filterMap.mp hx
     use RectSpin.fromRect ⟨to2d c1, to2d c1, Fin.le_refl _, Fin.le_refl _⟩
     constructor
-    · simp [SpinSet, rectangleSet_cond_iff]
+    · simp [SpinSet, rectSpinSet_cond_iff]
     · simp only [ne_eq, ite_not, Option.ite_none_left_eq_some, Option.some.injEq] at c3
       simp only [Rectangle.toSpin, ← c3.2, Spin.mk.injEq]
       constructor
