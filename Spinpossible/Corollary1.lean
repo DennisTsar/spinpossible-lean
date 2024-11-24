@@ -268,7 +268,7 @@ lemma List.map_attach_of_unattach {l : List α} {f : { x // x ∈ l } -> α} :
   simp only [a, map_subtype, unattach_attach, map_id_fun', id_eq]
 
 def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
-  |>.map ⟨(·.toSpin), rectSpin_toSpin_injective⟩
+  |>.map ⟨(·.toSpin), RectSpin.toSpin_injective⟩
 
 lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
   let set1 : Set (Equiv.Perm (Fin (m * n))) := (SpinSet 1 2 m n).image (·.α) |>.toSet

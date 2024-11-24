@@ -4,28 +4,28 @@ import Mathlib.Algebra.BigOperators.Intervals
 lemma to2d_injective {m n : PNat} : Function.Injective (to2d : Fin (m * n) -> _)
   | p1, p2, h => by simpa only [to1d_to2d_inverse] using congr(to1d $h)
 
-lemma rectangle_toSpin_injective : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
+lemma Rectangle.toSpin_injective : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
   | r1, r2, h => by
     have app := congr(Spin.u $h)
-    simp only [Rectangle.toSpin, funext_iff, eq_ite_iff] at app
+    simp only [toSpin, funext_iff, eq_ite_iff] at app
     apply rect_eq_if_corners_inside
-    · simpa [r1.corners_inside] using app (to1d r1.topLeft)
-    · simpa [r2.corners_inside] using app (to1d r2.topLeft)
-    · simpa [r1.corners_inside] using app (to1d r1.bottomRight)
-    · simpa [r2.corners_inside] using app (to1d r2.bottomRight)
+    · simpa [corners_inside] using app (to1d r1.topLeft)
+    · simpa [corners_inside] using app (to1d r2.topLeft)
+    · simpa [corners_inside] using app (to1d r1.bottomRight)
+    · simpa [corners_inside] using app (to1d r2.bottomRight)
 
 abbrev RectSpin.fromRect (r : Rectangle m n) : RectSpin m n := ⟨r.toSpin, r, rfl⟩
 
-lemma rectSpin_rect_bijective : Function.Bijective (RectSpin.r : RectSpin m n -> _) where
+lemma RectSpin.r_bijective : Function.Bijective (RectSpin.r : RectSpin m n -> _) where
   left := fun s1 s2 h => by
     ext : 1
     · rw [s1.h, s2.h, h]
     · rw [s1.h, s2.h, h]
     · exact h
-  right := fun r => ⟨RectSpin.fromRect r, rfl⟩
+  right := fun r => ⟨fromRect r, rfl⟩
 
-lemma rectSpin_toSpin_injective : Function.Injective (RectSpin.toSpin : RectSpin m n -> _)
-  | s1, s2, h => rectSpin_rect_bijective.1 (rectangle_toSpin_injective (s1.h ▸ s2.h ▸ h))
+lemma RectSpin.toSpin_injective : Function.Injective (RectSpin.toSpin : RectSpin m n -> _)
+  | s1, s2, h => r_bijective.1 (Rectangle.toSpin_injective (s1.h ▸ s2.h ▸ h))
 
 def validSpins (m n : PNat) : Finset (RectSpin m n) := Finset.univ
 
@@ -101,7 +101,7 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
     have := rectSpinSet_cond_iff.mp hs2
     have : _ ∧ _ := ⟨s1.r.validRow, s1.r.validCol⟩
     have : _ ∧ _ := ⟨s2.r.validRow, s2.r.validCol⟩
-    apply rectSpin_rect_bijective.1
+    apply RectSpin.r_bijective.1
     ext <;> omega
   · intro ⟨p1, p2⟩ hp
     have ⟨hp1, hp2⟩ := Finset.mem_product.mp hp
