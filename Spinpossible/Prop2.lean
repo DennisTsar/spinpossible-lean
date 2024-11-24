@@ -7,7 +7,7 @@ lemma to2d_injective {m n : PNat} : Function.Injective (to2d : Fin (m * n) -> _)
 lemma rectangle_toSpin_injective : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
   | r1, r2, h => by
     have app := congr(Spin.u $h)
-    simp only [VN, Rectangle.toSpin, funext_iff, eq_ite_iff] at app
+    simp only [Rectangle.toSpin, funext_iff, eq_ite_iff] at app
     apply rect_eq_if_corners_inside
     · simpa [r1.corners_inside] using app (to1d r1.topLeft)
     · simpa [r2.corners_inside] using app (to1d r2.topLeft)

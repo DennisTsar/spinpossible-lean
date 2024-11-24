@@ -3,26 +3,9 @@ import Mathlib.Data.Fintype.Pi
 import Mathlib.Data.ZMod.Defs
 import Mathlib.Tactic.DeriveFintype
 
-def perm (N : Nat) := Equiv.Perm (Fin N)
+abbrev perm (N : Nat) := Equiv.Perm (Fin N)
 
-namespace perm
-
--- apply α and then β
-def actionRight (α β : perm N) : perm N := α.trans β
-
-instance : Mul (perm N) := ⟨actionRight⟩
-
-def mul_def (α β : perm N) : α * β = α.trans β := rfl
-
-end perm
-
-def VN (N : Nat) := Fin N → ZMod 2
-
-instance : DecidableEq (VN N) := inferInstanceAs (DecidableEq (Fin N → ZMod 2))
-instance : Fintype (VN N) := inferInstanceAs (Fintype (Fin N → ZMod 2))
-
-instance : DecidableEq (perm N) := inferInstanceAs (DecidableEq (Fin N ≃ Fin N))
-instance : Fintype (perm n) := inferInstanceAs (Fintype (Equiv.Perm (Fin n)))
+abbrev VN (N : Nat) := Fin N → ZMod 2
 
 @[ext]
 structure Spin (m n : PNat) where
@@ -33,12 +16,12 @@ structure Spin (m n : PNat) where
 namespace Spin
 
 def mul (x y : Spin m n) : Spin m n where
-  α := x.α * y.α
+  α := y.α * x.α -- intentionally reversed
   u := fun i => x.u (y.α.invFun i) + y.u i
 
 instance : Mul (Spin m n) := ⟨mul⟩
 
-lemma mul_def (x y : Spin m n) : x * y = ⟨x.α * y.α, fun i => x.u (y.α.invFun i) + y.u i⟩ := rfl
+lemma mul_def (x y : Spin m n) : x * y = ⟨x.α.trans y.α , fun i => x.u (y.α.invFun i) + y.u i⟩ := rfl
 
 instance : One (Spin m n) := ⟨Equiv.refl _, fun _ => 0⟩
 

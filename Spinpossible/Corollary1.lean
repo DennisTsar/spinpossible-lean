@@ -8,21 +8,21 @@ instance : Inv (Spin m n) := ⟨Spin.inv⟩
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
   ext
   · rfl
-  · funext; apply add_assoc
+  · exact add_assoc ..
 
 theorem Spin.one_mul (x : Spin m n) : 1 * x = x := by
   ext
   · rfl
-  · funext; simp [mul_def]; rfl
+  · simp [mul_def]; rfl
 
 theorem Spin.mul_one (x : Spin m n) : x * 1 = x := by
   ext
   · rfl
-  · funext; exact (self_eq_add_right.mpr rfl).symm
+  · exact (self_eq_add_right.mpr rfl).symm
 
 theorem Spin.inv_mul_cancel (x : Spin m n) : x⁻¹ * x = 1 := by
-  ext
-  · rw [Equiv.ext_iff, ]; exact Equiv.apply_symm_apply _
+  ext : 1
+  · rw [Equiv.ext_iff]; exact Equiv.apply_symm_apply _
   · simp [Inv.inv, Spin.inv, mul_def]; rfl
 
 instance : Group (Spin m n) where
@@ -39,13 +39,13 @@ lemma spin_prod_perm_eq_perm_prod {l : List (Spin m n)} :
     l.prod.α = (l.map (fun s => (s.α : Equiv.Perm _))).reverse.prod := by
   induction' l with head tail ih
   · rfl
-  · simp_all [Spin.mul_def, perm.mul_def, Equiv.Perm.mul_def]
+  · simp_all [Spin.mul_def, Equiv.Perm.mul_def]
 
 lemma prod_eq_refl_of_refl {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.refl _) :
     l.prod.α = Equiv.refl _ := by
   induction' l with head tail ih
   · rfl
-  · simp_all [Spin.mul_def, perm.mul_def]
+  · simp_all [Spin.mul_def]
 
 lemma ZMod.cases_two (a : ZMod 2) : a = 0 ∨ a = 1 :=
   match a with
@@ -64,7 +64,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
   simp only [List.prod_append, Spin.mul_def, Equiv.invFun_as_coe]
   have k_refl : ∀ w ∈ k, w.α = Equiv.refl _ := by simp_all
   have k_prod_refl : k.prod.α = Equiv.refl _ := prod_eq_refl_of_refl k_refl
-  ext
+  ext : 1
   · exact k_prod_refl ▸ hl
   · funext i
     simp only
@@ -108,7 +108,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
           simp only [ite_not, List.mem_filterMap, List.mem_finRange,
             Option.ite_none_left_eq_some, Option.some.injEq, true_and] at this
           obtain ⟨x, -, hx⟩ := this
-          ext
+          ext : 1
           · simp [← hx]
           · have : x = i := by
               simp_rw [k', List.getElem_map] at hy
@@ -143,9 +143,9 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
 
 lemma rotate_around_one_eq_self (h : p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩) :
     rotate180 p ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ = p := by
-  simp [rotate180, rotateCalc]
+  simp [rotate180, rotateCalc, Point.ext_iff, Fin.ext_iff]
   simp [Point.IsInside] at h
-  ext <;> (simp only; omega)
+  omega
 
 def Point.IsAdjacent (p1 p2 : Point m n) : Prop :=
   (p1.row = p2.row ∧ (p1.col.val + 1 = p2.col.val ∨ p2.col.val + 1 = p1.col.val)) ∨

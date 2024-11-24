@@ -24,8 +24,8 @@ def perm2 : perm 3 where
 
 #guard perm1.toFun = ![1, 0, 2]
 #guard perm2.toFun = ![1, 2, 0]
-#guard (perm1 * perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
-#guard (perm2 * perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
+#guard (perm1.trans perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
+#guard (perm2.trans perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
 
 end Basics
 
