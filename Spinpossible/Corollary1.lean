@@ -5,6 +5,8 @@ def Spin.inv (x : Spin m n) : Spin m n := ⟨x.α.symm, fun i => -x.u (x.α.toFu
 
 instance : Inv (Spin m n) := ⟨Spin.inv⟩
 
+lemma Spin.inv_def (x : Spin m n) : x⁻¹ = ⟨x.α.symm, fun i => -x.u (x.α.toFun i)⟩ := rfl
+
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
   ext
   · rfl
