@@ -38,7 +38,7 @@ instance : Group (Spin m n) where
 open scoped CharTwo
 
 lemma spin_prod_perm_eq_perm_prod {l : List (Spin m n)} :
-    l.prod.α = (l.map (fun s => (s.α : Equiv.Perm _))).reverse.prod := by
+    l.prod.α = (l.map (·.α)).reverse.prod := by
   induction' l with head tail ih
   · rfl
   · simp_all [Spin.mul_def, Equiv.Perm.mul_def]
@@ -48,6 +48,11 @@ lemma prod_eq_refl_of_refl {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.
   induction' l with head tail ih
   · rfl
   · simp_all [Spin.mul_def]
+
+lemma Point.isInside_one_iff {p a : Point m n} :
+    p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ ↔ p = a := by
+  simp [Point.IsInside, Point.ext_iff]
+  omega
 
 lemma ZMod.cases_two (a : ZMod 2) : a = 0 ∨ a = 1 :=
   match a with
@@ -86,11 +91,9 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
     · have k_nodup : k.Nodup := by
         refine hk ▸ List.Nodup.filterMap ?_ (List.nodup_finRange _)
         intro a1 a2 s hs1 hs2
-        simp only [ite_not, Option.mem_def,
-          Option.ite_none_left_eq_some, Option.some.injEq] at hs1 hs2
-        have := hs2.2 ▸ hs1.2
-        simp only [Spin.mk.injEq, true_and] at this
-        simpa using congr($this a2)
+        simp only [Option.mem_def, Option.ite_none_right_eq_some, Option.some_inj] at hs1 hs2
+        have := funext_iff.mp (Spin.ext_iff.mp (hs2.2 ▸ hs1.2) |>.2) a2
+        simpa
 
       let x_i_def : Spin m n := ⟨Equiv.refl _, fun j ↦ if i = j then 1 else 0⟩
       have x_i_in_k : x_i_def ∈ k := by
@@ -107,8 +110,8 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
           unfold x_i_def
           have : k[y] ∈ k := List.getElem_mem _
           nth_rw 1 [hk] at this
-          simp only [ite_not, List.mem_filterMap, List.mem_finRange,
-            Option.ite_none_left_eq_some, Option.some.injEq, true_and] at this
+          simp only [List.mem_filterMap, List.mem_finRange,
+            Option.ite_none_right_eq_some, Option.some_inj, true_and] at this
           obtain ⟨x, -, hx⟩ := this
           ext : 1
           · simp [← hx]
@@ -354,7 +357,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
   rw [Subgroup.eq_top_iff']
   intro s
   let ⟨l, hl, hl2⟩ : ∃ l : List (Equiv.Perm (Fin (m * n))), (∀ x ∈ l, x.IsAdjacentSwap) ∧ l.prod = s.α := by
-    have : (s.α : Equiv.Perm _) ∈ Subgroup.closure set1 := by rw [top]; trivial
+    have : s.α ∈ Subgroup.closure set1 := by rw [top]; trivial
     let ⟨l, hl1, hl2⟩ := Subgroup.exists_list_of_mem_closure (s := set1) |>.mp this
     use l, ?_, hl2
     intro x hx
@@ -455,19 +458,13 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
     use RectSpin.fromRect ⟨to2d c1, to2d c1, Fin.le_refl _, Fin.le_refl _⟩
     constructor
     · simp [SpinSet, rectSpinSet_cond_iff]
-    · simp only [ne_eq, ite_not, Option.ite_none_left_eq_some, Option.some.injEq] at c3
-      simp only [Rectangle.toSpin, ← c3.2, Spin.mk.injEq]
-      constructor
+    · simp only [Option.ite_none_right_eq_some, Option.some_inj] at c3
+      simp only [Rectangle.toSpin, ← c3.2]
+      congr 1
       · rw [Equiv.ext_iff, Equiv.coe_fn_mk]
         simp_all [rotate_around_one_eq_self]
       · funext i
         have : (to2d i).IsInside ⟨to2d c1, to2d c1, Fin.le_refl _, Fin.le_refl _⟩ ↔ i = c1 := by
-          dsimp [Point.IsInside]
-          constructor
-          · intro h11
-            have : (to2d i) = (to2d c1) := by ext <;> omega
-            simpa using congr(to1d $this)
-          · intro h11
-            rw [h11]
-            omega
+          rw [← to2d_injective.eq_iff]
+          exact Point.isInside_one_iff
         split_ifs <;> simp_all

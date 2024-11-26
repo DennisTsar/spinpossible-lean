@@ -4,9 +4,9 @@ import Spinpossible.Corollary1
 
 lemma RectSpin.perm_symm (s : RectSpin m n) : s.α.symm = s.α := by simp [s.h, Rectangle.toSpin]
 
-lemma RectSpin.orient_def (s : RectSpin m n) : s.u = fun x ↦ s.u (s.α x) := by
-  simp [s.h, Rectangle.toSpin]
-  funext
+lemma RectSpin.orient_def (s : RectSpin m n) : ∀ x, s.u (s.α x) = s.u x := by
+  simp only [s.h, Rectangle.toSpin, Function.Involutive.coe_toPerm]
+  intros
   split_ifs <;> simp_all [spin_stays_inside]
 
 lemma RectSpin.inv_self (s : RectSpin m n) : s.toSpin⁻¹ = s.toSpin := by
@@ -27,14 +27,13 @@ lemma exists_rectSpin {s : Spin m n} (hs : s ∈ l) (hl : l ⊆ (validSpins_spin
   apply RectSpin.toSpin_injective
   rw [hb, ha.2]
 
-lemma rectSpin_prod_inv_eq_reverse_prod {l : List (Spin m n)}
-    (h : l ⊆ (validSpins_spin m n).toList) : l.prod⁻¹ = l.reverse.prod := by
+lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
+    (l.map RectSpin.toSpin).prod⁻¹ = (l.map RectSpin.toSpin).reverse.prod := by
   rw [Spin.inv_def]
   induction' l with hd tl ih
   · simp [Spin.one_def]
-  · obtain ⟨a, ha, -⟩ := exists_rectSpin (List.mem_cons_self _ _) h
-    simp [← ha, Spin.mul_def, ← funext_iff.mp a.orient_def, ← ih (List.subset_of_cons_subset h),
-      a.perm_symm, Equiv.ext_iff, ZMod.neg_eq_self_mod_two]
+  · simp [Spin.mul_def, RectSpin.orient_def, ZMod.neg_eq_self_mod_two, ← ih,
+      RectSpin.perm_symm, Equiv.ext_iff]
 
 /-- "In mathematical terms, the game works as follows: given an element `b ∈ Spin_m×n`
     (the starting board), write `b⁻¹` as a product `s₁s₂s₃⋯sₖ` of elements in `S`, with `k`
@@ -58,6 +57,7 @@ lemma Finset.choose_eq {l : Finset α} {p : α → Prop} [DecidablePred p] {h : 
     (x : α) (hx : x ∈ l ∧ p x) : Finset.choose p l h = x :=
   ExistsUnique.unique h (Finset.choose_spec p l h) hx
 
+@[simp]
 lemma spinSet_to_rectSpin_inv : (spinSet_to_rectSpin l h).map RectSpin.toSpin = l := by
   unfold spinSet_to_rectSpin
   induction' l with hd tl ih
@@ -66,6 +66,10 @@ lemma spinSet_to_rectSpin_inv : (spinSet_to_rectSpin l h).map RectSpin.toSpin = 
     refine ⟨?_, @ih h.2⟩
     obtain ⟨a, ha⟩ := h.1
     rw [Finset.choose_eq _ ⟨Finset.mem_univ a, ha⟩, ha]
+
+lemma spin_prod_inv_eq_reverse_prod {l : List (Spin m n)}
+    (h : l ⊆ (validSpins_spin m n).toList) : l.prod⁻¹ = l.reverse.prod := by
+  simpa using rectSpin_prod_inv_eq_reverse_prod (spinSet_to_rectSpin l h)
 
 /-- "every starting board in the Spinpossible game has a solution." -/
 lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
@@ -79,7 +83,7 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
     by_contra! hz2
     have : z ∈ s := Set.mem_setOf.mpr ⟨hz1, by rw [Set.mem_setOf_eq] at hy1; omega⟩
     exact Nat.not_le_of_lt hz2 (hy2 _ this)
-  have : b ∈ Subgroup.closure (mySet m n) := by rw [spin_s11_s12_closure,]; trivial
+  have : b ∈ Subgroup.closure (mySet m n) := by rw [spin_s11_s12_closure]; trivial
   let ⟨l, hl1, hl2⟩ := Subgroup.exists_list_of_mem_closure.mp this
   have hl3 : l ⊆ (validSpins_spin m n).toList := by
     intro x hx
@@ -92,4 +96,4 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
     · use a; rw [← a.inv_self, ha.2, inv_inv]
   use (spinSet_to_rectSpin l hl3).reverse
   simp only [List.map_reverse, spinSet_to_rectSpin_inv]
-  exact hl2 ▸ (rectSpin_prod_inv_eq_reverse_prod hl3 |>.symm)
+  exact hl2 ▸ spin_prod_inv_eq_reverse_prod hl3 |>.symm
