@@ -192,8 +192,7 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjac
     (hr : p1 = s.r.topLeft ∧ p2 = s.r.bottomRight) :
     s.α = Equiv.swap (to1d p1) (to1d p2) := by
   rw [hr.1, hr.2] at h ⊢
-  rw [Equiv.ext_iff]
-  intro j
+  ext j : 1
   simp only [s.h, Rectangle.toSpin, Function.Involutive.coe_toPerm]
   split_ifs with h7
   · simp [Equiv.swap, Equiv.swapCore, rotate180, rotateCalc]

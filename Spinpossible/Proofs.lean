@@ -335,8 +335,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def]
     rcases h with a | a
     · congr 1
-      · rw [Equiv.ext_iff]
-        intro p
+      · ext p : 1
         by_cases h1 : (to2d p).IsInside r1
         · have : ¬(to2d p).IsInside r2 := a (to2d p) h1
           simp [this, h1, spin_stays_outside_disj a.symm h1]
@@ -351,8 +350,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
           · simp [spin_stays_outside_disj a h2, h2, h1]
           · simp [h1, h2]
     · congr 1
-      · rw [Equiv.ext_iff]
-        intro p
+      · ext p : 1
         simp_rw [Equiv.trans_apply, coe_toPerm]
         by_cases h1 : (to2d p).IsInside r1
         · by_cases h2 : (to2d p).IsInside r2
@@ -477,16 +475,10 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     rcases h with h | h
     · use s2
       simp only [h, SameShape, and_self, and_true]
-      ext : 1
-      · rw [Equiv.ext_iff]
-        intro
-        by_contra! h_p
+      ext <;>
+      · by_contra! h_p
         simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def,
           Equiv.trans_apply, coe_toPerm] at h_p
-        split_ifs at h_p <;> simp_all [spin_stays_inside]
-      · funext
-        by_contra! h_p
-        simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def] at h_p
         split_ifs at h_p <;> simp_all [spin_stays_inside]
     · let r3 : Rectangle m n := ⟨
         rotate180 r2.bottomRight r1,
@@ -507,8 +499,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
       constructor
       · simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def]
         congr 1
-        · rw [Equiv.ext_iff]
-          intro p
+        · ext p : 1
           simp only [Equiv.trans_apply, coe_toPerm]
           rw [← to1d_to2d_inverse (p := p)] -- weird that this is needed
           split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains]
