@@ -159,7 +159,7 @@ lemma funtimes (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Sp
     (this : (to2d (s.α⁻¹ (to1d ⟨⟨row, by omega⟩, ⟨col, by omega⟩⟩))).col.val ≥ col)
     (hs_row2 : ∀ x, (_ : x < row) → s.α⁻¹ (to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩) = to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩)
     (hs_col2 : ∀ x y, (_ : x < col ∧ y < m.val) → s.α⁻¹ (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) :
-    let tile_pos := to2d (s.α⁻¹ (to1d ⟨⟨row, by omega⟩, ⟨col, by omega⟩⟩))
+    let tile_pos := to2d (s.α⁻¹ (to1d ⟨⟨row, _⟩, ⟨col, _⟩⟩))
     let row_spin : RectSpin m n := if hr2 : row > tile_pos.row.val then
       RectSpin.fromRect ⟨tile_pos, ⟨⟨row, by omega⟩, tile_pos.col⟩, by simp, Fin.le_of_lt hr2⟩
     else
@@ -170,8 +170,8 @@ lemma funtimes (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Sp
     ∀ x y, (_ : x < col + 1 ∧ y < m.val) →
       (s⁻¹ * row_spin.toSpin * col_spin.toSpin).α (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩)
         = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := by
-  have hs_row3 : ∀ x, (_ : x < row) → s⁻¹.α (to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩) = to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩ := hs_row2
-  have hs_col3 : ∀ x y, (_ : x < col ∧ y < m.val) → s⁻¹.α (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := hs_col2
+  have hs_row3 : ∀ x, (_ : x < row) → s⁻¹.α (to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩) = to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩ := hs_row2
+  have hs_col3 : ∀ x y, (_ : x < col ∧ y < m.val) → s⁻¹.α (to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩) = to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩ := hs_col2
 
   intro tile_pos row_spin col_spin x y hxy
   simp only [Spin.mul_def, Equiv.invFun_as_coe, Equiv.trans_apply]
@@ -292,7 +292,7 @@ lemma funtimes2 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : S
     · have := hs_col2 (to2d i).col.val (to2d i).row.val ⟨by omega, by omega⟩
       simpa
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin m n)
       (hs_row : ∀ x, (_ : x < row) → s.α (to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩)
         = to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩)
@@ -300,17 +300,17 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
         = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) : {l : List (RectSpin m n) // (l.map RectSpin.toSpin).prod.α = s.α } :=
   let tile_pos := to2d (s.α⁻¹ (to1d ⟨⟨row, by omega⟩, ⟨col, by omega⟩⟩))
 
-  have hs_row2 : ∀ x, (_ : x < row) → s.α⁻¹ (to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩) = to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩ := by
+  have hs_row2 : ∀ x, (_ : x < row) → s.α⁻¹ (to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩) = to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩ := by
     intro x hx
     rw [Equiv.Perm.inv_eq_iff_eq]
     exact hs_row x hx |>.symm
-  have hs_row3 : ∀ x, (_ : x < row) → s⁻¹.α (to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩) = to1d ⟨⟨x, by omega⟩, ⟨col, by omega⟩⟩ := hs_row2
+  have hs_row3 : ∀ x, (_ : x < row) → s⁻¹.α (to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩) = to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩ := hs_row2
     -- exact hs_row x hx |>.symm
-  have hs_col2 : ∀ x y, (_ : x < col ∧ y < m.val) → s.α⁻¹ (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := by
+  have hs_col2 : ∀ x y, (_ : x < col ∧ y < m.val) → s.α⁻¹ (to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩) = to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩ := by
     intro x y hxy
     rw [Equiv.Perm.inv_eq_iff_eq]
     exact hs_col x y hxy |>.symm
-  have hs_col3 : ∀ x y, (_ : x < col ∧ y < m.val) → s⁻¹.α (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := hs_col2
+  have hs_col3 : ∀ x y, (_ : x < col ∧ y < m.val) → s⁻¹.α (to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩) = to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩ := hs_col2
 
   have : tile_pos.col.val ≥ col := by
     -- sorry -- THIS PROOF WORKS, BUT SLOW
