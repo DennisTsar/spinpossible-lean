@@ -1,6 +1,7 @@
 import Spinpossible.Prop2
 import Spinpossible.Lemma1
 import Spinpossible.Corollary1
+import Mathlib.Data.Set.Finite.List
 
 lemma RectSpin.perm_symm (s : RectSpin m n) : s.α.symm = s.α := by simp [s.h, Rectangle.toSpin]
 
