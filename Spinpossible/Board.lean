@@ -1,5 +1,6 @@
 import Spinpossible.Definitions
-import Mathlib.Data.Matrix.Basic
+import Mathlib.Data.Matrix.Defs
+import Mathlib.Data.ZMod.Basic
 
 inductive orientation
   | positive
@@ -19,10 +20,34 @@ def Spin.toBoard (s : Spin m n) : board m n :=
     orient := if s.u (to1d ⟨i, j⟩) = 0 then orientation.positive else orientation.negative
   }
 
+private def Matrix.toList (M : Matrix (Fin m) (Fin n) α) : List α :=
+  (List.finRange m).flatMap (fun i => (List.finRange n).map (fun j => M i j))
+
 def board.toSpin (b : board m n) : Spin m n :=
-  let tiles_list : List tile :=
-    (List.finRange m).bind (fun i => (List.finRange n).map (fun j => b i j))
-  have : tiles_list.length = m * n := by simp [tiles_list, Function.comp_def]
+  let tiles_list : List tile := b.toList
+  have tiles_list_def : b.toList = tiles_list := rfl
+  have : tiles_list.length = m * n := by simp [Matrix.toList, tiles_list, Function.comp_def]
+
+  have fact4 : (tiles_list.map (·.id)).toFinset = Finset.Icc 1 (m.val * n) := sorry
+
+  have fact1 : ∀ x ∈ tiles_list, x.id > 0 ∧ x.id ≤ m * n := by
+    intro x hx
+    have : x.id ∈ (tiles_list.map (·.id)).toFinset := by
+      simp_all [Matrix.toList, -fact4]
+      use x
+    simp only [fact4, Finset.mem_Icc, and_true] at this
+    omega
+  have fact2 : ∀ x y : Fin tiles_list.length, tiles_list[x].id = tiles_list[y].id → x = y := by
+    intro x y hxy
+    ext
+    simp_all [Matrix.toList]
+    have : (tiles_list.map (·.id)).length =
+      (tiles_list.map (·.id)).toFinset.card := by simp_all
+    have nodup := Multiset.toFinset_card_eq_card_iff_nodup.mp (this.symm)
+    have : (tiles_list.map (·.id))[x] = (tiles_list.map (·.id))[y] := by simp_all
+    have := (List.Nodup.get_inj_iff nodup).mp this
+    exact Fin.mk.inj_iff.mp this
+
   let one : Nat := 1 -- Not inlined to prevent coercions to Fin
   {
     α := Equiv.mk
@@ -32,31 +57,44 @@ def board.toSpin (b : board m n) : Spin m n :=
         intro p
         simp only [Fin.getElem_fin, Fin.val_natCast]
         let e := List.findIdx (fun j ↦ j.id - one == p.val) tiles_list
-         -- True assuming board contains each tile exactly once
-        have : e < tiles_list.length := sorry
+        have : e < tiles_list.length := by
+          apply List.findIdx_lt_length_of_exists
+          by_contra! ht
+          have qwe2 : ∀ x ∈ (tiles_list.map (·.id)).toFinset, x - one ≠ p := by
+            intro x hx
+            have : ∃ y ∈ tiles_list, y.id = x := by simp_all [-fact4]
+            aesop
+          have : ∀ x ∈ Finset.range (m.val * n.val), x ≠ p := by
+            intro x hx
+            have := qwe2 (x + one) (by simp_all; omega)
+            simpa
+          aesop
         have zx : e < (↑m * ↑n) := by omega
         simp_rw [Nat.mod_eq_of_lt zx]
         suffices tiles_list[e].id - one = p by simp_all [e]
-        have zx : e % (↑m * ↑n) = e := by simp_all [Nat.mod_eq_of_lt]
-        have := @List.findIdx_getElem _ _ _ this
-        exact Nat.eq_of_beq_eq_true this
+        exact beq_iff_eq.mp <| List.findIdx_getElem (w := this)
       )
       (by
-        -- True assuming board contains proper numbers
-        have fact1 : ∀ x ∈ tiles_list, x.id > 0 ∧ x.id < m * n := sorry
-         -- True assuming board contains each tile exactly once
-        have fact2 : ∀ x y : Fin (tiles_list.length), tiles_list[x].id = tiles_list[y].id → x = y := sorry
-
         intro p
         simp only [Fin.val_natCast]
-        have : tiles_list[p].id > 0 ∧ tiles_list[p].id < m * n := fact1 _ (List.getElem_mem _)
+        have : tiles_list[p].id > 0 ∧ tiles_list[p].id ≤ m * n := fact1 _ (List.getElem_mem _)
         rw [Nat.mod_eq_of_lt (by omega)]
-        let e := (List.findIdx (fun j ↦ j.id - one == tiles_list[↑p].id - one) tiles_list)
-         -- True assuming board contains each tile exactly once
-        have : e < tiles_list.length := sorry
+        let e := (List.findIdx (fun j ↦ j.id - one == tiles_list[p].id - one) tiles_list)
+        have : e < tiles_list.length := by
+          apply List.findIdx_lt_length_of_exists
+          by_contra! ht
+          have qwe2 : ∀ x ∈ (tiles_list.map (·.id)).toFinset, x - one ≠ p := by
+            intro x hx
+            have : ∃ y ∈ tiles_list, y.id = x := by simp_all [-fact4]
+            aesop
+          have : ∀ x ∈ Finset.range (m.val * n.val), x ≠ p := by
+            intro x hx
+            have := qwe2 (x + one) (by simp_all; omega)
+            simpa
+          aesop
         suffices e = p by simp_all [e]
-        have := @List.findIdx_getElem _ _ _ this
-        have : tiles_list[e].id - one = tiles_list[p].id - one := Nat.eq_of_beq_eq_true this
+        have := List.findIdx_getElem (w := this)
+        have : tiles_list[e].id - one = tiles_list[p].id - one := beq_iff_eq.mp this
         have : tiles_list[e].id > 0 := fact1 _ (List.getElem_mem _) |>.1
         have := fact2 ⟨e, by omega⟩ ⟨p, by omega⟩ (by simp [one] at *; omega)
         exact Fin.mk.inj_iff.mp this
