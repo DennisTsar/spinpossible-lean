@@ -230,15 +230,9 @@ lemma exists_swap_spin_of_adj {p1 p2 : Point m n} (h : p1.IsAdjacent p2) :
     · rw [Equiv.swap_comm]
       exact spin_eq_swap_of_adj h.symm (by simp)
 
-lemma List.eq_one_of_two {l : List α} (h1 : l.length = 2) (h2 : x ∈ l) : x = l[0] ∨ x = l[1] := by
-  let k := [l[0], l[1]]
-  have l_eq : l = k := by
-    refine List.ext_getElem? fun y => ?_
-    match y with
-    | 0 | 1 => simp [k]
-    | _ + 2 => simp [k, h1]
-  have : ∀ e ∈ k, e = l[0] ∨ e = l[1] := fun e a ↦ List.mem_pair.mp a
-  exact this _ (l_eq ▸ h2)
+lemma List.eq_one_of_two {l : List α} (h1 : l.length = 2) (h2 : x ∈ l) : x = l[0] ∨ x = l[1] :=
+  match l with
+  | [_, _] => mem_pair.mp h2
 
 lemma Equiv.Perm.swap_support [DecidableEq α] [Fintype α] {p : Perm α}
     (h : p.support.toList.length = 2) :
