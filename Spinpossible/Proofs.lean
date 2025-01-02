@@ -15,7 +15,7 @@ instance : Coe (RectSpin m n) (Spin m n) := ⟨RectSpin.toSpin⟩
 
 /-- **Proposition 1.1**: A spin about a rectangle is its own inverse -/
 theorem spin_is_own_inverse (s : RectSpin m n) : s.toSpin * s.toSpin = 1 := by
-  rw [s.h, Spin.mul_def, Rectangle.toSpin, Equiv.trans]
+  rw [s.h, Spin.mul_def, Rectangle.toSpin]
   congr 1
   · ext p
     by_cases h1 : (to2d p).IsInside s.r

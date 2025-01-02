@@ -20,13 +20,12 @@ abbrev validSpins_spin (m n : PNat) : Finset (Spin m n) := validSpins m n
 
 lemma exists_rectSpin {s : Spin m n} (hs : s ∈ l) (hl : l ⊆ (validSpins_spin m n).toList) :
     ∃! a : RectSpin m n, a = s := by
-  let ⟨a, ha⟩ : ∃ a, a ∈ validSpins m n ∧ a = s := by
-    suffices ∃ a ∈ validSpins_spin m n, a = s from by simpa
+  let ⟨a, ha⟩ : ∃ a ∈ validSpins m n, a = s := by
+    suffices ∃ a ∈ validSpins_spin m n, a = s by simpa
     exact exists_eq_right.mpr (Finset.mem_toList.mp (hl hs))
   use a, ha.2
   intro b hb
-  apply RectSpin.toSpin_injective
-  rw [hb, ha.2]
+  rw [← RectSpin.toSpin_injective.eq_iff, hb, ha.2]
 
 lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
     (l.map RectSpin.toSpin).prod⁻¹ = (l.map RectSpin.toSpin).reverse.prod := by
@@ -85,16 +84,15 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
     have : z ∈ s := Set.mem_setOf.mpr ⟨hz1, by rw [Set.mem_setOf_eq] at hy1; omega⟩
     exact Nat.not_le_of_lt hz2 (hy2 _ this)
   have : b ∈ Subgroup.closure (mySet m n) := by rw [spin_s11_s12_closure]; trivial
-  let ⟨l, hl1, hl2⟩ := Subgroup.exists_list_of_mem_closure.mp this
+  obtain ⟨l, hl1, rfl⟩ := Subgroup.exists_list_of_mem_closure.mp this
   have hl3 : l ⊆ (validSpins_spin m n).toList := by
     intro x hx
     have := hl1 x hx
     simp only [mySet, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_union, Set.mem_image,
       Set.mem_union, Finset.mem_coe, Finset.mem_toList, Finset.mem_map, validSpins_eq_univ,
       Finset.mem_univ, true_and] at this ⊢
-    rcases this with ⟨a, ha⟩ | ⟨a, ha⟩
-    · use a, ha.2
+    rcases this with ⟨a, ha, rfl⟩ | ⟨a, ha⟩
+    · use a
     · use a; rw [← a.inv_self, ha.2, inv_inv]
   use (spinSet_to_rectSpin l hl3).reverse
-  simp only [List.map_reverse, spinSet_to_rectSpin_inv]
-  exact hl2 ▸ spin_prod_inv_eq_reverse_prod hl3 |>.symm
+  rw [List.map_reverse, spinSet_to_rectSpin_inv, spin_prod_inv_eq_reverse_prod hl3]

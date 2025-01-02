@@ -88,7 +88,7 @@ lemma rectSpinSet_empty_nonempty {m n : PNat} :
 -/
 theorem rectSpinSet_card_val {i j m n : PNat} :
     (RectSpinSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
-  rw [←Finset.card_range (m + 1 - i), ←Finset.card_range (n + 1 - j), ←Finset.card_product]
+  rw [← Finset.card_range (m + 1 - i), ← Finset.card_range (n + 1 - j), ← Finset.card_product]
   apply Finset.card_bij (fun s _ => ⟨s.r.topLeft.row, s.r.topLeft.col⟩)
   · intro s hs
     have := rectSpinSet_cond_iff.mp hs
@@ -160,9 +160,8 @@ theorem total_valid_spins_card {m n : PNat} :
   (validSpins m n).card = (m.val + 1).choose 2 * (n.val + 1).choose 2 := by
   rw [validSpins_union_rectSpinSet, Finset.card_biUnion]
   · simp only [rectSpinSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]
-    rw [Finset.sum_product, ←Finset.sum_mul_sum, sum_m_minus_x m, sum_m_minus_x n]
-  · simp only [Finset.mem_product, Finset.mem_range, ne_eq, and_imp, Prod.forall,
-      Prod.mk.injEq, not_and]
+    rw [Finset.sum_product, ← Finset.sum_mul_sum, sum_m_minus_x m, sum_m_minus_x n]
+  · simp only [Finset.mem_product, Finset.mem_range, ne_eq, and_imp, Prod.forall, not_and]
     intros
     apply Finset.disjoint_left.mpr
     intro r hr
@@ -273,11 +272,11 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
       rcases this with h5 | h5
       · use x, y, ?_
         by_contra
-        have : a > m.val ∨ b > n.val := by simp [a,b]; omega
+        have : a > m.val ∨ b > n.val := by simp [a, b]; omega
         exact Finset.nonempty_iff_ne_empty.mp h5 (rectSpinSet_empty_if this)
       · use y, x, ?_, spinSet_comm
         by_contra
-        have : b > m.val ∨ a > n.val := by simp [a,b]; omega
+        have : b > m.val ∨ a > n.val := by simp [a, b]; omega
         exact Finset.nonempty_iff_ne_empty.mp h5 (rectSpinSet_empty_if this)
 
     simp only [Finset.mem_attach, Function.Embedding.coeFn_mk, true_and,
