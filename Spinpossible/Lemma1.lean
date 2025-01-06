@@ -87,7 +87,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
     intro i hi hj
     refine (SimpleGraph.fromRel_adj ..).mpr ⟨hj, Or.inl ?_⟩
     let τ := l[i]
-    have hτE : τ ∈ E := hlE τ (l.get_mem i _)
+    have hτE : τ ∈ E := hlE τ (l.getElem_mem hi)
     obtain ⟨a, b, _, hτ_eq⟩ := hE τ hτE
     have h_next : vertices[i+1] = τ vertices[i] := List.getElem_succ_scanl _
     rw [h_next, hτ_eq]
