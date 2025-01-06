@@ -16,14 +16,14 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
       · intro w hw
         have : w⁻¹ ∈ L := by simpa using hw
         exact inv_inv w ▸ (HL1 _ this) |>.symm
-      · rw [List.prod_inv_reverse]
+      · exact List.prod_inv_reverse L |>.symm
   · obtain ⟨l, hl, rfl⟩ := h
     apply list_prod_mem
     intro x hx
     rcases hl x hx with hs | hs
-    · exact mem_closure.mpr fun K a ↦ a hs
+    · exact mem_closure.mpr fun K a => a hs
     · apply (Subgroup.inv_mem_iff _).mp
-      exact mem_closure.mpr fun K a ↦ a hs
+      exact mem_closure.mpr fun K a => a hs
 
 open Equiv
 
@@ -34,7 +34,7 @@ lemma scanl_last_eq_foldl_perm {α β : Type*} (l : List α) (f : β → α → 
   · exact ih _
 
 lemma foldl_perm_eq_prod_rev {α : Type*} (l : List (Perm α)) (x : α) :
-    List.foldl (fun a τ ↦ τ a) x l = l.reverse.prod x := by
+    List.foldl (fun a τ => τ a) x l = l.reverse.prod x := by
   induction l generalizing x
   · rfl
   · simp_all
@@ -55,9 +55,9 @@ lemma isSwap_swap_ne [DecidableEq α] {x y : α} (h : (swap x y).IsSwap) : x ≠
 
 private lemma graph_connected.aux1 [DecidableEq α]
     {l : List (Perm α)} (hl : ∀ τ ∈ l, τ.IsSwap) (h : l.prod = swap x y) :
-    (List.scanl (fun a τ ↦ τ a) x l)[l.length]'(by simp [List.length_scanl]) = y := by
+    (List.scanl (fun a τ => τ a) x l)[l.length]'(by simp [List.length_scanl]) = y := by
   have h_prod_reverse : l.reverse.prod = l.prod⁻¹ := by
-    have : ∀ w ∈ l, w⁻¹ = w := fun w hw ↦ isSwap_inv_eq_self (hl w hw) |>.symm
+    have : ∀ w ∈ l, w⁻¹ = w := fun w hw => isSwap_inv_eq_self (hl w hw) |>.symm
     simpa [List.map_eq_map_iff.mpr this, List.map_id] using l.prod_reverse_noncomm
   rw [scanl_last_eq_foldl_perm, foldl_perm_eq_prod_rev,
     h_prod_reverse, h, swap_inv, swap_apply_left]
@@ -110,7 +110,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
   -- Build the walk starting from n = 0
   let walk := build_walk 0 l.length.zero_le
   have h_start : vertices[0] = x := List.getElem_scanl_zero
-  have h_end : vertices[l.length] = y := graph_connected.aux1 (fun τ a ↦ hE τ (hlE τ a)) hl_prod
+  have h_end : vertices[l.length] = y := graph_connected.aux1 (fun τ a => hE τ (hlE τ a)) hl_prod
   exact ⟨h_start ▸ h_end ▸ walk⟩
 
 /--

@@ -130,7 +130,7 @@ theorem prop2 {i j m n : PNat} :
 
 lemma validSpins_union_rectSpinSet : validSpins m n =
   ((Finset.range m) ×ˢ (Finset.range n)).biUnion
-    (fun p => RectSpinSet ⟨p.1 + 1, by omega⟩ ⟨p.2 + 1, by omega⟩ m n) := by
+    (fun p => RectSpinSet ⟨p.1 + 1, Nat.zero_lt_succ _⟩ ⟨p.2 + 1, Nat.zero_lt_succ _⟩ m n) := by
   simp [Finset.ext_iff, rectSpinSet_cond_iff]
   omega
 
@@ -145,7 +145,7 @@ lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
   omega
 
 lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x in Finset.range m, (m - x)) * 2 = (m + 1) * m := by
-  rw [Finset.sum_nat_sub_distrib (by omega), Nat.sub_mul, Finset.sum_range_id_mul_two,
+  rw [Finset.sum_nat_sub_distrib (Nat.le_refl m), Nat.sub_mul, Finset.sum_range_id_mul_two,
     Nat.mul_sub_one, Nat.sub_eq_of_eq_add]
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
   linarith [Nat.add_sub_of_le <| Nat.le_mul_self m]
@@ -257,7 +257,7 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
   constructor
   · intro hs
     refine Finset.mem_map.mpr ?_
-    let ⟨x, y, _, _⟩ : ∃ x y : Nat,
+    let ⟨x, y, _, h_nonempty⟩ : ∃ x y : Nat,
         s = numsToSpinSet x y m n ∧ (numsToSpinSet x y m n).Nonempty := by
       simp [spinSetTypes] at hs
       aesop
@@ -266,10 +266,7 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
         (c < m ∧ d < n) ∧ numsToSpinSet c d m n = numsToSpinSet x y m n := by
       let a : PNat := ⟨x + 1, Nat.zero_lt_succ _⟩
       let b : PNat := ⟨y + 1, Nat.zero_lt_succ _⟩
-      have : (RectSpinSet a b m n).Nonempty ∨ (RectSpinSet b a m n).Nonempty := by
-        by_contra
-        simp_all [SpinSet]
-      rcases this with h5 | h5
+      rcases Finset.union_nonempty.mp h_nonempty with h5 | h5
       · use x, y, ?_
         by_contra
         have : a > m.val ∨ b > n.val := by simp [a, b]; omega

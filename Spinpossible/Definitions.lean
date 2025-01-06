@@ -42,7 +42,7 @@ lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
 def to1d (pos : Point m n) : Fin (m * n) where
   val := pos.2.val + pos.1.val * n
   isLt := by calc
-    pos.2.val + pos.1.val * n < n + pos.1.val * n := by apply Nat.add_lt_add_right pos.2.isLt
+    pos.2.val + pos.1.val * n < n + pos.1.val * n := by omega
     _ = (pos.1.val + 1) * n := by ring
     _ ≤ m * n := Nat.mul_le_mul_right n pos.1.isLt
 

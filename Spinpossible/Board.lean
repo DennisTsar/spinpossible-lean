@@ -45,8 +45,7 @@ def board.toSpin (b : board m n) : Spin m n :=
       (tiles_list.map (·.id)).toFinset.card := by simp_all
     have nodup := Multiset.toFinset_card_eq_card_iff_nodup.mp (this.symm)
     have : (tiles_list.map (·.id))[x] = (tiles_list.map (·.id))[y] := by simp_all
-    have := (List.Nodup.get_inj_iff nodup).mp this
-    exact Fin.mk.inj_iff.mp this
+    exact (List.Nodup.getElem_inj_iff nodup).mp this
 
   let one : Nat := 1 -- Not inlined to prevent coercions to Fin
   {
@@ -66,8 +65,7 @@ def board.toSpin (b : board m n) : Spin m n :=
             aesop
           have : ∀ x ∈ Finset.range (m.val * n.val), x ≠ p := by
             intro x hx
-            have := qwe2 (x + one) (by simp_all; omega)
-            simpa
+            exact qwe2 (x + one) (by simp_all; omega)
           aesop
         have zx : e < (↑m * ↑n) := by omega
         simp_rw [Nat.mod_eq_of_lt zx]
@@ -89,8 +87,7 @@ def board.toSpin (b : board m n) : Spin m n :=
             aesop
           have : ∀ x ∈ Finset.range (m.val * n.val), x ≠ p := by
             intro x hx
-            have := qwe2 (x + one) (by simp_all; omega)
-            simpa
+            exact qwe2 (x + one) (by simp_all; omega)
           aesop
         suffices e = p by simp_all [e]
         have := List.findIdx_getElem (w := this)

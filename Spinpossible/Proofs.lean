@@ -17,10 +17,7 @@ instance : Coe (RectSpin m n) (Spin m n) := ⟨RectSpin.toSpin⟩
 theorem spin_is_own_inverse (s : RectSpin m n) : s.toSpin * s.toSpin = 1 := by
   rw [s.h, Spin.mul_def, Rectangle.toSpin]
   congr 1
-  · ext p
-    by_cases h1 : (to2d p).IsInside s.r
-    · simp [h1, spin_stays_inside]
-    · simp [h1]
+  · exact Equiv.eq_symm_iff_trans_eq_refl.mp rfl
   · funext p
     by_cases h1 : (to2d p).IsInside s.r
     · simp [h1, spin_stays_inside]
@@ -210,8 +207,7 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
         absurd hs3_orient (to1d p2)
         simp [h_p2_r2, h_p2_not_r1, h, app]
       apply commonCenter_if_rotate_eq h_p2_r2 this
-      simp_rw [this, reduceIte, to1d_inj] at app
-      rw [← app]
+      simpa [this] using app.symm
 
     have r1_r3_commonCenter : CommonCenter r1 r3 := by
       have app := hs3_perm (to1d (rotate180 p1 r1))
@@ -277,9 +273,8 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
 def DisjointRect (r1 r2 : Rectangle m n) : Prop :=
   ∀ p : Point .., p.IsInside r1 → ¬p.IsInside r2
 
-lemma DisjointRect.symm (h : DisjointRect r1 r2) : DisjointRect r2 r1 := by
-  intro p h1 h2
-  simp_all only [DisjointRect]
+lemma DisjointRect.symm (h : DisjointRect r1 r2) : DisjointRect r2 r1 :=
+  fun p h2 h3 => h p h3 h2
 
 lemma spin_stays_outside_disj (h1 : DisjointRect r1 r2) (h2 : p.IsInside r2) :
     ¬(rotate180 p r2).IsInside r1 := h1.symm _ (spin_stays_inside h2)

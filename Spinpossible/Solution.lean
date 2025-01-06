@@ -61,7 +61,7 @@ lemma Finset.choose_eq {l : Finset α} {p : α → Prop} [DecidablePred p] {h : 
 lemma spinSet_to_rectSpin_inv : (spinSet_to_rectSpin l h).map RectSpin.toSpin = l := by
   unfold spinSet_to_rectSpin
   induction' l with hd tl ih
-  · simp
+  · rfl
   · simp at ih h ⊢
     refine ⟨?_, @ih h.2⟩
     obtain ⟨a, ha⟩ := h.1
