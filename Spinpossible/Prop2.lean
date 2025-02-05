@@ -137,21 +137,21 @@ lemma validSpins_union_rectSpinSet : validSpins m n =
 private lemma sum_nat_sub_distrib.aux1 {a b c : Nat} (h: (a : ℤ) = b - c) : a = b - c := by omega
 
 lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
-    ∑ x in range m, (n - x) = (∑ _i in range m, n) - (∑ i in range m, i) := by
+    ∑ x ∈ range m, (n - x) = (∑ _i ∈ range m, n) - (∑ i ∈ range m, i) := by
   apply sum_nat_sub_distrib.aux1
   zify
   convert Finset.sum_sub_distrib with a ha
   have : a < m := List.mem_range.mp ha
   omega
 
-lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x in Finset.range m, (m - x)) * 2 = (m + 1) * m := by
+lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 = (m + 1) * m := by
   rw [Finset.sum_nat_sub_distrib (Nat.le_refl m), Nat.sub_mul, Finset.sum_range_id_mul_two,
     Nat.mul_sub_one, Nat.sub_eq_of_eq_add]
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
   linarith [Nat.add_sub_of_le <| Nat.le_mul_self m]
 
 lemma sum_m_minus_x (m : PNat) :
-    ∑ i in Finset.range m, (m - i) = (m + 1) * m / 2 := by
+    ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by
   have := sum_m_minus_x_mul_two m
   omega
 

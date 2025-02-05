@@ -180,9 +180,13 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
     ∀ s : RectSpin m n, s1.toSpin * s2.toSpin ≠ s.toSpin := by
   intro s3 hs3
 
-  set r1 := s1.r
-  set r2 := s2.r
-  set r3 := s3.r
+  -- These used to be plain `let`s, but starting in Lean 4.16.0,
+  -- `simp` doesn't see that `r1` and `s1.r` are the same
+  -- Note: `simp +zetaDelta` works, but I don't want to have to use that for everything time
+  -- I want an "inline let", but `letI` doesn't work either
+  set r1 := s1.r with ← hr1
+  set r2 := s2.r with ← hr2
+  set r3 := s3.r with ← hr3
 
   have h_r1_ne_r2 : s1.r ≠ r2 := by
     by_contra h1
@@ -197,6 +201,9 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
     obtain ⟨hs3_perm, hs3_orient⟩ := hs3
     rw [Equiv.ext_iff] at hs3_perm
     rw [funext_iff] at hs3_orient
+    -- See note above: I don't want to have to do this
+    rw [hr1, hr2, hr3] at hs3_perm hs3_orient
+    clear hr1 hr2 hr3
     obtain ⟨p1, p2, h_p1_r1, h_p1_not_r2, h_p2_r2, h_p2_not_r1⟩ := h_exists_p1_p2
 
     have r2_r3_commonCenter : CommonCenter r2 r3 := by
@@ -239,7 +246,7 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
       have app := hs3_orient (to1d r3.topLeft)
       simpa [r3.corners_inside, this] using app
 
-    have r1_eq_r3 : s1.r = r3 := by
+    have r1_eq_r3 : r1 = r3 := by
       apply rect_eq_if_corners_inside r1_top_in_r3 r3_top_in_r1 <;>
       dsimp [Point.IsInside] at r1_top_in_r3 r3_top_in_r1 ⊢ <;> omega
 
@@ -308,8 +315,9 @@ lemma rotate_eq_if_comm (h1 : rotate180 (rotate180 p r1) r2 = rotate180 (rotate1
     `s1 * s2 = s2 * s1` if and only if `r1` and `r2` are disjoint or have a common center. -/
 theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     s1.toSpin * s2 = s2 * s1 ↔ (DisjointRect s1.r s2.r ∨ CommonCenter s1.r s2.r) := by
-  let r1 := s1.r
-  let r2 := s2.r
+  -- These used to be plain `let`s, see note in `s1s2_not_spin` above
+  set r1 := s1.r with ← hr1
+  set r2 := s2.r with ← hr2
 
   apply Iff.intro
   · intro h
@@ -327,7 +335,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
       simp [hp_r1, hp_r2] at x1 x2
       split_ifs at x2 <;> simp_all [spin_stays_inside]
   · intro h
-    simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def]
+    simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
     rcases h with a | a
     · congr 1
       · ext p : 1
@@ -411,6 +419,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     obtain ⟨h_perm, h_orient⟩ := h3
     rw [Equiv.ext_iff] at h_perm
     rw [funext_iff] at h_orient
+    refold_let r1 r2 at h_perm h_orient h2
 
     simp [DisjointRect] at h2
     obtain ⟨p, h_p⟩ := h2
@@ -467,9 +476,10 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     have := rotate_eq_if_comm this h_p.1 h_p.2
     exact commonCenter_if_rotate_eq h_p.1 h_p.2 this
   · intro h
+    -- Below the `+zetaDelta` and `r1, r2` had to be added Lean 4.16.0, see note in `s1s2_not_spin`
     rcases h with h | h
     · use s2
-      simp only [h, SameShape, and_self, and_true]
+      simp only [h, SameShape, and_self, and_true, r1, r2]
       ext <;>
       · by_contra! h_p
         simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def,
@@ -488,7 +498,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         s1s2s1_is_spin_iff.aux2 h ⟨rfl, rfl⟩
       have r3_in_r1 : r1.Contains r3 := by
         intro p h_p
-        dsimp [Point.IsInside, rotate180] at r2_bot_in_r1 h_p ⊢
+        dsimp +zetaDelta [Point.IsInside, rotate180] at r2_bot_in_r1 h_p ⊢
         omega
       use ⟨r3.toSpin, r3, rfl⟩
       constructor
@@ -497,7 +507,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         · ext p : 1
           simp only [Equiv.trans_apply, coe_toPerm]
           rw [← to1d_to2d_inverse (p := p)] -- weird that this is needed
-          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains]
+          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains, r1, r2]
           · dsimp [Point.IsInside, rotate180, r1, r2] at *
             ext <;> apply s1s2s1_is_spin_iff.aux1 <;> omega
         · simp only [Equiv.invFun_as_coe, toPerm_symm, coe_toPerm]
@@ -506,6 +516,6 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
           clear r2_bot_in_r1 r2_top_in_r1
           split_ifs <;>
           simp_all only [spin_stays_inside, Rectangle.Contains, to2d_to1d_inverse, to1d_inj,
-            zero_add, CharTwo.add_self_eq_zero, zero_ne_one, not_true_eq_false, add_zero]
-      · dsimp only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
+            zero_add, CharTwo.add_self_eq_zero, zero_ne_one, not_true_eq_false, add_zero, r1, r2]
+      · dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
         omega

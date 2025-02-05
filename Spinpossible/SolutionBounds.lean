@@ -79,7 +79,7 @@ lemma funtimes3 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : S
     have := hs_row2 tile_pos.row.val (by omega)
     simp [← hb] at this
     simp_all [tile_pos]
-  simp [← hb, ← hc, rect_spin_one, row_spin]
+  simp [← hb, ← hc, rect_spin_one, row_spin, col_spin]
 
   by_cases hx : (to2d i).col.val < tile_pos.col.val
   · have := hs_col2 (to2d i).col (to2d i).row (by omega) |>.symm
@@ -205,7 +205,7 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
         simp [Spin.mul_def]
         rw [Equiv.ext_iff]
         intro i
-        simp [Rectangle.toSpin, Spin.one_def]
+        simp [Rectangle.toSpin, Spin.one_def, next_spin]
         split_ifs with hk
         · have : (to2d (s.α⁻¹ i)) = ⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩ := by
             simp [Point.IsInside] at hk
@@ -247,11 +247,11 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
         intro x hx
         simp [Spin.mul_def]
         by_cases hg : x = row
-        · simp only [hg, row_spin]
+        · simp only [hg, row_spin, col_spin, tile_pos]
           split_ifs
           · simp [Rectangle.spin_eq_iff, Rectangle.corners_rotate_perm.1,
-              Rectangle.corners_rotate_perm.2, tile_pos]
-          · simp [Rectangle.spin_eq_iff, Rectangle.corners_rotate_perm.1, tile_pos]
+              Rectangle.corners_rotate_perm.2]
+          · simp [Rectangle.spin_eq_iff, Rectangle.corners_rotate_perm.1]
         · rw [Rectangle.spin_eq_iff, Rectangle.spin_perm_const (by fin_omega)]
           simp only [hs_row2 x (by omega), row_spin]
           split_ifs

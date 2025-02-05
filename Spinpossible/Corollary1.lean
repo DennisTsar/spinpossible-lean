@@ -99,7 +99,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
       have x_i_in_k : x_i_def ∈ k := by
         apply (hk ▸ List.mem_filterMap).mpr
         use i
-        simp [h2]
+        simp [h2, x_i_def]
       obtain ⟨a, ha1, ha2⟩ := List.getElem_of_mem x_i_in_k
 
       let k' := List.map (fun x ↦ x.u i) k
@@ -113,7 +113,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
             Option.ite_none_right_eq_some, Option.some_inj, true_and] at this
           obtain ⟨x, -, hx⟩ := this
           ext : 1
-          · simp [← hx]
+          · simp [← hx, x_i_def]
           · have : x = i := by
               simp_rw [k', List.getElem_map] at hy
               simpa [hy] using congr(Spin.u $hx i)
@@ -126,7 +126,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
       simp only [k_prod_refl, Equiv.refl_symm, Equiv.refl_apply, h2, bam, Finset.sum_list_count,
         nsmul_eq_mul]
       have k'_one : 1 ∈ k' := by
-        have : k'[a] = 1 := by simp [k', ha2]
+        have : k'[a] = 1 := by simp [k', ha2, x_i_def]
         exact this ▸ List.getElem_mem _
       have : List.count 1 k' = 1 := by
         have : ¬List.Duplicate 1 k' := by

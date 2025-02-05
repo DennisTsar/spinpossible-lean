@@ -55,7 +55,8 @@ def board.toSpin (b : board m n) : Spin m n :=
       (by
         intro p
         simp only [Fin.getElem_fin, Fin.val_natCast]
-        let e := List.findIdx (fun j ↦ j.id - one == p.val) tiles_list
+        let e := List.findIdx (fun j => j.id - one == p.val) tiles_list
+        refold_let e -- why can't I do this one step with `set`?
         have : e < tiles_list.length := by
           apply List.findIdx_lt_length_of_exists
           by_contra! ht
@@ -77,7 +78,7 @@ def board.toSpin (b : board m n) : Spin m n :=
         simp only [Fin.val_natCast]
         have : tiles_list[p].id > 0 ∧ tiles_list[p].id ≤ m * n := fact1 _ (List.getElem_mem _)
         rw [Nat.mod_eq_of_lt (by omega)]
-        let e := (List.findIdx (fun j ↦ j.id - one == tiles_list[p].id - one) tiles_list)
+        let e := (List.findIdx (fun j => j.id - one == tiles_list[p].id - one) tiles_list)
         have : e < tiles_list.length := by
           apply List.findIdx_lt_length_of_exists
           by_contra! ht

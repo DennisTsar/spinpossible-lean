@@ -99,7 +99,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
   -- Construct the path from x to y using the sequence of vertices
   let rec build_walk (n : Nat) (hn : n ≤ l.length) : G.Walk vertices[n] vertices[l.length] :=
     if h_eq : n = l.length then
-      SimpleGraph.Walk.nil.copy rfl (getElem_congr h_eq)
+      SimpleGraph.Walk.nil.copy rfl (by congr)
     else
       let tail := build_walk (n + 1) (by omega)
       if v_eq : vertices[n] = vertices[n+1] then
