@@ -257,17 +257,17 @@ def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
   |>.map ⟨(·.toSpin), RectSpin.toSpin_injective⟩
 
 lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
-  let set1 : Set (Equiv.Perm (Fin (m * n))) := (SpinSet 1 2 m n).image (·.α) |>.toSet
+  let set1 : Set (Equiv.Perm (Fin (m * n))) := SpinSet 1 2 m n |>.image (·.α)
 
   have set1_swap : ∀ e ∈ set1, e.IsSwap := by
-    intro e he
-    simp [set1] at he
-    obtain ⟨s, hs1, rfl⟩ := he
+    intro e
+    simp [set1]
+    rintro s hs1 rfl
     use to1d s.r.topLeft, to1d s.r.bottomRight
     simp [SpinSet, rectSpinSet_cond_iff] at hs1
     have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
     constructor
-    · simp [to1d_inj, Point.ext_iff]
+    · simp [Point.ext_iff]
       omega
     · refine spin_eq_swap_of_adj ?_ ⟨rfl, rfl⟩
       dsimp only [Point.IsAdjacent]
@@ -397,21 +397,18 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       apply List.map_attach_of_unattach
       funext ⟨x, hx⟩
       have adj := (hl1 _ hx).isAdjacent
-      have := (hl1 _ hx).list_card
+      have := Equiv.Perm.swap_support (hl1 _ hx).list_card
       split_ifs
       · convert spin_eq_swap_of_adj adj ?_
-        · simp only [to1d_to2d_inverse]
-          exact Equiv.Perm.swap_support this
+        · simpa
         · simp
       · convert spin_eq_swap_of_adj adj.symm ?_
-        · simp only [to1d_to2d_inverse]
-          rw [Equiv.swap_comm]
-          exact Equiv.Perm.swap_support this
+        · rw [Equiv.swap_comm]
+          simpa
         · simp
-    · intro x hx
-      simp only [mySet, Finset.mem_map, Finset.mem_union]
-      simp only [List.mem_reverse, List.mem_map] at hx
-      obtain ⟨a, ha1, ha2⟩ := hx
+    · intro x
+      simp only [mySet, Finset.mem_map, Finset.mem_union, List.mem_reverse, List.mem_map]
+      intro ⟨a, ha1, ha2⟩
       use a, Or.inr ?_, ha2
       simp only [to1d_to2d_inverse, id_eq,
         List.mem_map, List.mem_attach, true_and, Subtype.exists] at ha1
@@ -445,5 +442,5 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       · simp_all [Equiv.ext_iff, rotate_around_one_eq_self]
       · funext i
         have : (to2d i).IsInside ⟨to2d c1, to2d c1, Fin.le_refl _, Fin.le_refl _⟩ ↔ i = c1 := by
-          rw [← to2d_injective.eq_iff, Point.isInside_one_iff]
+          rw [Point.isInside_one_iff, to2d_injective.eq_iff]
         split_ifs <;> simp_all

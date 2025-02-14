@@ -192,16 +192,15 @@ lemma sizes_eq_of_spinSet_eq (h : numsToSpinSet a b m n = numsToSpinSet c d m n)
 abbrev spinSetNums (m n : PNat) :=
   ((Finset.range m) ×ˢ (Finset.range n)).image (fun (a,b) => if a ≤ b then (a,b) else (b, a))
 
-lemma spinSetNums_card (m n : PNat) (h : m.val ≤ n) :
+lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
     (spinSetNums m n).card = m * (2 * n - m + 1) / 2 := by
   let s := (Finset.range m).biUnion (fun i => (Finset.Ico i n)
     |>.map ⟨fun j => (i, j), Prod.mk.inj_left i⟩)
   have : spinSetNums m n = s := by
     ext x
     constructor
-    · intro hx
-      simp [s] at hx ⊢
-      obtain ⟨_, _, _, hx⟩ := hx
+    · simp [s]
+      intro _ _ _ _ hx
       use x.1
       split_ifs at hx
       · have := Prod.ext_iff.mp hx
@@ -319,5 +318,4 @@ theorem spinSetsTypes_card (m n : PNat) (h : m.val ≤ n) :
     let _ := (spinSetTypes_finite h).fintype
     (spinSetTypes m n).toFinset.card = m * (2 * n - m + 1) / 2 := by
   simp [spinSetTypes_eq h]
-  simp [spinSetsFromNums, spinSetNums_card m n h]
-
+  simp [spinSetsFromNums, spinSetNums_card h]

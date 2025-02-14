@@ -3,21 +3,19 @@ import Mathlib.GroupTheory.Perm.Sign
 
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
     a ∈ Subgroup.closure s ↔ ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
-  refine ⟨fun h => ?_, fun h => ?_⟩
+  constructor
   · refine Subgroup.closure_induction
-      (fun {x} hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, List.prod_singleton⟩)
-      ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_ h
+      (fun x hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, List.prod_singleton⟩)
+      ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_
     · intro a b ha hb ⟨La, _⟩ ⟨Lb, _⟩
       use La ++ Lb
       aesop
     · rintro a _ ⟨L, HL1, rfl⟩
-      use L.map (·⁻¹) |>.reverse
-      constructor
-      · intro w hw
-        have : w⁻¹ ∈ L := by simpa using hw
-        exact inv_inv w ▸ (HL1 _ this) |>.symm
-      · exact List.prod_inv_reverse L |>.symm
-  · obtain ⟨l, hl, rfl⟩ := h
+      use L.map (·⁻¹) |>.reverse, ?_, L.prod_inv_reverse.symm
+      intro w hw
+      have : w⁻¹ ∈ L := by simpa using hw
+      exact inv_inv w ▸ (HL1 _ this) |>.symm
+  · rintro ⟨l, hl, rfl⟩
     apply list_prod_mem
     intro x hx
     rcases hl x hx with hs | hs

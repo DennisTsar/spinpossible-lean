@@ -33,7 +33,7 @@ end Spin
 structure Point (m n : PNat) where
   row : Fin m
   col : Fin n
-  deriving DecidableEq, Fintype, Repr
+  deriving DecidableEq, Fintype, Repr, Nonempty
 
 @[simp]
 lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl

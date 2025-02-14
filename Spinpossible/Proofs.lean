@@ -321,19 +321,16 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
 
   apply Iff.intro
   · intro h
-    by_cases h1 : DisjointRect r1 r2
-    · exact Or.inl h1
-    · apply Or.inr
-      simp only [DisjointRect, not_forall, not_not] at h1
-      obtain ⟨p, hp_r1, hp_r2⟩ := h1
-      apply commonCenter_if_rotate_eq hp_r1 hp_r2
-      refine rotate_eq_if_comm ?_ hp_r1 hp_r2
-      simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, Spin.mk.injEq] at h
-      obtain ⟨h_perm, h_orient⟩ := h
-      have x1 := congr($h_perm (to1d p))
-      have x2 := congr($h_orient (to1d p))
-      simp [hp_r1, hp_r2] at x1 x2
-      split_ifs at x2 <;> simp_all [spin_stays_inside]
+    simp only [or_iff_not_imp_left, DisjointRect, not_forall, not_not]
+    intro ⟨p, hp_r1, hp_r2⟩
+    apply commonCenter_if_rotate_eq hp_r1 hp_r2
+    refine rotate_eq_if_comm ?_ hp_r1 hp_r2
+    simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, Spin.mk.injEq] at h
+    obtain ⟨h_perm, h_orient⟩ := h
+    have x1 := congr($h_perm (to1d p))
+    have x2 := congr($h_orient (to1d p))
+    simp [hp_r1, hp_r2] at x1 x2
+    split_ifs at x2 <;> simp_all [spin_stays_inside]
   · intro h
     simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
     rcases h with a | a
@@ -392,6 +389,10 @@ private lemma s1s2s1_is_spin_iff.aux2 {r1 r2 r3 : Rectangle m n} (h : r1.Contain
   simp only [h_r3]
   omega
 
+-- Together these save about 2s
+attribute [-simp] PNat.val_ofNat in
+instance : NeZero (1 : ZMod 2) := NeZero.one in
+seal Mul.mul in
 /-- **Proposition 1.4**: Let `s1` and `s2` be spins about rectangles `r1` and `r2` respectively.
     `s1 * s2 * s1` is a spin `s3` if and only if either `s1` and `s2` commute or `r1` contains `r2`.
     The rectangle of `s3` has the same shape as `r2`. -/
@@ -506,8 +507,9 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         congr 1
         · ext p : 1
           simp only [Equiv.trans_apply, coe_toPerm]
-          rw [← to1d_to2d_inverse (p := p)] -- weird that this is needed
-          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains, r1, r2]
+          generalize hp : to2d p = p'
+          specialize r3_in_r1 p'
+          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains, r1, r2, ← hp]
           · dsimp [Point.IsInside, rotate180, r1, r2] at *
             ext <;> apply s1s2s1_is_spin_iff.aux1 <;> omega
         · simp only [Equiv.invFun_as_coe, toPerm_symm, coe_toPerm]
@@ -515,7 +517,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
           rw [← to1d_to2d_inverse (p := p)] -- weird that this is needed
           clear r2_bot_in_r1 r2_top_in_r1
           split_ifs <;>
-          simp_all only [spin_stays_inside, Rectangle.Contains, to2d_to1d_inverse, to1d_inj,
+          simp_all only [spin_stays_inside, Rectangle.Contains, to2d_to1d_inverse,
             zero_add, CharTwo.add_self_eq_zero, zero_ne_one, not_true_eq_false, add_zero, r1, r2]
       · dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
         omega
