@@ -1,5 +1,6 @@
 import Mathlib.Data.Fintype.Perm
 import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.PNat.Defs
 import Mathlib.Data.ZMod.Defs
 import Mathlib.Tactic.DeriveFintype
 
@@ -7,17 +8,26 @@ abbrev perm (N : Nat) := Equiv.Perm (Fin N)
 
 abbrev VN (N : Nat) := Fin N → ZMod 2
 
-@[ext]
 structure Spin (m n : PNat) where
   α : perm (m * n)
   u : VN (m * n)
   deriving DecidableEq, Fintype
 
+-- manually define an `ext` lemma that uses function application
+@[ext]
+lemma Spin.ext {s1 s2 : Spin m n} (h1 : ∀ x, s1.α x = s2.α x) (h2 : ∀ x, s1.u x = s2.u x)
+    : s1 = s2 := by
+  obtain ⟨a, b⟩ := s1
+  obtain ⟨c, d⟩ := s2
+  congr
+  · ext x : 1; exact h1 x
+  · ext x : 1; exact h2 x
+
 namespace Spin
 
 def mul (x y : Spin m n) : Spin m n where
   α := y.α * x.α -- intentionally reversed
-  u := fun i => x.u (y.α.invFun i) + y.u i
+  u i := x.u (y.α.invFun i) + y.u i
 
 instance : Mul (Spin m n) := ⟨mul⟩
 
@@ -40,11 +50,11 @@ lemma point_eq (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
 
 -- Convert 2D coordinates to 1D (flattened)
 def to1d (pos : Point m n) : Fin (m * n) where
-  val := pos.2.val + pos.1.val * n
+  val := pos.col.val + pos.row.val * n
   isLt := by calc
-    pos.2.val + pos.1.val * n < n + pos.1.val * n := by omega
-    _ = (pos.1.val + 1) * n := by ring
-    _ ≤ m * n := Nat.mul_le_mul_right n pos.1.isLt
+    pos.col.val + pos.row.val * n < 1 * n + pos.row * n := by omega
+    _ = (1 + pos.row) * n := (add_mul ..).symm
+    _ ≤ m * n := Nat.mul_le_mul_right n (by omega)
 
 -- Convert 1D coordinates (flattened) to 2D
 def to2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
@@ -59,7 +69,7 @@ lemma to2d_to1d_inverse : to2d (to1d p) = p := by
   · simp [Nat.mod_eq_of_lt]
 
 @[simp]
-lemma to1d_to2d_inverse : (to1d (to2d p)) = p := by
+lemma to1d_to2d_inverse : to1d (to2d p) = p := by
   simp only [to1d, to2d, Nat.mod_add_div']
 
 @[ext, pp_using_anonymous_constructor]
@@ -98,7 +108,6 @@ def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
   α := Function.Involutive.toPerm
     (fun pos =>
       let p := to2d pos
-      if p.IsInside r then to1d (rotate180 p r) else pos
-    )
+      if p.IsInside r then to1d (rotate180 p r) else pos)
     (fun _ => by simp only; split_ifs <;> simp_all [spin_stays_inside])
-  u := fun pos => if (to2d pos).IsInside r then 1 else 0
+  u pos := if (to2d pos).IsInside r then 1 else 0

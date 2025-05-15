@@ -92,7 +92,7 @@ lemma funtimes3 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : S
         simp [← to2d_injective.eq_iff, Point.ext_iff]
         omega
       rw [this]
-      conv_lhs => simp [tile_pos]
+      conv_lhs => unfold tile_pos
       simp [Point.ext_iff]
       simp only [Fin.ext_iff]
       omega
@@ -138,8 +138,8 @@ lemma funtimes (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Sp
       · have hg4 : col ≠ tile_pos.col.val := by
           by_contra! hg4
           absurd hs_row2 tile_pos.row.val hg3
-          simp [hg4]
-          conv_rhs => rhs; simp [tile_pos]
+          simp only [Fin.eta, hg4, point_eq]
+          conv_rhs => rhs; unfold tile_pos
           simp [Point.ext_iff]
           simp only [Fin.ext_iff]
           omega
@@ -167,7 +167,7 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
   have : tile_pos.col.val ≥ col := by
     by_contra hx
     absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-    conv_rhs => rhs; simp [tile_pos]
+    conv_rhs => rhs; unfold tile_pos
     simp [Point.ext_iff]
     simp only [Fin.ext_iff]
     omega
@@ -291,7 +291,7 @@ theorem theorem1 (b : Spin m n) : ∀ l, Spin.IsSolution l b → l.length ≤ 3 
   have exists_v : ∀ v, b = ⟨b.α, v⟩ * ⟨1, b.u + v⟩ := by
     intro v
     simp [Spin.mul_def, Spin.ext_iff]
-    funext
+    intro
     rw [add_comm, CharTwo.eq_add_iff_add_eq]
 
   have hv2 v : b⁻¹ = ⟨1, b.u + v⟩⁻¹ * ⟨b.α, v⟩⁻¹ := by
@@ -316,7 +316,7 @@ theorem theorem1 (b : Spin m n) : ∀ l, Spin.IsSolution l b → l.length ≤ 3 
       apply Corollary1.aux1 (l := z1') (k := l) (by rfl)
       convert hl
       simp [to2d_injective.eq_iff, eq_comm]
-    · exact List.length_finRange (m * n) ▸ List.length_filterMap_le ..
+    · exact List.length_finRange (n := m * n) ▸ List.length_filterMap_le ..
   suffices h2 : ∃ l : List (RectSpin m n), (l.map RectSpin.toSpin).prod.α = b.α⁻¹ ∧
       l.length ≤ 2 * m * n - (m + n) by
     obtain ⟨l2, hl2⟩ := h2

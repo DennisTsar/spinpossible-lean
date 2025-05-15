@@ -19,9 +19,10 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
     apply list_prod_mem
     intro x hx
     rcases hl x hx with hs | hs
-    · exact mem_closure.mpr fun K a => a hs
-    · apply (Subgroup.inv_mem_iff _).mp
-      exact mem_closure.mpr fun K a => a hs
+    -- this proof was simplified by https://demo.projectnumina.ai/
+    · exact subset_closure hs
+    · rw [← Subgroup.inv_mem_iff]
+      exact subset_closure hs
 
 open Equiv
 
@@ -60,7 +61,7 @@ private lemma graph_connected.aux1 [DecidableEq α]
   rw [scanl_last_eq_foldl_perm, foldl_perm_eq_prod_rev,
     h_prod_reverse, h, swap_inv, swap_apply_left]
 
-lemma graph_connected [DecidableEq α] [Nonempty α] (E : Set (Perm α))
+lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
     (hE : ∀ σ ∈ E, σ.IsSwap) (h_closure : Subgroup.closure E = ⊤) :
     (SimpleGraph.fromRel (fun x y => swap x y ∈ E)).Connected := by
   apply SimpleGraph.Connected.mk
@@ -121,10 +122,9 @@ theorem transpositions_generate_symm_group_iff_connected_graph
     {E : Set (Perm α)}
     (hE : ∀ σ ∈ E, σ.IsSwap) :
     Subgroup.closure E = ⊤ ↔ (SimpleGraph.fromRel (fun x y => swap x y ∈ E)).Connected := by
-  refine ⟨graph_connected E hE, ?_⟩
-  intro hG_connected
-  apply (Subgroup.eq_top_iff' _).mpr
-  intro σ
+  refine ⟨graph_connected hE, ?_⟩
+  rw [Subgroup.eq_top_iff']
+  intro hG_connected σ
   induction' σ using Perm.swap_induction_on with τ a b hab hτ
   · exact Subgroup.one_mem _
   · clear hab

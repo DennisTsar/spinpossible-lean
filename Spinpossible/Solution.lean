@@ -13,7 +13,7 @@ lemma RectSpin.orient_def (s : RectSpin m n) : ∀ x, s.u (s.α x) = s.u x := by
 lemma RectSpin.inv_self (s : RectSpin m n) : s.toSpin⁻¹ = s.toSpin := by
   simp [s.h, Rectangle.toSpin, Spin.inv_def]
   funext
-  split_ifs <;> simp_all (config := {decide := true}) [spin_stays_inside]
+  split_ifs <;> simp_all [spin_stays_inside]
 
 abbrev validSpins_spin (m n : PNat) : Finset (Spin m n) := validSpins m n
   |>.map ⟨fun r => r.toSpin, RectSpin.toSpin_injective⟩
@@ -59,10 +59,9 @@ lemma Finset.choose_eq {l : Finset α} {p : α → Prop} [DecidablePred p] {h : 
 
 @[simp]
 lemma spinSet_to_rectSpin_inv : (spinSet_to_rectSpin l h).map RectSpin.toSpin = l := by
-  unfold spinSet_to_rectSpin
   induction' l with hd tl ih
   · rfl
-  · simp at ih h ⊢
+  · simp [spinSet_to_rectSpin] at ih h ⊢
     refine ⟨?_, @ih h.2⟩
     obtain ⟨a, ha⟩ := h.1
     rw [Finset.choose_eq _ ⟨Finset.mem_univ a, ha⟩, ha]
@@ -89,9 +88,9 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
     intro x hx
     have := hl1 x hx
     simp only [mySet, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_union, Set.mem_image,
-      Set.mem_union, Finset.mem_coe, Finset.mem_toList, Finset.mem_map, validSpins_eq_univ,
-      Finset.mem_univ, true_and] at this ⊢
-    rcases this with ⟨a, ha, rfl⟩ | ⟨a, ha⟩
+      Set.mem_union, Finset.mem_coe, Finset.mem_toList, Finset.mem_map, Finset.mem_univ,
+      true_and] at this ⊢
+    rcases this with ⟨a, -, rfl⟩ | ⟨a, ha⟩
     · use a
     · use a; rw [← a.inv_self, ha.2, inv_inv]
   use (spinSet_to_rectSpin l hl3).reverse
