@@ -6,14 +6,12 @@ import Mathlib.Data.Set.Finite.List
 lemma RectSpin.perm_symm (s : RectSpin m n) : s.α.symm = s.α := by simp [s.h, Rectangle.toSpin]
 
 lemma RectSpin.orient_def (s : RectSpin m n) : ∀ x, s.u (s.α x) = s.u x := by
-  simp only [s.h, Rectangle.toSpin, Function.Involutive.coe_toPerm]
-  intros
-  split_ifs <;> simp_all [spin_stays_inside]
+  simp [s.h, Rectangle.toSpin]
+  grind
 
 lemma RectSpin.inv_self (s : RectSpin m n) : s.toSpin⁻¹ = s.toSpin := by
   simp [s.h, Rectangle.toSpin, Spin.inv_def]
-  funext
-  split_ifs <;> simp_all [spin_stays_inside]
+  grind
 
 abbrev validSpins_spin (m n : PNat) : Finset (Spin m n) := validSpins m n
   |>.map ⟨fun r => r.toSpin, RectSpin.toSpin_injective⟩
@@ -35,7 +33,7 @@ lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
   · simp [Spin.mul_def, RectSpin.orient_def, ZMod.neg_eq_self_mod_two, ← ih,
       RectSpin.perm_symm, Equiv.ext_iff]
 
-/-- "In mathematical terms, the game works as follows: given an element `b ∈ Spin_m×n`
+/-- "In mathematical terms, the game works as follows: given an element `b ∈ Spinₘₓₙ`
     (the starting board), write `b⁻¹` as a product `s₁s₂s₃⋯sₖ` of elements in `S`, with `k`
     as small as possible (a solution)."
 -/
@@ -43,7 +41,7 @@ def Spin.IsSolution (l : List (RectSpin m n)) (b : Spin m n) : Prop :=
   (l.map RectSpin.toSpin).prod = b⁻¹ ∧
   ∀ l' : List (RectSpin m n), (l'.map RectSpin.toSpin).prod = b⁻¹ → l'.length ≥ l.length
 
-/-- "Applying the spins `s₁s₂s₃⋯sₖ` to `b` then yields the identity (the standard board)."-/
+/-- "Applying the spins `s₁s₂s₃⋯sₖ` to `b` then yields the identity (the standard board)." -/
 lemma Spin.IsSolution.apply_self {b : Spin m n} (h : Spin.IsSolution l b) :
   b * (l.map RectSpin.toSpin).prod = 1 := h.1 ▸ (mul_inv_cancel _)
 
@@ -52,19 +50,12 @@ def spinSet_to_rectSpin (l : List (Spin m n))
   l.attach.map fun ⟨s, hs⟩ =>
     Finset.choose (· = s) (validSpins m n) (by simp [exists_rectSpin hs h])
 
--- why doesn't this exist? am i using `choose` wrong?
-lemma Finset.choose_eq {l : Finset α} {p : α → Prop} [DecidablePred p] {h : ∃! a, a ∈ l ∧ p a}
-    (x : α) (hx : x ∈ l ∧ p x) : Finset.choose p l h = x :=
-  ExistsUnique.unique h (Finset.choose_spec p l h) hx
-
 @[simp]
 lemma spinSet_to_rectSpin_inv : (spinSet_to_rectSpin l h).map RectSpin.toSpin = l := by
   induction' l with hd tl ih
   · rfl
   · simp [spinSet_to_rectSpin] at ih h ⊢
-    refine ⟨?_, @ih h.2⟩
-    obtain ⟨a, ha⟩ := h.1
-    rw [Finset.choose_eq _ ⟨Finset.mem_univ a, ha⟩, ha]
+    exact ⟨Finset.choose_property (fun x : RectSpin _ _ => x.toSpin = hd) _ _, @ih h.2⟩
 
 lemma spin_prod_inv_eq_reverse_prod {l : List (Spin m n)}
     (h : l ⊆ (validSpins_spin m n).toList) : l.prod⁻¹ = l.reverse.prod := by
@@ -85,13 +76,6 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
   have : b ∈ Subgroup.closure (mySet m n) := by rw [spin_s11_s12_closure]; trivial
   obtain ⟨l, hl1, rfl⟩ := Subgroup.exists_list_of_mem_closure.mp this
   have hl3 : l ⊆ (validSpins_spin m n).toList := by
-    intro x hx
-    have := hl1 x hx
-    simp only [mySet, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_union, Set.mem_image,
-      Set.mem_union, Finset.mem_coe, Finset.mem_toList, Finset.mem_map, Finset.mem_univ,
-      true_and] at this ⊢
-    rcases this with ⟨a, -, rfl⟩ | ⟨a, ha⟩
-    · use a
-    · use a; rw [← a.inv_self, ha.2, inv_inv]
+    grind [mySet, Function.Embedding.coeFn_mk, Finset.mem_toList, RectSpin.inv_self, inv_inv]
   use (spinSet_to_rectSpin l hl3).reverse
   rw [List.map_reverse, spinSet_to_rectSpin_inv, spin_prod_inv_eq_reverse_prod hl3]

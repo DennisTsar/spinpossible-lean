@@ -1,4 +1,4 @@
-import Mathlib.Combinatorics.SimpleGraph.Path
+import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 import Mathlib.GroupTheory.Perm.Sign
 
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
@@ -9,12 +9,10 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
       ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_
     · intro a b ha hb ⟨La, _⟩ ⟨Lb, _⟩
       use La ++ Lb
-      aesop
-    · rintro a _ ⟨L, HL1, rfl⟩
-      use L.map (·⁻¹) |>.reverse, ?_, L.prod_inv_reverse.symm
-      intro w hw
-      have : w⁻¹ ∈ L := by simpa using hw
-      exact inv_inv w ▸ (HL1 _ this) |>.symm
+      grind [List.prod_append]
+    · rintro a _ ⟨L, hL⟩
+      use L.map (·⁻¹) |>.reverse
+      grind [inv_inv, List.prod_inv_reverse]
   · rintro ⟨l, hl, rfl⟩
     apply list_prod_mem
     intro x hx
@@ -73,17 +71,12 @@ lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
   have h_swap_in_H : swap x y ∈ H := hH_top ▸ Subgroup.mem_top _
   -- Express swap x y as a product of elements from E
   let ⟨l, hlE, hl_prod⟩ : ∃ l : List (Perm α), (∀ τ ∈ l, τ ∈ E) ∧ l.prod = swap x y := by
-    let ⟨l, h1, h2⟩ := Subgroup.exists_list_of_mem_closure.mp h_swap_in_H
-    use l, fun τ a => ?_, h2
-    rcases h1 _ a with h | h
-    · exact h
-    · rwa [isSwap_inv_eq_self (hE _ h), inv_inv] at h
+    grind [Subgroup.exists_list_of_mem_closure, Subgroup.mem_top, isSwap_inv_eq_self']
   -- Build the sequence of vertices starting from x by applying the permutations in l
   let vertices := l.scanl (fun a τ => τ a) x
   have : vertices.length = l.length + 1 := l.length_scanl x
-  have h_adj : ∀ i (hi : i < l.length), vertices[i] ≠ vertices[i+1] →
+  have h_adj i (hi : i < l.length) (hj : vertices[i] ≠ vertices[i+1]) :
       G.Adj vertices[i] vertices[i+1] := by
-    intro i hi hj
     refine (SimpleGraph.fromRel_adj ..).mpr ⟨hj, Or.inl ?_⟩
     let τ := l[i]
     have hτE : τ ∈ E := hlE τ (l.getElem_mem hi)
@@ -92,9 +85,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
     rw [h_next, hτ_eq]
     by_cases h_case : vertices[i] = a
     · rwa [h_case, swap_apply_left, ← hτ_eq]
-    · by_cases h_case' : vertices[i] = b
-      · rwa [h_case', swap_apply_right, swap_comm, ← hτ_eq]
-      · simp_all [swap_apply_of_ne_of_ne h_case h_case']
+    · grind [swap_apply_of_ne_of_ne, swap_apply_right, swap_comm]
   -- Construct the path from x to y using the sequence of vertices
   let rec build_walk (n : Nat) (hn : n ≤ l.length) : G.Walk vertices[n] vertices[l.length] :=
     if h_eq : n = l.length then

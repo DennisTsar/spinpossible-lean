@@ -44,40 +44,35 @@ lemma rectSpinSet_cond_iff {s : RectSpin m n} :
     s.r.bottomRight.col.val - s.r.topLeft.col.val + 1 = j :=
   ⟨(Finset.mem_filter.mp · |>.2), (Finset.mem_filter.mpr ⟨by simp, ·⟩)⟩
 
-/-- "The set `R_i×j` is necessarily empty if `i > m` or `j > n`" -/
-lemma rectSpinSet_empty_if {i j m n : PNat} : (i > m.val ∨ j > n.val) → (RectSpinSet i j m n) = ∅ := by
+/-- "The set `Rᵢₓⱼ` is necessarily empty if `i > m` or `j > n`" -/
+lemma rectSpinSet_empty_if {i j m n : PNat} :
+    (i > m.val ∨ j > n.val) → RectSpinSet i j m n = ∅ := by
   intro
   apply Finset.filter_eq_empty_iff.mpr
   omega
 
-/-- "we may have `R_i×j = ∅` even when `R_j×i ≠ ∅` (although this can occur only when `m ≠ n`)" -/
+/-- "we may have `Rᵢₓⱼ = ∅` even when `Rⱼₓᵢ ≠ ∅` (although this can occur only when `m ≠ n`)" -/
 lemma rectSpinSet_empty_nonempty {m n : PNat} :
   (m.val ≠ n → ∃ i j, RectSpinSet i j m n = ∅ ∧ RectSpinSet j i m n ≠ ∅) ∧
     (RectSpinSet i j m n = ∅ ∧ RectSpinSet j i m n ≠ ∅ → m ≠ n) := by
-  constructor
-  · intro h
-    use n, m
-    constructor
-    · exact rectSpinSet_empty_if (lt_or_gt_of_ne h)
-    · apply Finset.nonempty_iff_ne_empty.mp
-      have : m.val > 0 ∧ n.val > 0 := ⟨m.2, n.2⟩
-      use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨m.val - 1, by omega⟩, ⟨n.val - 1, by omega⟩⟩, by simp, by simp⟩
-      simp [rectSpinSet_cond_iff]
-      omega
-  · intro ⟨h1, h2⟩
-    have := Finset.filter_nonempty_iff.mp (Finset.nonempty_iff_ne_empty.mpr h2)
+  refine ⟨fun h => ⟨n, m, ?_, ?_⟩, fun ⟨h1, h2⟩ => ?_⟩
+  · exact rectSpinSet_empty_if (lt_or_gt_of_ne h)
+  · apply Finset.nonempty_iff_ne_empty.mp
+    have : m.val > 0 ∧ n.val > 0 := ⟨m.2, n.2⟩
+    use RectSpin.fromRect ⟨⟨0, 0⟩, ⟨⟨m.val - 1, by omega⟩, ⟨n.val - 1, by omega⟩⟩, by simp, by simp⟩
+    simp [rectSpinSet_cond_iff]
+    omega
+  · have := Finset.filter_nonempty_iff.mp (Finset.nonempty_iff_ne_empty.mpr h2)
     have : i.val > m.val ∨ j.val > n.val := by
-      by_contra!
-      absurd h1
-      apply Finset.nonempty_iff_ne_empty.mp
+      contrapose! h1
+      rw [← Finset.nonempty_iff_ne_empty]
       use RectSpin.fromRect ⟨
         ⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩,
         ⟨⟨i.val - 1, by omega⟩, ⟨j.val - 1, by omega⟩⟩,
         by simp, by simp⟩
       simp [rectSpinSet_cond_iff]
       omega
-    rw [ne_eq, ← PNat.coe_inj]
-    omega
+    grind
 
 /-- **Proposition 2.1**
     NOTE: The original conditions `i ≤ m`, `j ≤ n`, an `m ≤ n` are not necessary.
@@ -86,15 +81,10 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
     (RectSpinSet i j m n).card = (m.val + 1 - i) * (n.val + 1 - j) := by
   rw [← Finset.card_range (m + 1 - i), ← Finset.card_range (n + 1 - j), ← Finset.card_product]
   apply Finset.card_bij (fun s _ => ⟨s.r.topLeft.row, s.r.topLeft.col⟩)
-  · intro s hs
-    have := rectSpinSet_cond_iff.mp hs
-    have : s.r.topLeft.row.val < m + 1 - i := by omega
-    have : s.r.topLeft.col.val < n + 1 - j := by omega
-    simp only [Finset.mem_range, and_self, Finset.mem_product.mpr, *]
+  · grind [rectSpinSet_cond_iff]
   · intro s1 hs1 s2 hs2 h3
     rw [Prod.mk.injEq] at h3
-    have := rectSpinSet_cond_iff.mp hs1
-    have := rectSpinSet_cond_iff.mp hs2
+    have : _ ∧ _ := ⟨rectSpinSet_cond_iff.mp hs1, rectSpinSet_cond_iff.mp hs2⟩
     have : _ ∧ _ := ⟨s1.r.validRow, s1.r.validCol⟩
     have : _ ∧ _ := ⟨s2.r.validRow, s2.r.validCol⟩
     apply RectSpin.r_bijective.1
@@ -130,26 +120,24 @@ lemma validSpins_union_rectSpinSet : validSpins m n =
   simp [Finset.ext_iff, rectSpinSet_cond_iff]
   omega
 
-private lemma sum_nat_sub_distrib.aux1 {a b c : Nat} (h: (a : ℤ) = b - c) : a = b - c := by omega
+private lemma sum_nat_sub_distrib.aux1 {a b c : Nat} (h : (a : ℤ) = b - c) : a = b - c := by omega
 
 lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
     ∑ x ∈ range m, (n - x) = (∑ _i ∈ range m, n) - (∑ i ∈ range m, i) := by
   apply sum_nat_sub_distrib.aux1
   zify
-  convert Finset.sum_sub_distrib with a ha
-  have : a < m := List.mem_range.mp ha
+  convert Finset.sum_sub_distrib _ _ with a ha
+  have : a < m := Finset.mem_range.mp ha
   omega
 
 lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 = (m + 1) * m := by
   rw [Finset.sum_nat_sub_distrib (Nat.le_refl m), Nat.sub_mul, Finset.sum_range_id_mul_two,
     Nat.mul_sub_one, Nat.sub_eq_of_eq_add]
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
-  linarith [Nat.add_sub_of_le <| Nat.le_mul_self m]
+  grind [Nat.le_mul_self]
 
 lemma sum_m_minus_x (m : PNat) :
-    ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by
-  have := sum_m_minus_x_mul_two m
-  omega
+    ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by grind [sum_m_minus_x_mul_two]
 
 /-- **Proposition 2.3** -/
 theorem total_valid_spins_card {m n : PNat} :
@@ -158,13 +146,11 @@ theorem total_valid_spins_card {m n : PNat} :
   · simp only [rectSpinSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]
     rw [Finset.sum_product, ← Finset.sum_mul_sum, sum_m_minus_x m, sum_m_minus_x n]
   · intro h
-    contrapose
-    simp_all [rectSpinSet_cond_iff, Prod.ext_iff, Finset.disjoint_left]
+    grind [rectSpinSet_cond_iff, Finset.disjoint_left, PNat.mk_coe]
 
 -- More convenient version of `ne_of_mem_of_not_mem'`
-lemma ne_of_mem_of_not_mem'' {a b : Finset α} (x : α) : x ∈ a ∧ x ∉ b → a ≠ b := by
-  intro h
-  exact ne_of_mem_of_not_mem' h.1 h.2
+lemma ne_of_mem_of_not_mem'' {a b : Finset α} (x : α) : x ∈ a ∧ x ∉ b → a ≠ b :=
+  fun h => ne_of_mem_of_not_mem' h.1 h.2
 
 abbrev numsToSpinSet (i j : Nat) (m n : PNat) :=
   SpinSet ⟨i + 1, Nat.zero_lt_succ _⟩ ⟨j + 1, Nat.zero_lt_succ _⟩ m n
@@ -175,10 +161,10 @@ lemma spinSet_comm : SpinSet i j m n = SpinSet j i m n := by
 lemma numsToSpinSet_comm : numsToSpinSet i j m n = numsToSpinSet j i m n := spinSet_comm
 
 lemma sizes_eq_of_spinSet_eq (h : numsToSpinSet a b m n = numsToSpinSet c d m n)
-  (h2 : a < m ∧ b < n) (h3 : ¬(a = d ∧ b = c)) : a = c ∧ b = d := by
+    (h2 : a < m ∧ b < n) (h3 : ¬(a = d ∧ b = c)) : a = c ∧ b = d := by
   contrapose h
   apply ne_of_mem_of_not_mem''
-   <| RectSpin.fromRect ⟨⟨0, 0⟩, ⟨⟨a, h2.1⟩, ⟨b, h2.2⟩⟩, Fin.zero_le' _, Fin.zero_le' _⟩
+   <| RectSpin.fromRect ⟨⟨0, 0⟩, ⟨⟨a, h2.1⟩, ⟨b, h2.2⟩⟩, Fin.zero_le _, Fin.zero_le _⟩
   simp [SpinSet, rectSpinSet_cond_iff, h, h3]
 
 abbrev spinSetNums (m n : PNat) :=
@@ -186,26 +172,19 @@ abbrev spinSetNums (m n : PNat) :=
 
 lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
     (spinSetNums m n).card = m * (2 * n - m + 1) / 2 := by
-  let s := (Finset.range m).biUnion (fun i => (Finset.Ico i n)
+  let s := (Finset.range m).biUnion (fun i => Finset.Ico i n
     |>.map ⟨fun j => (i, j), Prod.mk_right_injective i⟩)
   have : spinSetNums m n = s := by
     ext x
     constructor
-    · simp [s]
-      intro _ _ _ _ hx
-      use x.1
-      split_ifs at hx
-      · have := Prod.ext_iff.mp hx
-        exact ⟨by omega, x.2, by simp; omega⟩
-      · have := Prod.ext_iff.mp hx
-        exact ⟨by omega, x.2, by simp; omega⟩
+    · simp [s] -- this could be a single `grind` but it doesn't understand `Function.Embedding.coeFn_mk`
+      grind
     · intro hx
-      simp [s]
+      simp
       use x.1, x.2
-      aesop
+      grind [Finset.mem_Ico, Function.Embedding.coeFn_mk]
   rw [this, Finset.card_biUnion]
-  · simp_all only [Finset.card_map, Finset.card_attach, Prod.mk.eta, PNat.coe_le_coe,
-      Nat.card_Ico, -h]
+  · simp only [Finset.card_map, Nat.card_Ico]
     apply Nat.eq_div_of_mul_eq_right (by omega)
     rw [Finset.sum_nat_sub_distrib h, Finset.sum_const, Finset.card_range, smul_eq_mul,
       Finset.sum_range_id]
@@ -216,23 +195,16 @@ lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
       show 2 * x2 - x1 + 1 = 2 * x2 - (x1 - 1) by omega,
       Nat.mul_sub_left_distrib x1 (2 * x2) _, Nat.mul_left_comm]
   · intro x _ y _ hxy
-    apply Finset.disjoint_left.mpr
-    intro k _ _
-    absurd hxy
-    aesop
+    grind [Finset.disjoint_left, Function.Embedding.coeFn_mk]
 
 def spinSetsFromNums (m n : PNat) : Finset (Finset (RectSpin m n)) :=
   (spinSetNums m n).attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
     intro ⟨⟨a1, a2⟩, ha⟩ ⟨⟨b1, b2⟩, hb⟩ h_eq
     simp only at h_eq
     rw [Subtype.mk_eq_mk, Prod.mk.injEq]
-    by_cases op_eq : (a1 = b2 ∧ a2 = b1)
-    · let ⟨_, _, hc2⟩:= Finset.mem_image.mp ha
-      let ⟨_, _, hc4⟩:= Finset.mem_image.mp hb
-      simp only [Prod.mk.eta] at hc2 hc4
-      split_ifs at hc2 hc4 <;> (simp_all; omega)
-    · have : (a1 < m ∧ a2 < n) ∨ (a1 < n ∧ a2 < m) := by aesop
-      rcases this with h | h
+    by_cases op_eq : a1 = b2 ∧ a2 = b1
+    · grind
+    · obtain h | h : (a1 < m ∧ a2 < n) ∨ (a1 < n ∧ a2 < m) := by grind
       · exact sizes_eq_of_spinSet_eq h_eq h op_eq
       · rw [numsToSpinSet_comm, numsToSpinSet_comm (i := b1)] at h_eq
         exact sizes_eq_of_spinSet_eq h_eq h.symm (by omega) |>.symm
@@ -251,7 +223,7 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
     let ⟨x, y, _, h_nonempty⟩ : ∃ x y : Nat,
         s = numsToSpinSet x y m n ∧ (numsToSpinSet x y m n).Nonempty := by
       simp [spinSetTypes] at hs
-      aesop
+      grind
 
     let ⟨c, d, hcd⟩ : ∃ c d : Nat,
         (c < m ∧ d < n) ∧ numsToSpinSet c d m n = numsToSpinSet x y m n := by
@@ -260,23 +232,19 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
       rcases Finset.union_nonempty.mp h_nonempty with h5 | h5
       · use x, y, ?_
         by_contra
-        have : a > m.val ∨ b > n.val := by simp [a, b]; omega
-        exact Finset.nonempty_iff_ne_empty.mp h5 (rectSpinSet_empty_if this)
+        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by grind [PNat.mk_coe])
       · use y, x, ?_, spinSet_comm
         by_contra
-        have : b > m.val ∨ a > n.val := by simp [a, b]; omega
-        exact Finset.nonempty_iff_ne_empty.mp h5 (rectSpinSet_empty_if this)
+        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by grind [PNat.mk_coe])
 
     simp only [Finset.mem_attach, Function.Embedding.coeFn_mk, true_and,
       Subtype.exists, Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]
     dsimp only [numsToSpinSet] at hcd
     by_cases h8 : c ≤ d
     · use c, d
-      refine ⟨⟨c, d, ?_⟩, by simp_all only⟩
-      simp only [hcd, and_self, h8, reduceIte]
+      grind
     · use d, c
-      refine ⟨⟨c, d, ?_⟩, by simp_all only [spinSet_comm ▸ hcd.2]⟩
-      simp only [hcd, and_self, h8, reduceIte]
+      grind [spinSet_comm]
   · intro hs
     let ⟨⟨⟨x, y⟩, hxy⟩, _⟩ := Finset.mem_map.mp hs
     simp only [Set.mem_image, Prod.exists, spinSetTypes]
@@ -284,20 +252,12 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
     simp_all only [Finset.mem_coe, Finset.mem_attach, SpinSet, Function.Embedding.coeFn_mk,
       true_and, and_true]
 
-    have : (x < m ∧ y < n) ∨ (y < m ∧ x < n) := by
-      by_contra
-      absurd hxy
-      simp only [Prod.mk.eta, Finset.mem_image, Finset.mem_product, Finset.mem_range,
-        Prod.exists, not_exists, not_and, and_imp]
-      intros
-      split_ifs <;> (simp; omega)
-
-    rcases this with hmn | hmn
+    obtain hmn | hmn : (x < m ∧ y < n) ∨ (y < m ∧ x < n) := by grind
     · apply Finset.Nonempty.inl
-      use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨x, hmn.1⟩, ⟨y, hmn.2⟩⟩, Fin.zero_le' _, Fin.zero_le' _⟩
+      use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨x, hmn.1⟩, ⟨y, hmn.2⟩⟩, Fin.zero_le _, Fin.zero_le _⟩
       simp [RectSpinSet]
     · apply Finset.Nonempty.inr
-      use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨y, hmn.1⟩, ⟨x, hmn.2⟩⟩, Fin.zero_le' _, Fin.zero_le' _⟩
+      use RectSpin.fromRect ⟨⟨0,0⟩, ⟨⟨y, hmn.1⟩, ⟨x, hmn.2⟩⟩, Fin.zero_le _, Fin.zero_le _⟩
       simp [RectSpinSet]
 
 lemma spinSetTypes_finite {m n : PNat} (h : m.val ≤ n) : (spinSetTypes m n).Finite :=

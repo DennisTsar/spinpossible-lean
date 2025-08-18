@@ -10,7 +10,7 @@ set_option linter.haveLet 0
 
 open scoped CharTwo
 
-lemma Spin.perm_distrib (s1 s2 : Spin m n) : (s1 * s2).α = (s2.α * s1.α) := rfl
+lemma Spin.perm_distrib (s1 s2 : Spin m n) : (s1 * s2).α = s2.α * s1.α := rfl
 
 @[simp]
 lemma Spin.inv_perm (s : Spin m n) : s⁻¹.α = s.α⁻¹ := rfl
@@ -18,24 +18,19 @@ lemma Spin.inv_perm (s : Spin m n) : s⁻¹.α = s.α⁻¹ := rfl
 private lemma aux1 {s1 : Spin m n} {s2 : RectSpin m n}
     (a : { l // (l.map RectSpin.toSpin).prod.α = (s1⁻¹ * s2).α }) :
     (a.1 ++ [s2] |>.map RectSpin.toSpin).prod.α⁻¹ = s1.α := by
-  simp only [List.map_append, List.map_cons, List.map_nil, List.prod_append, List.prod_cons,
-    List.prod_nil, mul_one, Spin.perm_distrib, a.2, Spin.inv_perm, mul_inv_rev, inv_inv]
-  nth_rw 1 [← Spin.inv_perm, RectSpin.inv_self, mul_inv_cancel_right]
+  simp [Spin.perm_distrib, a.2]
+  grind [RectSpin.inv_self, Spin.inv_perm, mul_inv_cancel_right]
 
 private lemma aux2 {s1 : Spin m n} {s2 s3 : RectSpin m n}
     (a : { l // (l.map RectSpin.toSpin).prod.α = (s1⁻¹ * s2 * s3).α }) :
     (a.1 ++ [s3, s2] |>.map RectSpin.toSpin).prod.α⁻¹ = s1.α := by
-  simp only [List.map_append, List.map_cons, List.map_nil, List.prod_append, List.prod_cons,
-    List.prod_nil, mul_one, ← mul_assoc, Spin.perm_distrib, a.2, Spin.inv_perm, mul_inv_rev,
-    inv_inv]
-  nth_rw 1 [← Spin.inv_perm, ← Spin.inv_perm]
-  simp [RectSpin.inv_self]
+  simp [← mul_assoc, Spin.perm_distrib, a.2]
+  grind [RectSpin.inv_self, Spin.inv_perm, mul_inv_cancel_right]
 
 lemma Rectangle.spin_perm_const {p : Point m n} {r : Rectangle m n}
     (h : p.row.val < r.topLeft.row.val ∨ p.col.val < r.topLeft.col.val) :
     r.toSpin.α (to1d p) = to1d p := by
-  simp [Rectangle.toSpin, Point.IsInside]
-  omega
+  grind [Rectangle.toSpin, Point.IsInside]
 
 lemma Rectangle.corners_rotate_perm {r : Rectangle m n} :
     r.toSpin.α (to1d r.topLeft) = to1d r.bottomRight ∧
@@ -47,9 +42,8 @@ lemma Rectangle.corners_rotate_perm {r : Rectangle m n} :
 theorem Function.Involutive.toPerm_inv {f : α → α} (h : Function.Involutive f) :
   (h.toPerm f)⁻¹ = h.toPerm f := rfl
 
-lemma Rectangle.spin_eq_iff {s : Rectangle m n} : s.toSpin.α p1 = p2 ↔ p1 = s.toSpin.α p2 := by
-  rw [← Equiv.Perm.eq_inv_iff_eq]
-  simp [Rectangle.toSpin]
+lemma Rectangle.spin_eq_iff {s : Rectangle m n} :
+    s.toSpin.α p1 = p2 ↔ p1 = s.toSpin.α p2 := by grind [Rectangle.toSpin]
 
 lemma funtimes3 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin m n)
     (hj2 : ¬ row + 1 < m) (hj3 : ¬ col + 1 < n)
@@ -68,34 +62,19 @@ lemma funtimes3 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : S
 
     ([].map RectSpin.toSpin).prod.α = (s⁻¹ * row_spin * col_spin).α := by
   intro tile_pos row_spin col_spin
-  simp [Spin.mul_def]
-  rw [Equiv.ext_iff]
-  intro i
-  simp [Spin.one_def, Spin.mul_def, ← Rectangle.spin_eq_iff]
+  ext i : 1
 
-  have hb : tile_pos.col.val = col := by simp [tile_pos] at this ⊢; omega
-  have hc : tile_pos.row.val = row := by
+  have hb : col = tile_pos.col.val := by grind
+  have hc : row = tile_pos.row.val := by
     by_contra! hx
     have := hs_row2 tile_pos.row.val (by omega)
-    simp [← hb] at this
-    simp_all [tile_pos]
-  simp [← hb, ← hc, rect_spin_one, row_spin, col_spin]
+    grind [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
+  simp [hb, hc, rect_spin_one, row_spin, col_spin,  List.map_nil, List.prod_nil,
+    Equiv.invFun_as_coe, Spin.mul_def, Spin.one_def, Spin.inv_perm]
 
   by_cases hx : (to2d i).col.val < tile_pos.col.val
-  · have := hs_col2 (to2d i).col (to2d i).row (by omega) |>.symm
-    simpa
-  · have asd : tile_pos.col = (to2d i).col := by omega
-    by_cases hxy : (to2d i).row.val < tile_pos.row.val
-    · have := hs_row2 (to2d i).row (by omega) |>.symm
-      simpa [← hb, asd]
-    · have : i = to1d tile_pos := by
-        simp [← to2d_injective.eq_iff, Point.ext_iff]
-        omega
-      rw [this]
-      conv_lhs => unfold tile_pos
-      simp [Point.ext_iff]
-      simp only [Fin.ext_iff]
-      omega
+  · simpa using hs_col2 (to2d i).col (to2d i).row (by omega) |>.symm
+  · by_cases (to2d i).row.val < tile_pos.row.val <;> grind [Fin.eta]
 
 lemma funtimes (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin m n)
     (hj2 : ¬ row + 1 < m) (hj3 : col + 1 < n)
@@ -115,90 +94,49 @@ lemma funtimes (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Sp
     ∀ x y, (_ : x < col + 1 ∧ y < m.val) →
       (s⁻¹ * row_spin.toSpin * col_spin.toSpin).α (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩)
         = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := by
-
   intro tile_pos row_spin col_spin x y hxy
   simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
-  rw [Rectangle.spin_eq_iff]
   by_cases hg : x < col
-  · have : tile_pos.col.val ≥ col := this
-    rw [hs_col2 x y (by omega), Rectangle.spin_perm_const (Or.inr hg)]
-    simp [row_spin]
-    split_ifs <;> rw [Rectangle.spin_perm_const (by fin_omega)]
-  · have : x = col := by omega
-    subst x
-    by_cases hg2 : y = row
-    · subst y
-      simp only [Rectangle.corners_rotate_perm.1, row_spin]
-      split_ifs
-      · simp [Rectangle.spin_eq_iff, Rectangle.corners_rotate_perm.2, tile_pos]
-      · simp [Rectangle.spin_eq_iff, Rectangle.corners_rotate_perm.1, tile_pos]
-    · rw [hs_row2 y (by omega), Rectangle.spin_perm_const (by fin_omega)]
-      simp only [row_spin]
-      split_ifs with hg3
-      · have hg4 : col ≠ tile_pos.col.val := by
-          by_contra! hg4
-          absurd hs_row2 tile_pos.row.val hg3
-          simp only [Fin.eta, hg4, point_eq]
-          conv_rhs => rhs; unfold tile_pos
-          simp [Point.ext_iff]
-          simp only [Fin.ext_iff]
-          omega
-        have : col < tile_pos.col.val := Nat.lt_of_le_of_ne this hg4
-        rw [Rectangle.spin_eq_iff, Rectangle.spin_perm_const (Or.inr this)]
-      · rw [Rectangle.spin_perm_const (by fin_omega)]
+  · grind [Rectangle.spin_perm_const]
+  · grind [Rectangle.corners_rotate_perm, Rectangle.spin_eq_iff, Rectangle.spin_perm_const,
+      EmbeddingLike.apply_eq_iff_eq, Fin.eta]
 
+-- `grind -ring -linarith` saves ~1s over `grind` alone
 -- set_option debug.skipKernelTC true in -- Speeds up proof during dev, but DO NOT COMMIT
 def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin m n)
     (hs_row : ∀ x, (_ : x < row) → s.α (to1d ⟨⟨x, by omega⟩, ⟨col, hcol⟩⟩)
       = to1d ⟨⟨x, by omega⟩, ⟨col, hcol⟩⟩)
-    (hs_col: ∀ x y, (_ : x < col ∧ y < m.val) → s.α (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩)
+    (hs_col : ∀ x y, (_ : x < col ∧ y < m.val) → s.α (to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩)
       = to1d ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) :
     {l : List (RectSpin m n) // (l.map RectSpin.toSpin).prod.α = s.α } :=
   let tile_pos := to2d (s.α⁻¹ (to1d ⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩))
 
-  have hs_row2 : ∀ x, (_ : x < row) → s.α⁻¹ (to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩) = to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩ := by
-    intro x hx
-    exact Equiv.Perm.eq_inv_iff_eq.mp (hs_row x hx |>.symm)
-  have hs_col2 : ∀ x y, (_ : x < col ∧ y < m.val) →
-      s.α⁻¹ (to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩) = to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩ := by
-    intro x y hxy
-    exact Equiv.Perm.eq_inv_iff_eq.mp (hs_col x y hxy |>.symm)
+  have hs_row2 (x) (hx : x < row) : s.α⁻¹ (to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩) = to1d ⟨⟨x, _⟩, ⟨col, _⟩⟩ :=
+    Equiv.Perm.eq_inv_iff_eq.mp (hs_row x hx |>.symm)
+  have hs_col2 (x y) (hxy : x < col ∧ y < m.val) :
+      s.α⁻¹ (to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩) = to1d ⟨⟨y, _⟩, ⟨x, _⟩⟩ :=
+    Equiv.Perm.eq_inv_iff_eq.mp (hs_col x y hxy |>.symm)
 
   have : tile_pos.col.val ≥ col := by
     by_contra hx
     absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-    conv_rhs => rhs; unfold tile_pos
-    simp [Point.ext_iff]
-    simp only [Fin.ext_iff]
-    omega
+    grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
 
   if hj : row = 0 then
     let next_spin := RectSpin.fromRect
       ⟨⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩, tile_pos, this, by fin_omega⟩
     let a := if hj2 : row + 1 < m then
-        attempt4 (row + 1) col hj2 hcol (s⁻¹ * next_spin) (by
-          intro x hx
-          have : x = row := by omega
-          simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
-          rw [Rectangle.spin_eq_iff]
-          simp [this, Rectangle.corners_rotate_perm.1, tile_pos]
-        ) (by
-          intro x y hxy
-          simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
-          rw [Rectangle.spin_eq_iff, Rectangle.spin_perm_const (Or.inr hxy.1)]
-          exact hs_col2 x y hxy
-        )
+        attempt4 (row + 1) col hj2 hcol (s⁻¹ * next_spin)
+          (by grind -ring -linarith [= Spin.mul_def, Spin.inv_perm,
+            Rectangle.corners_rotate_perm, Equiv.invFun_as_coe, Equiv.trans_apply])
+          (by grind -ring -linarith [= Spin.mul_def, Spin.inv_perm,
+            Rectangle.spin_perm_const, Equiv.invFun_as_coe, Equiv.trans_apply])
       else if hj3 : col + 1 < n then
         attempt4 0 (col + 1) (by omega) hj3 (s⁻¹ * next_spin.toSpin) (by omega) (by
           intro x y hxy
           simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
           by_cases hg : x = col
-          · by_cases hg2 : y = row
-            · simp [hg, hg2]
-              rw [Rectangle.spin_eq_iff]
-              simp [Rectangle.corners_rotate_perm.1, tile_pos]
-            · rw [Rectangle.spin_eq_iff, Rectangle.spin_perm_const (by omega)]
-              exact hg ▸ (hs_row2 y (by omega))
+          · grind -ring -linarith [Rectangle.corners_rotate_perm]
           · rw [hs_col2 x y (by omega), Rectangle.spin_perm_const (by fin_omega)]
         )
       else ⟨[], by
@@ -259,19 +197,11 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
               by_contra! hg4
               absurd hs_row2 tile_pos.row.val (by omega)
               simp [hg4]
-              conv_rhs => rhs; simp [tile_pos]
-              simp [Point.ext_iff]
-              simp only [Fin.ext_iff]
-              omega
+              grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq]
             rw [Rectangle.spin_perm_const (by fin_omega)]
           · rw [Rectangle.spin_perm_const (by fin_omega)]
-      ) (by
-        intro x y hxy
-        simp [Spin.mul_def, hs_col2 _ _ hxy]
-        rw [Rectangle.spin_eq_iff, Rectangle.spin_perm_const (by fin_omega)]
-        simp only [row_spin]
-        split_ifs <;> (exact Rectangle.spin_perm_const (by fin_omega))
-      )
+      ) (by grind -ring -linarith [= Spin.mul_def, Rectangle.spin_perm_const, Spin.inv_perm,
+          Equiv.invFun_as_coe, Equiv.trans_apply])
     else if hj3 : col + 1 < n then
       attempt4 0 (col + 1) m.2 hj3 (s⁻¹ * row_spin.toSpin * col_spin.toSpin) (by omega)
         (funtimes row col hrow hcol s hj2 hj3 this hs_row2 hs_col2)
@@ -315,27 +245,24 @@ theorem theorem1 (b : Spin m n) : ∀ l, Spin.IsSolution l b → l.length ≤ 3 
         else none with hl
       apply Corollary1.aux1 (l := z1') (k := l) (by rfl)
       convert hl
-      simp [to2d_injective.eq_iff, eq_comm]
+      rw [to2d_injective.eq_iff, eq_comm]
     · exact List.length_finRange (n := m * n) ▸ List.length_filterMap_le ..
   suffices h2 : ∃ l : List (RectSpin m n), (l.map RectSpin.toSpin).prod.α = b.α⁻¹ ∧
       l.length ≤ 2 * m * n - (m + n) by
     obtain ⟨l2, hl2⟩ := h2
     obtain ⟨l1, hl1⟩ := h3 ((l2.map RectSpin.toSpin).prod.u ∘ (b.α.symm))
     have zz : (List.map RectSpin.toSpin (l1 ++ l2)).prod = b⁻¹ := by
-      simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def, hl2, add_assoc, ← Spin.symm_inv]
+      simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def, add_assoc, ← Spin.symm_inv]
     intro l5 hl5
     simp [Spin.IsSolution] at hl5
-    have l5size : (l1 ++ l2).length ≤ m * n + (2 * m * n - (m + n)) := by
-      rw [List.length_append]
-      omega
-    have : 2 * m.val * n.val ≥ m.val + n.val := by
+    grw [hl5.2 (l1 ++ l2) zz, List.length_append, hl2.2, hl1.2]
+    have : m.val + n.val ≤ 2 * m.val * n.val := by
       have : 2 * m.val * n.val = m.val * n.val + m.val * n.val := by ring
       have : m.val * n.val ≥ m.val := Nat.le_mul_of_pos_right _ n.2
       have : m.val * n.val ≥ n.val := Nat.le_mul_of_pos_left _ m.2
       omega
     have : m.val * n.val + 2 * m.val * n.val - (m.val + n.val) =
       3 * m.val * n.val - (m.val + n.val) := by ring_nf
-    have := hl5.2 (l1 ++ l2) zz
     omega
 
   let res : { l : List (RectSpin m n) // (List.map RectSpin.toSpin l).prod.α = b⁻¹.α } :=

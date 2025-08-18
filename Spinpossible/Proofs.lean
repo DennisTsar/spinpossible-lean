@@ -1,9 +1,16 @@
 import Spinpossible.Definitions
 import Mathlib.Tactic
 
+-- I don't know how to make `#synth CharZero (ZMod 2)` fail faster,
+-- so instead we disable the `@[simp]` lemmas that search for `CharZero`.
+-- To check: `set_option profiler true` and look for `typeclass inference of CharZero took _`
+attribute [-simp]
+  OfNat.ofNat_ne_zero OfNat.zero_ne_ofNat OfNat.ofNat_ne_one OfNat.one_ne_ofNat OfNat.ofNat_eq_ofNat
+
 open scoped CharTwo -- useful since orient is in `ZMod 2` (specifically `CharTwo.two_eq_zero`)
 open Function.Involutive -- to make theorem names shorter
 
+attribute [grind] coe_toPerm
 /-- We say that an element of `Spin m n` is a *spin* if it is a spin about some rectangle `r` -/
 @[ext]
 structure RectSpin (m n : PNat) extends Spin m n where
@@ -66,7 +73,7 @@ def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
 lemma to1d_injective : Function.Injective (to1d : Point m n -> _)
   | p1, p2, h => by simpa only [to2d_to1d_inverse] using congr(to2d $h)
 
-@[simp]
+@[simp, grind]
 lemma to1d_inj : to1d p1 = to1d p2 ↔ p1 = p2 := to1d_injective.eq_iff
 
 lemma rect_eq_if_corners_inside {r1 r2 : Rectangle m n}
@@ -98,12 +105,10 @@ private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
       absurd hs3_orient (to1d (rotate180 p r1))
       simp [h2, spin_stays_inside p_in_r1, h]
     have app := hs3_perm (to1d (rotate180 p r1))
-    simp only [Equiv.trans_apply, coe_toPerm, to2d_to1d_inverse, r1_bot_in_r2, r2_in_r1,
-      reduceIte, p_in_r1, rotate180_self_inverse, p_not_in_r2, h, to1d_inj] at app
-    exact (app ▸ p_not_in_r2) r1_bot_in_r2
+    grind [Equiv.trans_apply]
 
   have ⟨r1_top_in_r3, r1_bot_in_r3⟩ : r1.topLeft.IsInside r3 ∧ r1.bottomRight.IsInside r3 := by
-    cases p_is_corner <;> simp_all [r1.corners_rotate]
+    grind [Rectangle.corners_rotate]
 
   have r3_eq_r1 : r3 = r1 := by
     apply rect_eq_if_corners_inside ?_ r1_top_in_r3 ?_ r1_bot_in_r3
@@ -113,8 +118,8 @@ private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
     · by_contra h
       absurd hs3_orient (to1d r3.bottomRight)
       simp [h, (r2_in_r1 r3.bottomRight).mt h, r3.corners_inside]
-  have app_orient := hs3_orient (to1d r2.topLeft)
-  simp [r2.corners_inside, r2.corners_rotate, r2_in_r1, r3_eq_r1] at app_orient
+  specialize hs3_orient (to1d r2.topLeft)
+  simp [r2.corners_inside, r2.corners_rotate, r2_in_r1, r3_eq_r1] at hs3_orient
 
 private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
     -- This is implied by the last arg, but most of the proof needs only this weaker
@@ -134,12 +139,14 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
 
   have r3_top_in_r2 : r3.topLeft.IsInside r2 := by
     by_contra! h
-    have app := hs3_orient (to1d r3.topLeft)
+    specialize hs3_orient (to1d r3.topLeft)
+    clear hs3_perm
     simp_all [r3.corners_inside]
 
   have r3_bot_in_r2 : r3.bottomRight.IsInside r2 := by
     by_contra! h
-    have app := hs3_orient (to1d r3.bottomRight)
+    specialize hs3_orient (to1d r3.bottomRight)
+    clear hs3_perm
     simp_all [r3.corners_inside]
 
   have r2_bot_in_r3 : p.IsInside r3 := by
@@ -147,21 +154,14 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
 
   have r2_top_not_in_r3 : ¬(rotate180 p r2).IsInside r3 := by
     by_contra! h
-    have r2_eq_r3 : r2 = r3 := by
-      refine rect_eq_if_corners_inside ?top r3_top_in_r2 ?bot r3_bot_in_r2 <;>
-      rcases p_is_corner with rfl | rfl
-      case bot.inr | top.inl => exact r2_bot_in_r3
-      case bot.inl | top.inr => simpa [r2.corners_rotate] using h
+    have r2_eq_r3 : r2 = r3 := by grind [rect_eq_if_corners_inside, Rectangle.corners_rotate]
     have r1_bot_in_r3 : r1.bottomRight.IsInside r3 :=
       r2_eq_r3 ▸ r1_in_r2 r1.bottomRight r1.corners_inside.2
     absurd hs3_orient (to1d (rotate180 r1.bottomRight r2))
     simp [r1_bot_in_r3, spin_stays_inside, r2_eq_r3, r1.corners_inside]
 
-  have app := hs3_perm (to1d (rotate180 p r2))
-  simp [Equiv.trans_apply, coe_toPerm, to2d_to1d_inverse, p_rot_not_in_r1, reduceIte,
-    p_in_r2, spin_stays_inside, rotate180_self_inverse, r2_top_not_in_r3, to1d_inj] at app
-  rw [app, rotate180_self_inverse p_in_r2] at r2_top_not_in_r3
-  contradiction
+  specialize hs3_perm (to1d (rotate180 p r2))
+  grind [Equiv.trans_apply]
 
 private lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n}
     (h_contains : r1.Contains r2) (h_r1_ne_r2 : r1 ≠ r2) :
@@ -220,49 +220,29 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
         rw [← app] at h
         absurd hs3_orient (to1d p1)
         simp [h_p1_not_r2, h_p1_r1, h]
-      apply commonCenter_if_rotate_eq (spin_stays_inside h_p1_r1) this
-      simp_rw [this, reduceIte, to1d_inj] at app
-      rw [← app, rotate180_self_inverse h_p1_r1]
+      grind [commonCenter_if_rotate_eq]
 
     clear hs3_perm
     dsimp [CommonCenter] at r1_r3_commonCenter r2_r3_commonCenter
 
-    have r1_top_not_in_r2 : ¬r1.topLeft.IsInside r2 := by
-      dsimp [Point.IsInside] at h_p1_r1 h_p1_not_r2 ⊢
-      omega
+    have r1_top_not_in_r2 : ¬r1.topLeft.IsInside r2 := by grind [Point.IsInside]
 
     have r1_top_in_r3 : r1.topLeft.IsInside r3 := by
       have := hs3_orient (to1d r1.topLeft)
       simpa [r1.corners_inside, r1_top_not_in_r2, eq_ite_iff]
     have r3_top_in_r1 : r3.topLeft.IsInside r1 := by
-      have : ¬r3.topLeft.IsInside r2 := by
-        dsimp [Point.IsInside] at r1_top_not_in_r2 r1_top_in_r3 ⊢
-        omega
+      have : ¬r3.topLeft.IsInside r2 := by grind [Point.IsInside]
       have app := hs3_orient (to1d r3.topLeft)
       simpa [r3.corners_inside, this] using app
 
-    have r1_eq_r3 : r1 = r3 := by
-      apply rect_eq_if_corners_inside r1_top_in_r3 r3_top_in_r1 <;>
-      dsimp [Point.IsInside] at r1_top_in_r3 r3_top_in_r1 ⊢ <;> omega
-
-    have r2_top_not_in_r3 : ¬r2.topLeft.IsInside r3 := by
-      dsimp [Point.IsInside] at h_p2_r2 h_p2_not_r1 r3_top_in_r1 ⊢
-      omega
-    have r2_bot_in_r3 : r2.bottomRight.IsInside r3 := by
+    have r2_bot_in_r3 : r2.bottomRight.IsInside r1 := by
+      have : ¬r2.topLeft.IsInside r3 := by grind [Point.IsInside]
       by_contra! h
       absurd hs3_orient (to1d r2.topLeft)
-      simp [h, r2_top_not_in_r3, r2.corners_rotate, r2.corners_inside, r1_eq_r3]
+      simp [h, this, r2.corners_rotate, r2.corners_inside]
 
-    dsimp [Point.IsInside] at r2_bot_in_r3 r2_top_not_in_r3
-    omega
-  · have r1_contains_r2_or_r2_contains_r1 : r1.Contains r2 ∨ r2.Contains r1 := by
-      by_contra! h
-      simp [exists_p1_p2] at h_exists_p1_p2
-      simp [Rectangle.Contains] at h
-      obtain ⟨⟨p1, h_p1⟩, ⟨p2, h_p2⟩⟩ := h
-      exact h_p1.2 <| h_exists_p1_p2 p2 h_p2.1 h_p2.2 p1 h_p1.1
-
-    rcases r1_contains_r2_or_r2_contains_r1 with h | h
+    grind [Point.IsInside]
+  · obtain h | h : r1.Contains r2 ∨ r2.Contains r1  := by grind [Rectangle.Contains]
     · rcases s1s2_not_spin.aux3 h h_r1_ne_r2 with h_corner | h_corner
       · exact s1s2_not_spin.aux1 r1.corners_inside.1 h_corner hs3 h (Or.inl rfl)
       · exact s1s2_not_spin.aux1 r1.corners_inside.2 h_corner hs3 h (Or.inr rfl)
@@ -313,10 +293,7 @@ lemma rotate_eq_if_comm (h1 : rotate180 (rotate180 p r1) r2 = rotate180 (rotate1
     `s1 * s2 = s2 * s1` if and only if `r1` and `r2` are disjoint or have a common center. -/
 theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     s1.toSpin * s2 = s2 * s1 ↔ (DisjointRect s1.r s2.r ∨ CommonCenter s1.r s2.r) := by
-  -- These used to be plain `let`s, see note in `s1s2_not_spin` above
-  set r1 := s1.r with ← hr1
-  set r2 := s2.r with ← hr2
-
+  -- `grind -ring -linarith` makes the proof about .75s faster than `grind` alone
   apply Iff.intro
   · rw [or_iff_not_imp_left, DisjointRect.not_iff]
     intro h ⟨p, hp_r1, hp_r2⟩
@@ -327,38 +304,20 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     specialize h_perm (to1d p)
     specialize h_orient (to1d p)
     simp [hp_r1, hp_r2] at h_perm h_orient
-    split_ifs at h_orient <;> simp_all [spin_stays_inside]
+    grind -ring -linarith
   · intro h
+    -- For some reason `grind` doesn't work well without the `set`s
+    set r1 := s1.r with ← hr1
+    set r2 := s2.r with ← hr2
     simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
     rcases h with a | a
     · ext p : 1
-      · by_cases h1 : (to2d p).IsInside r1
-        · have : ¬(to2d p).IsInside r2 := a (to2d p) h1
-          simp [this, h1, spin_stays_outside_disj a.symm h1]
-        · by_cases h2 : (to2d p).IsInside r2
-          · simp [spin_stays_outside_disj a h2, h2, h1]
-          · simp [h1, h2]
-      · by_cases h1 : (to2d p).IsInside r1
-        · have : ¬(to2d p).IsInside r2 := a (to2d p) h1
-          simp [this, h1, spin_stays_outside_disj a.symm h1]
-        · by_cases h2 : (to2d p).IsInside r2
-          · simp [spin_stays_outside_disj a h2, h2, h1]
-          · simp [h1, h2]
+      · grind -ring -linarith [Equiv.trans_apply, DisjointRect]
+      · grind -ring -linarith [add_zero, zero_add, toPerm_symm, DisjointRect, Equiv.invFun_as_coe]
     · ext p : 1
-      · by_cases h1 : (to2d p).IsInside r1
-        · by_cases h2 : (to2d p).IsInside r2
-          · simp [h1, h2, spin_stays_inside_cent a.symm, spin_stays_inside, a.rotate_eq]
-          · simp [spin_stays_outside_cent a.symm h2 h1, h1, h2]
-        · by_cases h2 : (to2d p).IsInside r2
-          · simp [spin_stays_outside_cent a h1 h2, h1, h2]
-          · simp [h1, h2]
-      · by_cases h1 : (to2d p).IsInside r1
-        · by_cases h2 : (to2d p).IsInside r2
-          · simp [h1, h2, spin_stays_inside_cent a.symm, spin_stays_inside, a.rotate_eq]
-          · simp [spin_stays_outside_cent a.symm h2 h1, h1, h2]
-        · by_cases h2 : (to2d p).IsInside r2
-          · simp [spin_stays_outside_cent a h1 h2, h1, h2]
-          · simp [h1, h2]
+      · grind -ring -linarith [Equiv.trans_apply, → CommonCenter.rotate_eq, spin_stays_outside_cent]
+      · grind -ring -linarith [add_zero, zero_add, Equiv.invFun_as_coe, toPerm_symm,
+          → CommonCenter.symm, spin_stays_inside_cent, spin_stays_outside_cent]
 
 def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
@@ -391,8 +350,8 @@ seal Mul.mul in
 theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     (∃ s3 : RectSpin m n, s1.toSpin * s2 * s1 = s3 ∧ SameShape s3.r s2.r) ↔
     (s1.toSpin * s2 = s2 * s1 ∨ s1.r.Contains s2.r) := by
-  set r1 := s1.r
-  set r2 := s2.r
+  set r1 := s1.r with ← hr1
+  set r2 := s2.r with ← hr2
   apply Iff.intro
   · rw [s1s2_eq_s2s1_iff, or_iff_not_imp_right, or_iff_not_imp_left]
     rintro ⟨s3, h3, -⟩ h1 h2
@@ -412,33 +371,11 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
       · specialize h_perm (to1d r2.topLeft)
         specialize h_orient (to1d r2.topLeft)
         simp [r2_top_r1, r2.corners_inside] at h_perm h_orient
-        have : ¬(rotate180 r2.topLeft r2).IsInside r1 := by
-          by_contra! h
-          simp [h, apply_ite] at h_perm h_orient
-          rw [if_neg h_orient] at h_perm
-          exact r2_top_r1 (h_perm ▸ spin_stays_inside h)
-        simp [this, apply_ite] at h_perm h_orient
-        rw [if_pos h_orient] at h_perm
-        have : CommonCenter s3.r r2 :=
-          commonCenter_if_rotate_eq h_orient r2.corners_inside.1 h_perm
-        refine ⟨this, ?_⟩
-        dsimp [Point.IsInside, CommonCenter, r1, r2] at *
-        omega
+        grind [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
       · specialize h_perm (to1d r2.bottomRight)
         specialize h_orient (to1d r2.bottomRight)
         simp [r2_bot_r1, r2.corners_inside] at h_perm h_orient
-        have : ¬(rotate180 r2.bottomRight r2).IsInside r1 := by
-          by_contra! h
-          simp [h, apply_ite] at h_perm h_orient
-          rw [if_neg h_orient] at h_perm
-          exact r2_bot_r1 (h_perm ▸ spin_stays_inside h)
-        simp [this, apply_ite] at h_perm h_orient
-        rw [if_pos h_orient] at h_perm
-        have : CommonCenter s3.r r2 :=
-          commonCenter_if_rotate_eq h_orient r2.corners_inside.2 h_perm
-        refine ⟨this, ?_⟩
-        dsimp [Point.IsInside, CommonCenter, r1, r2] at *
-        omega
+        grind [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
 
     specialize h_perm (to1d p)
     specialize h_orient (to1d p)
@@ -447,24 +384,15 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
       by_contra! h
       simp [h, h_p, spin_stays_inside, p_in_r3] at h_orient
     simp [this, h_p] at h_perm h_orient
-
-    have hx : (rotate180 (rotate180 p r1) r2).IsInside r1 := by
-      contrapose p_in_r3
-      simpa [p_in_r3, apply_ite] using h_orient
-    simp [hx, apply_ite] at h_perm h_orient
-    rw [if_pos h_orient] at h_perm
-    apply commonCenter_if_rotate_eq h_p.1 h_p.2
-    apply rotate_eq_if_comm ?_ h_p.1 h_p.2
-    rw [r2_r3_commonCenter.rotate_eq p h_orient h_p.2]
-    exact rotate180_self_inverse hx ▸ congr(rotate180 $h_perm r1)
+    have : (rotate180 (rotate180 p r1) r2).IsInside r1 := by grind
+    grind [CommonCenter.rotate_eq, rotate_eq_if_comm, commonCenter_if_rotate_eq]
   · intro h
     -- Below the `+zetaDelta` and `r1, r2` had to be added Lean 4.16.0, see note in `s1s2_not_spin`
     rcases h with h | h
     · use s2, h ▸ ?_, rfl
       ext : 1 <;>
-      · by_contra! hp
-        simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, Equiv.trans_apply, coe_toPerm] at hp
-        split_ifs at hp <;> simp_all [spin_stays_inside]
+      · simp [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
+        grind
     · let r3 : Rectangle m n := ⟨
         rotate180 r2.bottomRight r1,
         rotate180 r2.topLeft r1,
@@ -482,18 +410,16 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         omega
       use ⟨r3.toSpin, r3, rfl⟩
       constructor
-      · simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def]
+      · simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
         ext p : 1
         · simp only [Equiv.trans_apply, coe_toPerm]
           specialize r3_in_r1 (to2d p)
           specialize this (to2d p)
-          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains, r1, r2]
+          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains]
           · dsimp [Point.IsInside, rotate180] at *
             ext <;> apply s1s2s1_is_spin_iff.aux1 <;> omega
-        · simp only [Equiv.invFun_as_coe, toPerm_symm, coe_toPerm]
-          specialize r3_in_r1 (to2d p)
+        · specialize r3_in_r1 (to2d p)
           specialize this (to2d p)
-          clear r2_bot_in_r1 r2_top_in_r1
-          split_ifs <;> simp_all [spin_stays_inside, Rectangle.Contains, r1, r2]
+          grind [Equiv.invFun_as_coe, toPerm_symm, Rectangle.Contains]
       · dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
         omega
