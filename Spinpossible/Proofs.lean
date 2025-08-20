@@ -307,11 +307,11 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     rcases h with a | a
     · ext p : 1
       · grind -ring -linarith [Equiv.trans_apply, DisjointRect]
-      · grind -ring -linarith [add_zero, zero_add, toPerm_symm, DisjointRect, Equiv.invFun_as_coe]
+      · grind -ring -linarith [add_zero, zero_add, toPerm_symm, DisjointRect]
     · ext p : 1
       · grind -ring -linarith [Equiv.trans_apply, → CommonCenter.rotate_eq, spin_stays_outside_cent]
-      · grind -ring -linarith [add_zero, zero_add, Equiv.invFun_as_coe, toPerm_symm,
-          → CommonCenter.symm, spin_stays_inside_cent, spin_stays_outside_cent]
+      · grind -ring -linarith [add_zero, zero_add, toPerm_symm, → CommonCenter.symm,
+          spin_stays_inside_cent, spin_stays_outside_cent]
 
 def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
@@ -414,6 +414,6 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
             ext <;> apply s1s2s1_is_spin_iff.aux1 <;> omega
         · specialize r3_in_r1 p
           specialize this p
-          grind [Equiv.invFun_as_coe, toPerm_symm, Rectangle.Contains]
+          grind [toPerm_symm, Rectangle.Contains]
       · dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
         omega

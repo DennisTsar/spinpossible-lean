@@ -70,7 +70,7 @@ lemma funtimes3 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : S
     have := hs_row2 tile_pos.row.val (by omega)
     grind [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
   simp [hb, hc, rect_spin_one, row_spin, col_spin,  List.map_nil, List.prod_nil,
-    Equiv.invFun_as_coe, Spin.mul_def, Spin.one_def, Spin.inv_perm]
+    Spin.mul_def, Spin.one_def, Spin.inv_perm]
 
   by_cases hx : i.col.val <tile_pos.col.val
   · simpa using hs_col2 i.col i.row (by omega) |>.symm
@@ -95,7 +95,7 @@ lemma funtimes (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Sp
       (s⁻¹ * row_spin.toSpin * col_spin.toSpin).α ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩
         = ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := by
   intro tile_pos row_spin col_spin x y hxy
-  simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
+  simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
   by_cases hg : x < col
   · grind [Rectangle.spin_perm_const]
   · grind [Rectangle.corners_rotate_perm, Rectangle.spin_eq_iff, Rectangle.spin_perm_const,
@@ -128,13 +128,13 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
     let a := if hj2 : row + 1 < m then
         attempt4 (row + 1) col hj2 hcol (s⁻¹ * next_spin)
           (by grind -ring -linarith [= Spin.mul_def, Spin.inv_perm,
-            Rectangle.corners_rotate_perm, Equiv.invFun_as_coe, Equiv.trans_apply])
+            Rectangle.corners_rotate_perm, Equiv.trans_apply])
           (by grind -ring -linarith [= Spin.mul_def, Spin.inv_perm,
-            Rectangle.spin_perm_const, Equiv.invFun_as_coe, Equiv.trans_apply])
+            Rectangle.spin_perm_const, Equiv.trans_apply])
       else if hj3 : col + 1 < n then
         attempt4 0 (col + 1) (by omega) hj3 (s⁻¹ * next_spin.toSpin) (by omega) (by
           intro x y hxy
-          simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
+          simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
           by_cases hg : x = col
           · grind -ring -linarith [Rectangle.corners_rotate_perm]
           · rw [hs_col2 x y (by omega), Rectangle.spin_perm_const (by fin_omega)]
@@ -142,7 +142,7 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
       else ⟨[], by
         ext i : 1
         simp only [List.map_nil, List.prod_nil, Spin.one_def, Equiv.refl_apply, Rectangle.toSpin,
-          Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Function.Involutive.toPerm_symm,
+          Spin.mul_def, Spin.inv_perm, Function.Involutive.toPerm_symm,
           Function.Involutive.coe_toPerm, Equiv.trans_apply, next_spin]
         split_ifs with hk
         · have : (s.α⁻¹ i) = ⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩ := by
@@ -180,7 +180,7 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
     let a := if hj2 : row + 1 < m then
       attempt4 (row + 1) col hj2 hcol (s⁻¹ * row_spin * col_spin) (by
         intro x hx
-        simp only [Spin.mul_def, Spin.inv_perm, Equiv.invFun_as_coe, Equiv.trans_apply]
+        simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
         by_cases hg : x = row
         · simp only [hg, row_spin, col_spin, tile_pos]
           split_ifs
@@ -196,7 +196,7 @@ def attempt4 (row col : Nat) (hrow : row < m.val) (hcol : col < n.val) (s : Spin
             rw [Rectangle.spin_perm_const (by fin_omega)]
           · rw [Rectangle.spin_perm_const (by fin_omega)]
       ) (by grind -ring -linarith [= Spin.mul_def, Rectangle.spin_perm_const, Spin.inv_perm,
-          Equiv.invFun_as_coe, Equiv.trans_apply])
+          Equiv.trans_apply])
     else if hj3 : col + 1 < n then
       attempt4 0 (col + 1) m.2 hj3 (s⁻¹ * row_spin.toSpin * col_spin.toSpin) (by omega)
         (funtimes row col hrow hcol s hj2 hj3 this hs_row2 hs_col2)
@@ -232,7 +232,7 @@ theorem theorem1 (b : Spin m n) : ∀ l, Spin.IsSolution l b → l.length ≤ 3 
 
     use z2
     constructor
-    · simp only [z2, Spin.inv_def, Equiv.Perm.one_symm, Equiv.toFun_as_coe, Equiv.Perm.coe_one, id_eq,
+    · simp only [z2, Spin.inv_def, Equiv.Perm.one_symm, Equiv.Perm.coe_one, id_eq,
         CharTwo.neg_eq, RectSpin.fromRect, List.map_filterMap, Option.map_if, rect_spin_one]
       set l : List (Spin m n) := (.univ : Finset (Point m n)).toList.filterMap fun x =>
         if z1'.prod.u x ≠ (b.u + v) x

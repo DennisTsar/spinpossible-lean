@@ -3,11 +3,11 @@ import Spinpossible.Lemma1
 
 open scoped CharTwo
 
-def Spin.inv (x : Spin m n) : Spin m n := ⟨x.α.symm, fun i => -x.u (x.α.toFun i)⟩
+def Spin.inv (x : Spin m n) : Spin m n := ⟨x.α.symm, fun i => -x.u (x.α i)⟩
 
 instance : Inv (Spin m n) := ⟨Spin.inv⟩
 
-lemma Spin.inv_def (x : Spin m n) : x⁻¹ = ⟨x.α.symm, fun i => -x.u (x.α.toFun i)⟩ := rfl
+lemma Spin.inv_def (x : Spin m n) : x⁻¹ = ⟨x.α.symm, fun i => -x.u (x.α i)⟩ := rfl
 
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
   ext : 1
@@ -65,7 +65,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
       if l.prod.u x ≠ s.u x
       then some ⟨Equiv.refl _, fun j => if j = x then 1 else 0⟩
       else none) : (l ++ k).prod = s := by
-  simp only [List.prod_append, Spin.mul_def, Equiv.invFun_as_coe]
+  simp only [List.prod_append, Spin.mul_def]
   have k_refl : ∀ w ∈ k, w.α = Equiv.refl _ := by grind
   have k_prod_refl : k.prod.α = Equiv.refl _ := prod_eq_refl_of_refl k_refl
   ext i : 1
