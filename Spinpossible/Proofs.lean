@@ -148,7 +148,8 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
 
   have r2_top_not_in_r3 : ¬(rotate180 p r2).IsInside r3 := by
     by_contra! h
-    have r2_eq_r3 : r2 = r3 := by grind [rect_eq_if_corners_inside, Rectangle.corners_rotate]
+    have r2_eq_r3 : r2 = r3 := by
+      cases p_is_corner <;> grind [rect_eq_if_corners_inside, Rectangle.corners_rotate]
     have r1_bot_in_r3 : r1.bottomRight.IsInside r3 :=
       r2_eq_r3 ▸ r1_in_r2 r1.bottomRight r1.corners_inside.2
     absurd hs3_orient (rotate180 r1.bottomRight r2)
