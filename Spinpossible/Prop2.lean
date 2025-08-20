@@ -1,18 +1,15 @@
 import Spinpossible.Proofs
 import Mathlib.Algebra.BigOperators.Intervals
 
-lemma to2d_injective {m n : PNat} : Function.Injective (to2d : Fin (m * n) -> _)
-  | p1, p2, h => by simpa only [to1d_to2d_inverse] using congr(to1d $h)
-
 lemma Rectangle.toSpin_injective : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
   | r1, r2, h => by
     have app := congr(Spin.u $h)
     simp only [toSpin, funext_iff, eq_ite_iff] at app
     apply rect_eq_if_corners_inside
-    · simpa [corners_inside] using app (to1d r1.topLeft)
-    · simpa [corners_inside] using app (to1d r2.topLeft)
-    · simpa [corners_inside] using app (to1d r1.bottomRight)
-    · simpa [corners_inside] using app (to1d r2.bottomRight)
+    · simpa [corners_inside] using app r1.topLeft
+    · simpa [corners_inside] using app r2.topLeft
+    · simpa [corners_inside] using app r1.bottomRight
+    · simpa [corners_inside] using app r2.bottomRight
 
 abbrev RectSpin.fromRect (r : Rectangle m n) : RectSpin m n := ⟨r.toSpin, r, rfl⟩
 

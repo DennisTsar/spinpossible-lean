@@ -13,11 +13,37 @@ structure tile where
   deriving DecidableEq, Repr
 
 def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
+  deriving DecidableEq
+
+private def to1d (pos : Point m n) : Fin (m * n) where
+  val := pos.col.val + pos.row.val * n
+  isLt := by calc
+    pos.col.val + pos.row.val * n < 1 * n + pos.row * n := by omega
+    _ = (1 + pos.row) * n := (add_mul ..).symm
+    _ ≤ m * n := Nat.mul_le_mul_right n (by omega)
+
+private def to2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
+  ⟨⟨pos.val / n, Nat.div_lt_of_lt_mul (Nat.mul_comm m n ▸ pos.isLt)⟩,
+  ⟨pos.val % n, Nat.mod_lt pos n.pos⟩⟩
+
+private lemma to2d_to1d_inverse : to2d (to1d p) = p := by
+  rw [to1d, to2d]
+  congr
+  · simp [Nat.add_mul_div_right, Nat.div_eq_of_lt]
+  · simp [Nat.mod_eq_of_lt]
+
+private lemma to1d_to2d_inverse : to1d (to2d p) = p := by
+  simp only [to1d, to2d, Nat.mod_add_div']
+
+private lemma to1d_injective : Function.Injective (to1d : Point m n -> _)
+  | p1, p2, h => by simpa only [to2d_to1d_inverse] using congr(to2d $h)
+
+private lemma to1d_inj : to1d p1 = to1d p2 ↔ p1 = p2 := to1d_injective.eq_iff
 
 def Spin.toBoard (s : Spin m n) : board m n :=
   fun i j => {
-    id := s.α.symm (to1d ⟨i, j⟩) + 1,
-    orient := if s.u (to1d ⟨i, j⟩) = 0 then orientation.positive else orientation.negative
+    id := to1d (s.α.symm ⟨i, j⟩) + 1,
+    orient := if s.u ⟨i, j⟩ = 0 then orientation.positive else orientation.negative
   }
 
 private def Matrix.toList (M : Matrix (Fin m) (Fin n) α) : List α :=
@@ -49,43 +75,43 @@ def board.toSpin (b : board m n) : Spin m n :=
 
   {
     α := Equiv.mk
-      (fun i => Fin.ofNat _ (tiles_list.findIdx (fun j => j.id - 1 == i.val)))
-      (fun i => Fin.ofNat _ ((tiles_list[i]).id - 1))
+      (fun i => to2d <| Fin.ofNat _ (tiles_list.findIdx (fun j => j.id - 1 == (to1d i).val)))
+      (fun i => to2d <| Fin.ofNat _ ((tiles_list[to1d i]).id - 1))
       (by
         intro p
-        simp only [Fin.ofNat_eq_cast, Fin.getElem_fin, Fin.val_natCast]
-        let e := tiles_list.findIdx (fun j => j.id - 1 == p.val)
+        simp only [Fin.ofNat_eq_cast, to1d_to2d_inverse, ← to1d_inj, Fin.getElem_fin]
+        let e := tiles_list.findIdx (fun j => j.id - 1 == (to1d p).val)
         refold_let e -- why can't I do this one step with `set`?
         have : e < tiles_list.length := by
           apply List.findIdx_lt_length_of_exists
           by_contra! ht
-          have qwe2 (x : Nat) : x ∈ (tiles_list.map (·.id)).toFinset → x - 1 ≠ p := by
+          have qwe2 (x : Nat) : x ∈ (tiles_list.map (·.id)).toFinset → x - 1 ≠ to1d p := by
             grind [List.mem_toFinset]
-          have (x) (hx : x ∈ Finset.range (m.val * n.val)) : (x + 1) - 1 ≠ p :=
+          have (x) (hx : x ∈ Finset.range (m.val * n.val)) : (x + 1) - 1 ≠ to1d p :=
             qwe2 (x + 1) (by grind [Finset.mem_Icc])
           grind
-        grind [Fin.cast_val_eq_self, Nat.mod_eq_of_lt]
+        grind [Fin.cast_val_eq_self, Nat.mod_eq_of_lt, Fin.val_natCast]
       )
       (by
         intro p
-        simp only [Fin.ofNat_eq_cast, Fin.val_natCast]
-        have : tiles_list[p].id > 0 ∧ tiles_list[p].id ≤ m * n := fact1 _ (List.getElem_mem _)
-        let (eq := he) e := tiles_list.findIdx (fun j => j.id - 1 == tiles_list[p].id - 1)
+        simp only [Fin.ofNat_eq_cast, to1d_to2d_inverse, ← to1d_inj, Fin.val_natCast]
+        have : tiles_list[to1d p].id > 0 ∧ tiles_list[to1d p].id ≤ m * n := fact1 _ (List.getElem_mem _)
+        let (eq := he) e := tiles_list.findIdx (fun j => j.id - 1 == tiles_list[to1d p].id - 1)
         have : e < tiles_list.length := by
           apply List.findIdx_lt_length_of_exists
           by_contra! ht
-          have (x) (hx : x ∈ Finset.range (m.val * n.val)) : x ≠ p := by
+          have (x) (hx : x ∈ Finset.range (m.val * n.val)) : x ≠ to1d p := by
             rw [Fin.getElem_fin] at ht
             grind
           grind
-        suffices e = p by rw [Nat.mod_eq_of_lt (by omega), ← he, this, Fin.cast_val_eq_self]
-        have : tiles_list[e].id - 1 = tiles_list[p].id - 1 :=
+        suffices e = to1d p by rw [Nat.mod_eq_of_lt (by omega), ← he, this, Fin.cast_val_eq_self]
+        have : tiles_list[e].id - 1 = tiles_list[to1d p].id - 1 :=
           beq_iff_eq.mp (List.findIdx_getElem (w := this))
         have : tiles_list[e].id > 0 := fact1 _ (List.getElem_mem _) |>.1
-        have := fact2 ⟨e, by omega⟩ ⟨p, by omega⟩ (by simp_rw [← Fin.getElem_fin]; grind)
+        have := fact2 ⟨e, by omega⟩ ⟨to1d p, by omega⟩ (by simp_rw [← Fin.getElem_fin]; grind)
         exact Fin.mk.inj_iff.mp this
       ),
-    u i := if (b (to2d i).row (to2d i).col).orient = orientation.positive then 0 else 1
+    u i := if (b i.row i.col).orient = orientation.positive then 0 else 1
   }
 
 def standardBoard (m n : PNat) : board m n := (1 : Spin m n).toBoard

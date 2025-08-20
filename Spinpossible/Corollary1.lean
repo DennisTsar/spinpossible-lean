@@ -10,17 +10,17 @@ instance : Inv (Spin m n) := ⟨Spin.inv⟩
 lemma Spin.inv_def (x : Spin m n) : x⁻¹ = ⟨x.α.symm, fun i => -x.u (x.α.toFun i)⟩ := rfl
 
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
-  ext
+  ext : 1
   · rfl
-  · exact add_assoc ..
+  · simp [Spin.mul_def, add_assoc]
 
 theorem Spin.one_mul (x : Spin m n) : 1 * x = x := by
-  ext
+  ext : 1
   · rfl
   · simp [mul_def]; rfl
 
 theorem Spin.mul_one (x : Spin m n) : x * 1 = x := by
-  ext
+  ext : 1
   · rfl
   · exact (left_eq_add.mpr rfl).symm
 
@@ -61,9 +61,9 @@ lemma ZMod.cases_two (a : ZMod 2) : a = 0 ∨ a = 1 :=
 attribute [-instance] NeZero.charZero_one -- saves about 0.75s
 
 lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s.α)
-    (hk : k = (List.finRange (↑m * ↑n)).filterMap fun isp ↦
-      if l.prod.u isp ≠ s.u isp
-      then some ⟨Equiv.refl _, fun j ↦ if isp = j then 1 else 0⟩
+    (hk : k = (.univ : Finset (Point m n)).toList.filterMap fun x =>
+      if l.prod.u x ≠ s.u x
+      then some ⟨Equiv.refl _, fun j => if j = x then 1 else 0⟩
       else none) : (l ++ k).prod = s := by
   simp only [List.prod_append, Spin.mul_def, Equiv.invFun_as_coe]
   have k_refl : ∀ w ∈ k, w.α = Equiv.refl _ := by grind
@@ -81,35 +81,36 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
       cases (l.prod.u i).cases_two <;> cases (s.u i).cases_two <;> simp [*]
     · have (e) (_ : e ∈ k) : e.u i = 0 := by
         subst hk
-        simp only [List.mem_filterMap, List.mem_finRange] at *
+        simp only [List.mem_filterMap] at *
         grind
       simp [k_prod_refl, h2, bam, List.map_eq_map_iff.mpr this]
     · have k_nodup : k.Nodup := by
-        refine hk ▸ List.Nodup.filterMap ?_ (List.nodup_finRange _)
+        refine hk ▸ List.Nodup.filterMap ?_ (Finset.nodup_toList _)
         simp only [Option.mem_def, Option.ite_none_right_eq_some, Option.some_inj]
         intro a1 a2 s hs1 hs2
-        have := congr(Spin.u $(hs2.2 ▸ hs1.2) a2)
-        simpa only [reduceIte, ite_eq_left_iff, zero_ne_one, imp_false, Decidable.not_not]
+        have := congr(Spin.u $(hs2.2 ▸ hs1.2) a1)
+        simpa
 
-      let x_i_def : Spin m n := ⟨Equiv.refl _, fun j ↦ if i = j then 1 else 0⟩
+      let x_i_def : Spin m n := ⟨Equiv.refl _, fun j => if j = i then 1 else 0⟩
       have x_i_in_k : x_i_def ∈ k := (hk ▸ List.mem_filterMap).mpr ⟨i, by simp [h2, x_i_def]⟩
       obtain ⟨a, ha1, ha2⟩ := List.getElem_of_mem x_i_in_k
 
-      let k' := List.map (fun x ↦ x.u i) k
+      let k' := k.map fun x => x.u i
       have k_length : k'.length = k.length := List.length_map _
       have k'_cond (y : Fin k'.length) (hy : k'[y.val] = 1) : y = a := by
         have : k[y.val] = x_i_def := by
           have : k[y.val] ∈ k := List.getElem_mem _
           nth_rw 1 [hk] at this
-          simp only [List.mem_filterMap, List.mem_finRange,
-            Option.ite_none_right_eq_some, Option.some_inj, true_and] at this
+          simp only [ne_eq, ite_not, List.mem_filterMap, Finset.mem_toList, Finset.mem_univ,
+            Option.ite_none_left_eq_some, Option.some.injEq, true_and] at this
           obtain ⟨x, -, hx⟩ := this
           ext : 1
           · rw [← hx]
-          · have : x = i := by
+          · have : i = x := by
               simp_rw [k', List.getElem_map] at hy
-              grind only
-            rw [← hx, this]
+              have := congr(Spin.u $hx i)
+              simpa [hy]
+            rw [← hx, ← this]
         contrapose! k_nodup with h
         apply List.not_nodup_of_get_eq_of_ne k ⟨a, ha1⟩ ⟨y, k_length ▸ y.2⟩
         · rw [List.get_eq_getElem, ha2, List.get_eq_getElem, this]
@@ -148,28 +149,27 @@ lemma Point.IsAdjacent.symm {p1 p2 : Point m n} (_ : p1.IsAdjacent p2) :
   p2.IsAdjacent p1 := by grind
 
 @[grind]
-def Equiv.Perm.IsAdjacentSwap {m n : PNat} (p : Equiv.Perm (Fin (m * n))) : Prop :=
+def Equiv.Perm.IsAdjacentSwap {m n : PNat} (p : Equiv.Perm (Point m n)) : Prop :=
   let x := p.support
   if h : x.card = 2 then
     have : x.toList.length = 2 := h ▸ Finset.length_toList _
-    Point.IsAdjacent (to2d x.toList[0]) (to2d x.toList[1])
+    Point.IsAdjacent x.toList[0] x.toList[1]
   else
     False
 
-lemma Equiv.Perm.IsAdjacentSwap.list_card {m n : PNat} {p : Equiv.Perm (Fin (m * n))}
+lemma Equiv.Perm.IsAdjacentSwap.list_card {m n : PNat} {p : Equiv.Perm (Point m n)}
     (h : p.IsAdjacentSwap) : p.support.toList.length = 2 := by
   simp [Equiv.Perm.IsAdjacentSwap] at h
   exact Equiv.Perm.card_support_eq_two.mpr h.choose ▸ Finset.length_toList _
 
-lemma Equiv.Perm.IsAdjacentSwap.isAdjacent {m n : PNat} {p : Equiv.Perm (Fin (m * n))}
+lemma Equiv.Perm.IsAdjacentSwap.isAdjacent {m n : PNat} {p : Equiv.Perm (Point m n)}
   (h : p.IsAdjacentSwap) :
   haveI := h.list_card
-  (to2d p.support.toList[0]).IsAdjacent (to2d p.support.toList[1]) := by grind
+  p.support.toList[0].IsAdjacent p.support.toList[1] := by grind
 
-lemma Point.IsAdjacent.lt_of_1d_lt {a b : Point m n} (h : to1d a ≤ to1d b) (h2 : a.IsAdjacent b) :
-    a.row ≤ b.row ∧ a.col ≤ b.col := by
-  dsimp only [to1d] at h
-  cases h2 <;> simp_all
+lemma Point.IsAdjacent.lt_or_lt {a b : Point m n} (h2 : a.IsAdjacent b) :
+    (a.row ≤ b.row ∧ a.col ≤ b.col) ∨ (b.row ≤ a.row ∧ b.col ≤ a.col) := by
+  cases h2 <;> omega
 
 lemma Rectangle.swap_iff {s : RectSpin m n} :
     s ∈ SpinSet 1 2 m n ↔ s.r.topLeft.IsAdjacent s.r.bottomRight := by
@@ -179,7 +179,7 @@ lemma Rectangle.swap_iff {s : RectSpin m n} :
 
 lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjacent p2)
     (hr : p1 = s.r.topLeft ∧ p2 = s.r.bottomRight) :
-    s.α = Equiv.swap (to1d p1) (to1d p2) := by
+    s.α = Equiv.swap p1 p2 := by
   rw [hr.1, hr.2] at h ⊢
   ext j : 1
   simp only [s.h, Rectangle.toSpin, Function.Involutive.coe_toPerm]
@@ -188,23 +188,19 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjac
     split_ifs with h8 h9
     · simp [h8]
     · have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
-      simp only [h9, to2d_to1d_inverse, to1d_inj]
       ext <;> grind [→ Fin.val_le_of_le]
-    · simp_rw [← to2d_injective.ne_iff] at h8 h9
-      have : s ∈ SpinSet 1 2 m n := Rectangle.swap_iff.mpr h
+    · have : s ∈ SpinSet 1 2 m n := Rectangle.swap_iff.mpr h
       simp [SpinSet, rectSpinSet_cond_iff] at this
       simp [Point.ext_iff, Point.IsInside] at *
       omega
   · rw [Equiv.swap_apply_of_ne_of_ne] <;> grind [Rectangle.corners_inside]
 
 lemma exists_swap_spin_of_adj {p1 p2 : Point m n} (h : p1.IsAdjacent p2) :
-    ∃ s : RectSpin m n, s ∈ SpinSet 1 2 m n ∧ s.α = Equiv.swap (to1d p1) (to1d p2) := by
-  by_cases h1 : to1d p1 ≤ to1d p2
-  · have := h.lt_of_1d_lt h1
-    use RectSpin.fromRect ⟨p1, p2, this.2, this.1⟩
+    ∃ s : RectSpin m n, s ∈ SpinSet 1 2 m n ∧ s.α = Equiv.swap p1 p2 := by
+  rcases h.lt_or_lt with h1 | h1
+  · use RectSpin.fromRect ⟨p1, p2, h1.2, h1.1⟩
     exact ⟨Rectangle.swap_iff.mpr h, spin_eq_swap_of_adj h (by trivial)⟩
-  · have := h.symm.lt_of_1d_lt (le_of_not_ge h1)
-    use RectSpin.fromRect ⟨p2, p1, this.2, this.1⟩
+  · use RectSpin.fromRect ⟨p2, p1, h1.2, h1.1⟩
     rw [Equiv.swap_comm]
     exact ⟨Rectangle.swap_iff.mpr h.symm, spin_eq_swap_of_adj h.symm (by trivial)⟩
 
@@ -238,78 +234,66 @@ def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
   |>.map ⟨(·.toSpin), RectSpin.toSpin_injective⟩
 
 lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
-  let set1 : Set (Equiv.Perm (Fin (m * n))) := SpinSet 1 2 m n |>.image (·.α)
+  let set1 : Set (Equiv.Perm (Point m n)) := SpinSet 1 2 m n |>.image (·.α)
 
   have set1_swap : ∀ e ∈ set1, e.IsSwap := by
     intro e
     simp [set1]
     rintro s hs1 rfl
-    use to1d s.r.topLeft, to1d s.r.bottomRight
+    use s.r.topLeft, s.r.bottomRight
     simp [SpinSet, rectSpinSet_cond_iff] at hs1
     have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
     grind [spin_eq_swap_of_adj, → Fin.val_le_of_le, ← Fin.val_inj]
 
-  let x1 : SimpleGraph (Fin (m * n)) := SimpleGraph.fromRel (fun x y => Equiv.swap x y ∈ set1)
+  let x1 : SimpleGraph (Point m n) := SimpleGraph.fromRel (fun x y => Equiv.swap x y ∈ set1)
   have : x1.Connected := by
     rw [SimpleGraph.connected_iff_exists_forall_reachable]
-    use 0, fun v => SimpleGraph.Walk.reachable ?_
-    by_cases h : v = 0
+    use ⟨0, 0⟩, fun v => SimpleGraph.Walk.reachable ?_
+    by_cases h : v = ⟨0, 0⟩
     · rw [h]
     have : n.val ≥ 1 := n.2
 
     let rec build_walk_horiz (row col col_end : Nat)
         (hrow : row < m.val := by omega) (hcol : col < n.val := by omega)
         (hcol_end : col_end < n.val := by omega) (hk : col < col_end + 1 := by omega) :
-        x1.Walk (to1d ⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩) (to1d ⟨⟨row, hrow⟩, ⟨col_end, hcol_end⟩⟩) :=
+        x1.Walk ⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩ ⟨⟨row, hrow⟩, ⟨col_end, hcol_end⟩⟩ :=
       if ht : col = col_end then
         SimpleGraph.Walk.nil.copy rfl (by simp only [ht])
       else
         let tail := build_walk_horiz row (col + 1) (col_end)
         SimpleGraph.Walk.cons (by simp [x1, set1, exists_swap_spin_of_adj, Point.IsAdjacent]) tail
 
-    let rec build_walk_full (z : Nat) (hz : z ≤ v.val := by omega) : x1.Walk ⟨z, by omega⟩ v :=
-      have hzLt : z < m.val * n.val := by omega
-      if ht : z = v.val then
-        SimpleGraph.Walk.nil.copy rfl (Fin.eq_of_val_eq ht)
-      else if hcol : ¬n.val ∣ z + 1 then
-        have : (z + 1) % n.val = z % n.val + 1 := Nat.mod_succ_of_not_dvd hcol n.2
-        let edge := build_walk_horiz (z / n) (z % n) ((z + 1) % n)
-          (Nat.div_lt_iff_lt_mul n.2 |>.mpr hzLt) (Nat.mod_lt _ n.2) (Nat.mod_lt _ n.2)
-
-        let walk : x1.Walk ⟨z, hzLt⟩ ⟨z + 1, by omega⟩ := edge.copy
-          (by simp [to1d, Nat.mod_add_div'])
-          (by simp [to1d, this, Nat.add_right_comm _ 1, Nat.mod_add_div'])
-
-        walk.append (build_walk_full (z + 1))
+    let rec build_walk_full (z : Point m n)
+        (hz : z.row.val < v.row.val ∨ (z.row.val = v.row.val ∧ z.col.val ≤ v.col.val) := by omega)
+        : x1.Walk z v :=
+      if ht : z = v then
+        SimpleGraph.Walk.nil.copy rfl (by omega)
+      else if hcol : z.col < n.val - 1 then
+        let edge := build_walk_horiz z.row z.col (z.col.val + 1) z.row.isLt (by omega) (by omega)
+        let walk : x1.Walk z ⟨⟨z.row, _⟩, ⟨↑z.col + 1, _⟩⟩ := edge.copy (by simp) (by simp)
+        walk.append (build_walk_full ⟨⟨z.row, _⟩, ⟨z.col + 1, _⟩⟩
+          (by simp [Point.ext_iff, Fin.ext_iff] at ht hz ⊢; omega))
       else
-        have hz1Lt : z + 1 < m.val * n.val := by omega
-        have : z + n.val < m.val * n.val := by
-          rw [mul_comm] at hz1Lt
-          obtain ⟨w, hw⟩ := not_not.mp hcol
-          have : z + n.val < (w + 1) * n.val := by grind
-          apply lt_mul_of_lt_mul_right this
-          by_contra! k
-          have : z + 1 < n.val * w := lt_mul_of_lt_mul_left hz1Lt (Nat.le_of_lt_succ k)
-          omega
-        let a : Point m n := to2d ⟨z, hzLt⟩
-        let b : Point m n := to2d ⟨z + n.val, this⟩
-        have adj : a.IsAdjacent b := by right; simp [to2d, a, b]
-        have edge : x1.Adj ⟨z, hzLt⟩ ⟨z + n.val, this⟩ := by
-          refine (SimpleGraph.fromRel_adj ..).mpr ⟨by simp, Or.inl ?_⟩
-          simp only [Finset.coe_image, Set.mem_image, Finset.mem_coe, set1]
-          convert exists_swap_spin_of_adj adj
-          · simp [a]
-          · simp [b]
+        have hcol' : z.col.val = n.val - 1 := by omega
+        have : z.row.val < v.row.val := by simp [Point.ext_iff, Fin.ext_iff] at ht; omega
 
-        have _ := Nat.div_mul_cancel (not_not.mp hcol)
-        let walk_horiz := build_walk_horiz ((z + 1) / n.val) 0 (n.val - 1)
-          (Nat.div_lt_iff_lt_mul n.2 |>.mpr hz1Lt)
-        let walk_horiz' : x1.Walk ⟨z + 1, hz1Lt⟩ ⟨z + n.val, this⟩ := walk_horiz.copy
-          (by simp [to1d]; omega) (by simp [to1d]; omega)
-        let tail := walk_horiz'.reverse.append (build_walk_full (z + 1) (by omega))
+        let b : Point m n := ⟨⟨z.row.val + 1, by omega⟩, z.col⟩
+        have adj : z.IsAdjacent b := by right; simp [b]
+        have edge : x1.Adj z ⟨⟨z.row.val + 1, _⟩, z.col⟩ := by
+          -- grind [SimpleGraph.fromRel_adj, → exists_swap_spin_of_adj]
+          refine (SimpleGraph.fromRel_adj ..).mpr ⟨by grind, Or.inl ?_⟩
+          simp only [Finset.coe_image, Set.mem_image, Finset.mem_coe, set1]
+          exact exists_swap_spin_of_adj adj
+
+        let walk_horiz := build_walk_horiz (z.row.val + 1) 0 (n.val - 1)
+        let walk_horiz' : x1.Walk ⟨⟨z.row.val + 1, _⟩, 0⟩ ⟨⟨z.row.val + 1, _⟩, z.col⟩ :=
+          walk_horiz.copy (by simp) (by simp [Fin.ext_iff, hcol'])
+        let tail := walk_horiz'.reverse.append (build_walk_full ⟨⟨z.row.val + 1, _⟩, 0⟩ (by
+          have : z.row.val + 1 ≤ v.row.val := by omega
+          rcases this.eq_or_lt with h | h <;> simp [h]))
 
         SimpleGraph.Walk.cons edge tail
-    exact build_walk_full 0
+    exact build_walk_full ⟨⟨0, _⟩, ⟨0, _⟩⟩ (by grind)
   have top := transpositions_generate_symm_group_iff_connected_graph set1_swap |>.mpr this
   rw [Subgroup.eq_top_iff']
   intro s
@@ -335,35 +319,31 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       dsimp [Point.IsAdjacent] at adj
       simp [Point.ext_iff]
       omega
-    have := Equiv.Perm.support_swap (to1d_inj.ne.mpr r_corners)
+    have := Equiv.Perm.support_swap (r_corners)
     rw [← spin_eq_swap_of_adj adj (Rectangle.ext_iff.mp rfl)] at this
-    have top_in : to1d s.r.topLeft ∈ s.α.support.toList := by simp [this]
-    have bot_in : to1d s.r.bottomRight ∈ s.α.support.toList := by simp [this]
+    have top_in : s.r.topLeft ∈ s.α.support.toList := by simp [this]
+    have bot_in : s.r.bottomRight ∈ s.α.support.toList := by simp [this]
     have bot_eq := List.eq_one_of_two perm_length bot_in
-    have := to1d_inj.ne.mpr r_corners
     rcases List.eq_one_of_two perm_length top_in with htop | htop
-    · simp only [← htop, to2d_to1d_inverse]
-      have := ne_of_ne_of_eq this.symm htop
-      exact bot_eq.resolve_left this ▸ to2d_to1d_inverse ▸ adj
-    · simp only [← htop, to2d_to1d_inverse]
-      have := ne_of_ne_of_eq this.symm htop
-      exact bot_eq.resolve_right this ▸ to2d_to1d_inverse ▸ adj.symm
+    · have := ne_of_ne_of_eq r_corners.symm htop
+      exact bot_eq.resolve_left this ▸ htop ▸ adj
+    · have := ne_of_ne_of_eq r_corners.symm htop
+      exact bot_eq.resolve_right this ▸ htop ▸ adj.symm
 
   let ⟨l, hl1, hl2⟩ : ∃ l : List (Spin m n), l.prod.α = s.α ∧ (∀ x ∈ l, x ∈ mySet m n) := by
     use l.attach.map (fun ⟨i, hi⟩ =>
       have := (hl1 _ hi).list_card
-      let a := to2d i.support.toList[0]
-      let b := to2d i.support.toList[1]
+      let a := i.support.toList[0]
+      let b := i.support.toList[1]
       have adj : a.IsAdjacent b := (hl1 _ hi).isAdjacent
-      if h : (to1d a) ≤ (to1d b) then
-        have := adj.lt_of_1d_lt h
-        RectSpin.fromRect ⟨a, b, this.2, this.1⟩
+      if h : a.row ≤ b.row ∧ a.col ≤ b.col then
+        RectSpin.fromRect ⟨a, b, h.2, h.1⟩
       else
-        have := adj.symm.lt_of_1d_lt (le_of_not_ge h)
+        have := adj.lt_or_lt.resolve_left h
         RectSpin.fromRect ⟨b, a, this.2, this.1⟩
     ) |>.map (·.toSpin) |>.reverse
     constructor
-    · simp only [to1d_to2d_inverse, List.map_map, Function.comp_def, spin_prod_perm_eq_perm_prod,
+    · simp only [List.map_map, Function.comp_def, spin_prod_perm_eq_perm_prod,
         List.map_reverse, List.reverse_reverse, ← hl2]
       congr
       apply List.map_attach_of_unattach
@@ -372,8 +352,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       have := Equiv.Perm.swap_support (hl1 _ hx).list_card
       split_ifs
       · convert spin_eq_swap_of_adj adj ?_
-        · simpa
-        · simp
+        simp
       · convert spin_eq_swap_of_adj adj.symm ?_
         · simpa [Equiv.swap_comm]
         · simp
@@ -381,18 +360,17 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       simp only [mySet, Finset.mem_map, Finset.mem_union, List.mem_reverse, List.mem_map]
       intro ⟨a, ha1, ha2⟩
       use a, Or.inr ?_, ha2
-      simp only [to1d_to2d_inverse, List.mem_attach, true_and, Subtype.exists] at ha1
+      simp only [List.mem_attach, true_and, Subtype.exists] at ha1
       obtain ⟨b, hb1, rfl⟩ := ha1
       apply Rectangle.swap_iff.mpr
       split_ifs
       · exact (hl1 _ hb1).isAdjacent
       · exact (hl1 _ hb1).isAdjacent.symm
   apply Subgroup.exists_list_of_mem_closure.mpr
-  let k : List (Spin m n) := List.finRange (m * n) |>.filterMap fun isp =>
-    if l.prod.u isp ≠ s.u isp then
-      some ⟨Equiv.refl _, fun j => if isp = j then 1 else 0⟩
-    else
-      none
+  let k : List (Spin m n) := (.univ : Finset (Point m n)).toList.filterMap fun x =>
+    if l.prod.u x ≠ s.u x
+    then some ⟨Equiv.refl _, fun j => if j = x then 1 else 0⟩
+    else none
 
   use l ++ k, fun x hx => Or.inl ?_, Corollary1.aux1 hl1 rfl
   rcases List.mem_append.mp hx with hx | hx
@@ -401,12 +379,11 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       Function.Embedding.coeFn_mk, Set.mem_union, Set.mem_image, Finset.mem_coe]
     left
     let ⟨c1, _, c3⟩ := List.mem_filterMap.mp hx
-    use RectSpin.fromRect ⟨to2d c1, to2d c1, Fin.le_refl _, Fin.le_refl _⟩
+    use RectSpin.fromRect ⟨c1, c1, Fin.le_refl _, Fin.le_refl _⟩
     constructor
     · simp [SpinSet, rectSpinSet_cond_iff]
-    · simp only [Option.ite_none_right_eq_some, Option.some_inj] at c3
+    · rw [Option.ite_none_right_eq_some, Option.some_inj] at c3
       simp only [Rectangle.toSpin, ← c3.2]
-      ext i
+      ext i : 1
       · simp_all [rotate_around_one_eq_self]
-      · refine if_congr ?_ rfl rfl
-        rw [Point.isInside_one_iff, to2d_injective.eq_iff, eq_comm]
+      · simp [Point.isInside_one_iff, eq_comm]

@@ -4,14 +4,23 @@ import Mathlib.Data.PNat.Defs
 import Mathlib.Data.ZMod.Defs
 import Mathlib.Tactic.DeriveFintype
 
-abbrev perm (N : Nat) := Equiv.Perm (Fin N)
+@[ext, grind ext, pp_using_anonymous_constructor]
+structure Point (m n : PNat) where
+  row : Fin m
+  col : Fin n
+  deriving DecidableEq, Fintype, Repr, Nonempty
 
-abbrev VN (N : Nat) := Fin N → ZMod 2
+@[simp]
+lemma Point.eta (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
+
+abbrev perm (m n : PNat) := Equiv.Perm (Point m n)
+
+abbrev VN (m n : PNat) := Point m n → ZMod 2
 
 @[grind ext]
 structure Spin (m n : PNat) where
-  α : perm (m * n)
-  u : VN (m * n)
+  α : perm m n
+  u : VN m n
   deriving DecidableEq, Fintype
 
 -- manually define an `ext` lemma that uses function application
@@ -40,39 +49,6 @@ lemma one_def : (1 : Spin m n) = ⟨Equiv.refl _, fun _ => 0⟩ := rfl
 
 end Spin
 
-@[ext, grind ext, pp_using_anonymous_constructor]
-structure Point (m n : PNat) where
-  row : Fin m
-  col : Fin n
-  deriving DecidableEq, Fintype, Repr, Nonempty
-
-@[simp]
-lemma Point.eta (p : Point m n) : ⟨p.row, p.col⟩ = p := rfl
-
--- Convert 2D coordinates to 1D (flattened)
-def to1d (pos : Point m n) : Fin (m * n) where
-  val := pos.col.val + pos.row.val * n
-  isLt := by calc
-    pos.col.val + pos.row.val * n < 1 * n + pos.row * n := by omega
-    _ = (1 + pos.row) * n := (add_mul ..).symm
-    _ ≤ m * n := Nat.mul_le_mul_right n (by omega)
-
--- Convert 1D coordinates (flattened) to 2D
-def to2d {m n : PNat} (pos : Fin (m * n)) : Point m n :=
-  ⟨⟨pos.val / n, Nat.div_lt_of_lt_mul (Nat.mul_comm m n ▸ pos.isLt)⟩,
-  ⟨pos.val % n, Nat.mod_lt pos n.pos⟩⟩
-
-@[simp, grind =]
-lemma to2d_to1d_inverse : to2d (to1d p) = p := by
-  rw [to1d, to2d]
-  congr
-  · simp [Nat.add_mul_div_right, Nat.div_eq_of_lt]
-  · simp [Nat.mod_eq_of_lt]
-
-@[simp, grind =]
-lemma to1d_to2d_inverse : to1d (to2d p) = p := by
-  simp only [to1d, to2d, Nat.mod_add_div']
-
 @[ext, pp_using_anonymous_constructor]
 structure Rectangle (m n : PNat) where
   topLeft : Point m n
@@ -82,8 +58,8 @@ structure Rectangle (m n : PNat) where
   deriving DecidableEq, Fintype, Repr
 
 def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=
-  r.topLeft.row.val ≤ p.1.val ∧ p.1.val ≤ r.bottomRight.row.val ∧
-  r.topLeft.col.val ≤ p.2.val ∧ p.2.val ≤ r.bottomRight.col.val
+  r.topLeft.row.val ≤ p.row.val ∧ p.row.val ≤ r.bottomRight.row.val ∧
+  r.topLeft.col.val ≤ p.col.val ∧ p.col.val ≤ r.bottomRight.col.val
   deriving Decidable
 
 abbrev rotateCalc (a b c : Fin n) : Fin n where
@@ -107,8 +83,6 @@ grind_pattern spin_stays_inside => (rotate180 p r).IsInside r
 -- Define a function to create a Spin element for a rectangle spin
 def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
   α := Function.Involutive.toPerm
-    (fun pos =>
-      let p := to2d pos
-      if p.IsInside r then to1d (rotate180 p r) else pos)
-    (fun _ => by simp only; split_ifs <;> simp_all [spin_stays_inside])
-  u pos := if (to2d pos).IsInside r then 1 else 0
+    (fun p => if p.IsInside r then rotate180 p r else p)
+    (fun _ => by grind [spin_stays_inside])
+  u p := if p.IsInside r then 1 else 0

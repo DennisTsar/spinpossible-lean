@@ -1,57 +1,55 @@
 import Spinpossible.Board
 import Spinpossible.Proofs
 
-instance : DecidableEq (board m n) := inferInstanceAs (DecidableEq (Matrix (Fin m) (Fin n) tile))
-
 def board3by3 := standardBoard 3 3
 
 namespace Basics
 
-def perm1 : perm 3 where
-  toFun := ![1, 0, 2]
-  invFun := ![1, 0, 2]
-  left_inv := by decide
-  right_inv := by decide
+-- def perm1 : perm 3 where
+--   toFun := ![1, 0, 2]
+--   invFun := ![1, 0, 2]
+--   left_inv := by decide
+--   right_inv := by decide
 
-def perm2 : perm 3 where
-  toFun := fun i => i + 1
-  invFun := fun i => i - 1
-  left_inv := by exact leftInverse_sub_add_left 1
-  right_inv := by -- or just `by decide`
-    apply Function.rightInverse_of_injective_of_leftInverse
-    · exact sub_left_injective
-    · exact leftInverse_sub_add_left 1
+-- def perm2 : perm 3 where
+--   toFun := fun i => i + 1
+--   invFun := fun i => i - 1
+--   left_inv := by exact leftInverse_sub_add_left 1
+--   right_inv := by -- or just `by decide`
+--     apply Function.rightInverse_of_injective_of_leftInverse
+--     · exact sub_left_injective
+--     · exact leftInverse_sub_add_left 1
 
-#guard perm1.toFun = ![1, 0, 2]
-#guard perm2.toFun = ![1, 2, 0]
-#guard (perm1.trans perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
-#guard (perm2.trans perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
+-- #guard perm1.toFun = ![1, 0, 2]
+-- #guard perm2.toFun = ![1, 2, 0]
+-- #guard (perm1.trans perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
+-- #guard (perm2.trans perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
 
 end Basics
 
 namespace TestSpinAction
 
-def samplePerm : perm (3 * 3) where
-  toFun := fun i => if i = 0 then 1 else if i = 1 then 0 else i
-  invFun := fun i => if i = 0 then 1 else if i = 1 then 0 else i
+def samplePerm : perm 3 3 where
+  toFun := fun i => if i = ⟨0, 0⟩ then ⟨0, 1⟩ else if i = ⟨0, 1⟩ then ⟨0, 0⟩ else i
+  invFun := fun i => if i = ⟨0, 1⟩ then ⟨0, 0⟩ else if i = ⟨0, 0⟩ then ⟨0, 1⟩ else i
   left_inv := by decide
   right_inv := by decide
 
 def sampleSpin : Spin 3 3 :=
   {
     α := samplePerm
-    u := fun i => if i = 0 then 1 else 0
+    u := fun i => if i = ⟨0, 0⟩ then 1 else 0
   }
 
-def samplePerm2 : perm (3 * 3) where
-  toFun := fun i => if i = 4 then 3 else if i = 3 then 1 else if i = 1 then 4 else i
-  invFun := fun i => if i = 4 then 1 else if i = 3 then 4 else if i = 1 then 3 else i
+def samplePerm2 : perm 3 3 where
+  toFun := fun i => if i = ⟨1, 1⟩ then ⟨0, 2⟩ else if i = ⟨0, 2⟩ then ⟨0, 1⟩ else if i = ⟨0, 1⟩ then ⟨1, 1⟩ else i
+  invFun := fun i => if i = ⟨1, 1⟩ then ⟨0, 1⟩ else if i = ⟨0, 2⟩ then ⟨1, 1⟩ else if i = ⟨0, 1⟩ then ⟨0, 2⟩ else i
   left_inv := by decide
   right_inv := by decide
 
 def sampleSpin2 : Spin 3 3 where
   α := samplePerm2
-  u := fun i => if i % 2 = 0 then 1 else 0
+  u := fun i => if i.row % 2 = 0 then 1 else 0
 
 def a := Spin.actionOnBoard sampleSpin (Spin.actionOnBoard sampleSpin2 board3by3)
 def b := (sampleSpin2 * sampleSpin).actionOnBoard board3by3
