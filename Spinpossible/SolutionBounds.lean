@@ -2,6 +2,12 @@ import Spinpossible.Solution
 
 
 
+attribute [-grind] List.eq_nil_of_map_eq_nil
+attribute [-instance] NeZero.charZero_one
+
+attribute [-simp] PNat.coe_eq_one_iff
+attribute [-simp]
+  OfNat.ofNat_ne_zero OfNat.zero_ne_ofNat OfNat.ofNat_ne_one OfNat.one_ne_ofNat OfNat.ofNat_eq_ofNat
 
 private lemma aux1 (n row col : Nat) (hcol : col + 2 < n) :
     (n - (col + 1) - 1) * (2 * (row + 1) - 1) + row + 1 + 1 ≤
