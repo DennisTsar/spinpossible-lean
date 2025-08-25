@@ -262,6 +262,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       else
         let tail := build_walk_horiz row (col + 1) (col_end)
         SimpleGraph.Walk.cons (by simp [x1, set1, exists_swap_spin_of_adj, Point.IsAdjacent]) tail
+    decreasing_by omega -- faster than default
 
     let rec build_walk_full (z : Point m n)
         (hz : z.row.val < v.row.val ∨ (z.row.val = v.row.val ∧ z.col.val ≤ v.col.val) := by omega)
@@ -293,6 +294,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
           rcases this.eq_or_lt with h | h <;> simp [h]))
 
         SimpleGraph.Walk.cons edge tail
+    decreasing_by all_goals omega -- faster than default
     exact build_walk_full ⟨⟨0, _⟩, ⟨0, _⟩⟩ (by grind)
   have top := transpositions_generate_symm_group_iff_connected_graph set1_swap |>.mpr this
   rw [Subgroup.eq_top_iff']
