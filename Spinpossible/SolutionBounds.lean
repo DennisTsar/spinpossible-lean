@@ -9,6 +9,7 @@ attribute [-simp] PNat.coe_eq_one_iff
 attribute [-simp]
   OfNat.ofNat_ne_zero OfNat.zero_ne_ofNat OfNat.ofNat_ne_one OfNat.one_ne_ofNat OfNat.ofNat_eq_ofNat
 
+attribute [-simp] Nat.sub_eq_zero_of_le
 private lemma aux1 (n row col : Nat) (hcol : col + 2 < n) :
     (n - (col + 1) - 1) * (2 * (row + 1) - 1) + row + 1 + 1 ≤
       (n - col - 1) * (2 * (row + 1) - 1) + (row + 1) - 2 * row := by
