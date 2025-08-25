@@ -170,11 +170,13 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     simp only [zero_add, List.cons_append, List.nil_append, List.map_cons, List.map_reverse,
       List.prod_cons, List.length_cons, List.length_reverse]
     split_ifs with h1 h2
-    · specialize ih1 (by omega)
-        (by grind -ring -linarith [= Spin.mul_def, Spin.inv_perm,
-          Rectangle.corners_rotate_perm, Equiv.trans_apply])
-        (by grind -ring -linarith [= Spin.mul_def, Spin.inv_perm,
-          Rectangle.spin_perm_const, Equiv.trans_apply])
+    · specialize ih1 h1
+        (fun x hx => by simp only [next_spin_eq, Fin.mk_zero', Spin.mul_def, Spin.inv_perm,
+          show x = 0 by omega, Equiv.trans_apply, Rectangle.spin_eq_iff,
+          Rectangle.corners_rotate_perm.1, tile_pos, cur_pos])
+        (fun x y hxy => by rw [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply, next_spin_eq,
+          Rectangle.spin_eq_iff, Rectangle.spin_perm_const (Or.inr hxy.1), hs_col2 x y hxy]
+        )
       constructor
       · rw [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, Spin.inv_perm, ih1.1, Spin.perm_distrib]
         simp
@@ -222,8 +224,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       simp (disch := omega) [hr, row_spin, RectSpin.fromPoints, dif_pos, ← Fin.val_fin_le]
 
     split_ifs with h1
-    · specialize ih1 h1 (by
-        intro x hx
+    · specialize ih1 h1 (fun x hx => by
         simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
         by_cases hg : x = row
         -- · grind -ring -linarith [Rectangle.corners_rotate_perm] -- too slow
@@ -240,8 +241,13 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
               grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
             rw [Rectangle.spin_perm_const (by fin_omega)]
           · rw [Rectangle.spin_perm_const (by fin_omega)]
-      ) (by grind -ring -linarith [= Spin.mul_def, Rectangle.spin_perm_const, Spin.inv_perm,
-          Equiv.trans_apply])
+      ) (fun x y hxy => by
+        simp only [row_spin_eq, Spin.mul_def, Spin.inv_perm, col_spin_eq, Equiv.trans_apply,
+          hs_col2 _ _ hxy, Rectangle.spin_eq_iff]
+        split_ifs with hz <;>
+        rw [Rectangle.spin_perm_const (by simp only; omega),
+          Rectangle.spin_perm_const (by simp [cur_pos]; omega)]
+      )
       constructor
       · simp only [List.cons_append, List.nil_append, List.map_cons, List.map_reverse,
           List.prod_cons]
@@ -311,8 +317,13 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
             grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
           rw [Rectangle.spin_perm_const (by fin_omega)]
         · rw [Rectangle.spin_perm_const (by fin_omega)]
-    ) (by
-      grind -ring -linarith [= Spin.mul_def, Rectangle.spin_perm_const, Spin.inv_perm, Equiv.trans_apply])
+    ) (fun x y hxy => by
+        simp only [row_spin_eq, Spin.mul_def, Spin.inv_perm, col_spin_eq, Equiv.trans_apply,
+          hs_col2 _ _ hxy, Rectangle.spin_eq_iff]
+        split_ifs with hz <;>
+        rw [Rectangle.spin_perm_const (by simp only; omega),
+          Rectangle.spin_perm_const (by simp [cur_pos]; omega)]
+      )
     constructor
     · have col_spin_eq' : col_spin.α = Equiv.refl _ := by
         ext i : 1
