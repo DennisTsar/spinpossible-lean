@@ -391,8 +391,8 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     · let r3 : Rectangle m n := ⟨
         rotate180 r2.bottomRight r1,
         rotate180 r2.topLeft r1,
-        by dsimp [rotate180]; have := r2.validCol; fin_omega,
         by dsimp [rotate180]; have := r2.validRow; fin_omega,
+        by dsimp [rotate180]; have := r2.validCol; fin_omega,
       ⟩
       have r2_top_in_r1 := h r2.topLeft r2.corners_inside.1
       have r2_bot_in_r1 := h r2.bottomRight r2.corners_inside.2

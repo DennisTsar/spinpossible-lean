@@ -53,8 +53,8 @@ end Spin
 structure Rectangle (m n : PNat) where
   topLeft : Point m n
   bottomRight : Point m n
-  validCol : topLeft.col ≤ bottomRight.col := by decide
   validRow : topLeft.row ≤ bottomRight.row := by decide
+  validCol : topLeft.col ≤ bottomRight.col := by decide
   deriving DecidableEq, Fintype, Repr
 
 def Point.IsInside (p : Point m n) (r : Rectangle m n) : Prop :=

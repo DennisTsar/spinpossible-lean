@@ -119,7 +119,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
         nsmul_eq_mul]
       have k'_one : 1 ∈ k' := by
         have : k'[a] = 1 := by simp [k', ha2, x_i_def]
-        exact this ▸ List.getElem_mem _
+        exact List.mem_of_getElem this
       have : List.count 1 k' = 1 := by
         have : ¬List.Duplicate 1 k' := by
           by_contra! h
@@ -198,9 +198,9 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjac
 lemma exists_swap_spin_of_adj {p1 p2 : Point m n} (h : p1.IsAdjacent p2) :
     ∃ s : RectSpin m n, s ∈ SpinSet 1 2 m n ∧ s.α = Equiv.swap p1 p2 := by
   rcases h.lt_or_lt with h1 | h1
-  · use RectSpin.fromRect ⟨p1, p2, h1.2, h1.1⟩
+  · use RectSpin.fromRect ⟨p1, p2, h1.1, h1.2⟩
     exact ⟨Rectangle.swap_iff.mpr h, spin_eq_swap_of_adj h (by trivial)⟩
-  · use RectSpin.fromRect ⟨p2, p1, h1.2, h1.1⟩
+  · use RectSpin.fromRect ⟨p2, p1, h1.1, h1.2⟩
     rw [Equiv.swap_comm]
     exact ⟨Rectangle.swap_iff.mpr h.symm, spin_eq_swap_of_adj h.symm (by trivial)⟩
 
@@ -337,10 +337,10 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       let b := i.support.toList[1]
       have adj : a.IsAdjacent b := (hl1 _ hi).isAdjacent
       if h : a.row ≤ b.row ∧ a.col ≤ b.col then
-        RectSpin.fromRect ⟨a, b, h.2, h.1⟩
+        RectSpin.fromRect ⟨a, b, h.1, h.2⟩
       else
         have := adj.lt_or_lt.resolve_left h
-        RectSpin.fromRect ⟨b, a, this.2, this.1⟩
+        RectSpin.fromRect ⟨b, a, this.1, this.2⟩
     ) |>.map (·.toSpin) |>.reverse
     constructor
     · simp only [List.map_map, Function.comp_def, spin_prod_perm_eq_perm_prod,

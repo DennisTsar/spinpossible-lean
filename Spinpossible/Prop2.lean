@@ -224,8 +224,6 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
 
     let ⟨c, d, hcd⟩ : ∃ c d : Nat,
         (c < m ∧ d < n) ∧ numsToSpinSet c d m n = numsToSpinSet x y m n := by
-      let a : PNat := ⟨x + 1, Nat.zero_lt_succ _⟩
-      let b : PNat := ⟨y + 1, Nat.zero_lt_succ _⟩
       rcases Finset.union_nonempty.mp h_nonempty with h5 | h5
       · use x, y, ?_
         by_contra

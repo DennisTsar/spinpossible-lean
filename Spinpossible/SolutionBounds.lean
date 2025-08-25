@@ -6,7 +6,7 @@ instance : Inhabited (Rectangle m n) := ⟨⟨0, 0⟩, ⟨0, 0⟩, by simp, by s
   or panic / return a default value if they do not -/
 abbrev RectSpin.fromPoints (topLeft bottomRight : Point m n) : RectSpin m n :=
   if h : topLeft.row ≤ bottomRight.row ∧ topLeft.col ≤ bottomRight.col then
-    fromRect ⟨topLeft, bottomRight, h.2, h.1⟩
+    fromRect ⟨topLeft, bottomRight, h.1, h.2⟩
   else
     fromRect (panic! "Invalid rectangle")
 
@@ -88,11 +88,11 @@ private lemma aux3 {row col : Nat} (hrow : row < m.val) (hcol : col < n.val) (s 
       = ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩) :
     let tile_pos := s.α⁻¹ ⟨⟨row, _⟩, ⟨col, _⟩⟩
     let row_spin : RectSpin m n := if hr2 : tile_pos.row.val < row then
-      RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_refl _, Fin.le_of_lt hr2⟩
+      RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_of_lt hr2, Fin.le_refl _⟩
     else
-      RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, Fin.le_refl _, by omega⟩
+      RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, by omega, Fin.le_refl _⟩
     let col_spin : RectSpin m n := RectSpin.fromRect
-      ⟨⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩, ⟨⟨row, hrow⟩, tile_pos.col⟩, this, by simp⟩
+      ⟨⟨⟨row, hrow⟩, ⟨col, hcol⟩⟩, ⟨⟨row, hrow⟩, tile_pos.col⟩, by simp, this⟩
 
     ∀ x y, (_ : x < col + 1 ∧ y < m.val) →
       (s⁻¹ * row_spin.toSpin * col_spin.toSpin).α ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩
@@ -159,7 +159,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
 
     have next_spin_eq : next_spin = RectSpin.fromRect
-      ⟨⟨⟨0, hm⟩, ⟨col, hcol⟩⟩, tile_pos, by omega, by fin_omega⟩ := by
+      ⟨⟨⟨0, hm⟩, ⟨col, hcol⟩⟩, tile_pos, by fin_omega, by omega⟩ := by
         simp (disch := omega) [next_spin, RectSpin.fromPoints, dif_pos, cur_pos]
 
     simp only [zero_add, List.cons_append, List.nil_append, List.map_cons, List.map_reverse,
@@ -204,13 +204,13 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
 
     have col_spin_eq : col_spin =
-        RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by omega, Fin.ge_of_eq rfl⟩ := by
+        RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.ge_of_eq rfl, by omega⟩ := by
       simp (disch := omega) [col_spin, RectSpin.fromPoints, dif_pos, cur_pos]
     have row_spin_eq : row_spin =
         if ht : tile_pos.row.val < row then
-          RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by simp, Fin.le_of_lt ht⟩
+          RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_of_lt ht, by simp⟩
         else
-          RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, by simp, Fin.not_lt.mp ht⟩ := by
+          RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, Fin.not_lt.mp ht, by simp⟩ := by
       split_ifs with hr <;>
       simp (disch := omega) [hr, row_spin, RectSpin.fromPoints, dif_pos, ← Fin.val_fin_le]
 
@@ -268,13 +268,13 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
 
     have col_spin_eq : col_spin =
-        RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by omega, by simp [cur_pos]⟩ := by
+        RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by simp [cur_pos], by omega⟩ := by
       simp (disch := omega) [col_spin, RectSpin.fromPoints, dif_pos, cur_pos]
     have row_spin_eq : row_spin =
         if ht : tile_pos.row.val < row then
-          RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by simp, Fin.le_of_lt ht⟩
+          RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_of_lt ht, by simp⟩
         else
-          RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, by simp, Fin.not_lt.mp ht⟩ := by
+          RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, Fin.not_lt.mp ht, by simp⟩ := by
       split_ifs with hr <;>
       simp (disch := omega) [hr, row_spin, RectSpin.fromPoints, dif_pos, ← Fin.val_fin_le]
 
