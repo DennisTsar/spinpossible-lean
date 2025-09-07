@@ -317,6 +317,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
 def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
   (r1.bottomRight.col.val - r1.topLeft.col.val) = (r2.bottomRight.col.val - r2.topLeft.col.val)
+  deriving Decidable
 
 private lemma s1s2s1_is_spin_iff.aux1 {r1t r1b r2t r2b p : Fin x}
   (_ : r2t ≤ r2b) (_ : r1t ≤ r2t) (_ : r1b ≥ r2b)
