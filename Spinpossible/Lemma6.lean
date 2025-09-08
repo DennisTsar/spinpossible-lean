@@ -26,9 +26,12 @@ theorem uniq_s1s2s1_of_single (s1 s2 : RectSpin m n) (hl : s2 ∈ SpinSet 1 1 m 
 def shiftSingleToEnd (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet 1 1 m n) : List (RectSpin m n) :=
   if hi' : i = l.length - 1 then l else
+  haveI : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
   let x := Fintype.chooseX _ (uniq_s1s2s1_of_single l[i+1] l[i] hl)
   let l' := l.take i ++ l[i+1] :: x.1 :: l.drop (i + 2)
   shiftSingleToEnd l' (i + 1) (by grind) (by grind [SameShape_spinSet_mem])
+  termination_by l.length - i
+  decreasing_by grind -- about 20x faster than default
 
 theorem sste_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length)
     (hl' : l'[i'] ∈ SpinSet 1 1 m n) :
@@ -37,6 +40,7 @@ theorem sste_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
   fun_induction shiftSingleToEnd with
   | case1 => rfl
   | case2 l i _ _ _ x l2 h2 =>
+    have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
     suffices l[i].toSpin * l[i + 1] = l[i + 1] * x.1 by
       rw [h2, show l = l.take i ++ [l[i], l[i+1]] ++ l.drop (i + 2) by simp]
       simp [- List.append_assoc, this, l2, mul_assoc]
@@ -44,7 +48,8 @@ theorem sste_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
 
 theorem sste_length (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet 1 1 m n) :
-    (shiftSingleToEnd l i hi hl).length = l.length := by fun_induction shiftSingleToEnd <;> grind
+    (shiftSingleToEnd l i hi hl).length = l.length := by
+  fun_induction shiftSingleToEnd <;> grind -ring -linarith
 
 theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
     (hi' : i' < l'.length) (hl' : l'[i'] ∈ SpinSet 1 1 m n) :
