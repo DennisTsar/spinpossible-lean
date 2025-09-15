@@ -140,30 +140,17 @@ theorem swte_last (l : List (RectSpin m n)) (i : Nat)
 theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
     (hi : i < l.length) (hj : i ≤ j ∧ j < l.length - 1) (hl : l[i] ∈ SpinSet m n m n) :
     SameShape ((shiftWholeToEnd l i hi hl)[j]'(by grind [swte_length])).r l[j+1].r := by
-  generalize_proofs
+  generalize_proofs ha
   fun_induction shiftWholeToEnd with
-  | case1 l' => grind [SameShape]
+  | case1 => omega
   | case2 l i _ _ _ x l2 h2 =>
     by_cases hj' : j = i
-    · simp [← hj']
-      have := swte_eq_beg l2 (j + 1) (by grind [swte_length]) (by grind [swte_length])
-      have := congr($this[j]'(by grind [swte_length]))
-      grind
-    · specialize h2 (by grind [swte_length]) (by grind [swte_length]) (by grind [swte_length])
-      suffices (l2[j+1]'(by grind [swte_length])).r = l[j+1].r by
-        grind
-      simp (disch := omega) [l2]
-      have : j ≥ i + 1 := by omega
-      refold_let l2
-      simp only [show l2 = l.take i ++ [x.1, l[i]] ++ l.drop (i + 2) by simp [l2]]
-      have : (l.take i ++ [x.1, l[i]] ++ l.drop (i + 2))[j+1]'(by grind) =
-          (l.drop (i + 2))[(j+1) - (l.take i ++ [x.1, l[i]]).length]'(by grind) := by
-        grind
-      rw [this]
-      have a : (l.take i ++ [x.1, l[i]]).length = i + 2 := by grind
-      simp [a]
-      have : i + 2 + (j - (i + 1)) = j + 1 := by omega
-      simp [this]
+    · have := swte_eq_beg l2 (i + 1) (by grind) (by grind only)
+      have := List.getElem_take ▸ congr($this[j]'(by grind))
+      grind -ring -linarith
+    · convert h2 (by grind) ha (by grind) using 2
+      simp [l2, List.getElem_cons, List.getElem_append]
+      grind -ring -linarith only [= Nat.min_def, getElem_congr_idx]
 
 -- Original: "If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = sᵢ⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i ≤ j ≤ k`."
 -- Corrected (I think?): If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = s₁⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i < j ≤ k`.
