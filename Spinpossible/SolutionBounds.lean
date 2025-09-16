@@ -338,7 +338,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     · have : i.col.val = col := by omega
       by_cases i.row.val < row
       · simpa [← this] using hs_row i.row.val (by omega) |>.symm
-      · grind [Fin.eta, Equiv.refl_apply, Equiv.Perm.apply_inv_self]
+      · grind [Fin.eta, Equiv.Perm.apply_inv_self]
 
 -- TODO: figure out how to avoid this popping up
 lemma Spin.symm_inv (s : Spin m n) : Equiv.symm s.α = s.α⁻¹ := rfl
@@ -379,7 +379,7 @@ theorem theorem1 (b : Spin m n) :
     obtain ⟨l2, hl2⟩ := h2
     obtain ⟨l1, hl1⟩ := h3 ((l2.map RectSpin.toSpin).prod.u ∘ (b.α.symm))
     have zz : (List.map RectSpin.toSpin (l1 ++ l2)).prod = b⁻¹ := by
-      simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def, add_assoc, ← Spin.symm_inv]
+      simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def, ← Spin.symm_inv]
     intro l5 hl5
     simp [Spin.IsSolution] at hl5
     grw [hl5.2 (l1 ++ l2) zz, List.length_append, hl2.2, hl1.2]

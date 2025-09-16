@@ -1,6 +1,6 @@
 import Spinpossible.Definitions
-import Mathlib.Data.Matrix.Defs
-import Mathlib.Data.ZMod.Basic
+import Mathlib.LinearAlgebra.Matrix.Defs
+import Mathlib.Order.Interval.Finset.Nat
 
 inductive orientation
   | positive

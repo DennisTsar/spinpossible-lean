@@ -1,5 +1,6 @@
 import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 import Mathlib.GroupTheory.Perm.Sign
+import Mathlib.Tactic.Cases
 
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
     a ∈ Subgroup.closure s ↔ ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by

@@ -98,8 +98,8 @@ private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
       by_contra! h2
       absurd hs3_orient (rotate180 p r1)
       simp [h2, spin_stays_inside p_in_r1, h]
-    have app := hs3_perm (rotate180 p r1)
-    grind [Equiv.trans_apply]
+    specialize hs3_perm (rotate180 p r1)
+    grind
 
   have ⟨r1_top_in_r3, r1_bot_in_r3⟩ : r1.topLeft.IsInside r3 ∧ r1.bottomRight.IsInside r3 := by
     cases p_is_corner <;> grind [Rectangle.corners_rotate]
@@ -156,7 +156,7 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
     simp [r1_bot_in_r3, spin_stays_inside, r2_eq_r3, r1.corners_inside]
 
   specialize hs3_perm (rotate180 p r2)
-  grind [Equiv.trans_apply]
+  grind
 
 private lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n}
     (h_contains : r1.Contains r2) (h_r1_ne_r2 : r1 ≠ r2) :
@@ -307,11 +307,11 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
     rcases h with a | a
     · ext p : 1
-      · grind -ring -linarith [Equiv.trans_apply, DisjointRect]
-      · grind -ring -linarith [add_zero, zero_add, toPerm_symm, DisjointRect]
+      · grind -ring -linarith [DisjointRect]
+      · grind -ring -linarith [toPerm_symm, DisjointRect]
     · ext p : 1
-      · grind -ring -linarith [Equiv.trans_apply, → CommonCenter.rotate_eq, spin_stays_outside_cent]
-      · grind -ring -linarith [add_zero, zero_add, toPerm_symm, → CommonCenter.symm,
+      · grind -ring -linarith [→ CommonCenter.rotate_eq, spin_stays_outside_cent]
+      · grind -ring -linarith [toPerm_symm, → CommonCenter.symm,
           spin_stays_inside_cent, spin_stays_outside_cent]
 
 def SameShape (r1 r2 : Rectangle m n) : Prop :=

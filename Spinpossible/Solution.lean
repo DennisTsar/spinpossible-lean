@@ -22,8 +22,8 @@ lemma exists_rectSpin {s : Spin m n} (hs : s ∈ l) (hl : l ⊆ (validSpins_spin
     suffices ∃ a ∈ validSpins_spin m n, a = s by simpa
     exact exists_eq_right.mpr (Finset.mem_toList.mp (hl hs))
   use a, ha.2
-  intro b hb
-  rw [← RectSpin.toSpin_injective.eq_iff, hb, ha.2]
+  intro b rfl
+  exact RectSpin.toSpin_injective ha.2.symm
 
 lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
     (l.map RectSpin.toSpin).prod⁻¹ = (l.map RectSpin.toSpin).reverse.prod := by
