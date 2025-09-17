@@ -204,7 +204,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
 
     have col_spin_eq : col_spin =
-        RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.ge_of_eq rfl, by omega⟩ := by
+        RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_refl _, by omega⟩ := by
       simp (disch := omega) [col_spin, RectSpin.fromPoints, dif_pos, cur_pos]
     have row_spin_eq : row_spin =
         if ht : tile_pos.row.val < row then
@@ -313,7 +313,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     · grw [ih1.2]
       simp [listSize, show n.val = col + 1 by omega, show m.val ≠ 1 by omega]
       omega
-  | case5 row col hrow hcol s cur_pos tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
+  | case5 row col hrow hcol s _ tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
     unfold l k
 
     have hs_row2 (x) (hx : x < row) : s.α⁻¹ ⟨⟨x, _⟩, ⟨col, _⟩⟩ = ⟨⟨x, _⟩, ⟨col, _⟩⟩ :=
@@ -343,33 +343,25 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
 -- TODO: figure out how to avoid this popping up
 lemma Spin.symm_inv (s : Spin m n) : Equiv.symm s.α = s.α⁻¹ := rfl
 
-lemma rect_spin_one (p : Point m n) : Rectangle.toSpin ⟨p, p, Fin.le_refl _, Fin.le_refl _⟩ =
-    ⟨Equiv.refl _, fun x => if x = p then 1 else 0⟩ := by
-  simp_all [Rectangle.toSpin, Equiv.ext_iff, rotate_around_one_eq_self]
-  funext
-  exact if_congr Point.isInside_one_iff rfl rfl
-
 open scoped CharTwo in
+/-- Every element of `Spinₘₓₙ` can be expressed as a product of at most `3mn - (m + n)` spins. -/
 theorem theorem1 (b : Spin m n) :
     ∀ l, Spin.IsSolution l b → l.length ≤ 3 * m * n - (m + n) := by
   have h3 v : ∃ l : List (RectSpin m n), (l.map RectSpin.toSpin).prod =
       ⟨1, b.u + v⟩⁻¹ ∧ l.length ≤ m * n := by
     let z1 : List (RectSpin m n) := []
-    let z1' : List (Spin m n) := z1.map RectSpin.toSpin
     let z2 : List (RectSpin m n) := (.univ : Finset (Point m n)).toList.filterMap fun x =>
-      if z1'.prod.u x ≠ (b.u + v) x
+      if (z1.map RectSpin.toSpin).prod.u x ≠ (b.u + v) x
       then RectSpin.fromRect ⟨x, x, Fin.le_refl _, Fin.le_refl _⟩
       else none
 
-    use z2
+    use z1 ++ z2
     constructor
-    · simp only [z2, Spin.inv_def, Equiv.Perm.one_symm, Equiv.Perm.coe_one, id_eq,
-        CharTwo.neg_eq, RectSpin.fromRect, List.map_filterMap, Option.map_if, rect_spin_one]
-      set l : List (Spin m n) := (.univ : Finset (Point m n)).toList.filterMap fun x =>
-        if z1'.prod.u x ≠ (b.u + v) x
-        then some ⟨Equiv.refl _, fun y => if y = x then 1 else 0⟩
-        else none with hl
-      exact Corollary1.aux1 (l := z1') (k := l) (by rfl) hl
+    · unfold z1 z2
+      rw [List.map_append]
+      apply Corollary1.aux1 (by simp [Spin.one_def, Equiv.Perm.one_def])
+      -- `ite_not` doesn't work well with `Option.map_if`
+      simp [-ite_not, -Classical.ite_not, List.map_filterMap, Spin.inv_def, z1]
     · have : (.univ : Finset (Point m n)).card = (.univ : Finset (Fin m × Fin n)).card := by
         apply Finset.card_bij (fun r _ => (r.row, r.col)) (by simp) (by simp [Point.ext_iff])
         exact fun b _ => ⟨⟨b.1, b.2⟩, by simp⟩

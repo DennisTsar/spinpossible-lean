@@ -8,7 +8,7 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
   · refine Subgroup.closure_induction
       (fun x hxs => ⟨[x], List.forall_mem_singleton.2 <| Or.inl hxs, List.prod_singleton⟩)
       ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_
-    · intro a b ha hb ⟨La, _⟩ ⟨Lb, _⟩
+    · intro a b _ _ ⟨La, _⟩ ⟨Lb, _⟩
       use La ++ Lb
       grind [List.prod_append]
     · rintro a _ ⟨L, hL⟩
@@ -127,8 +127,8 @@ theorem transpositions_generate_symm_group_iff_connected_graph
     · by_cases h_eq : x = z
       · exact h_eq ▸ swap_self x ▸ Subgroup.one_mem _
       have swap_xy_in_E : swap x y ∈ E := by
-        have := (SimpleGraph.fromRel_adj ..).mp adj_edge |>.2
-        rwa [swap_comm y x, or_self] at this
+        convert (SimpleGraph.fromRel_adj ..).mp adj_edge |>.2
+        rw [swap_comm, or_self]
       have swap_xz_eq : swap y z * swap x y * swap y z = swap z x :=
         swap_mul_swap_mul_swap (isSwap_swap_ne (hE _ swap_xy_in_E)) h_eq
       rw [swap_comm, ← swap_xz_eq,

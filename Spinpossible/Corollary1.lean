@@ -53,17 +53,30 @@ lemma Point.isInside_one_iff {p a : Point m n} :
   simp [Point.IsInside, Point.ext_iff]
   omega
 
-lemma ZMod.cases_two (a : ZMod 2) : a = 0 ∨ a = 1 :=
-  match a with
+lemma ZMod.cases_two : (a : ZMod 2) → a = 0 ∨ a = 1
   | 0 => Or.inl rfl
   | 1 => Or.inr rfl
+
+lemma rotate_around_one_eq_self (h : p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩) :
+    rotate180 p ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ = p := by
+  ext <;> grind [Fin.ext_iff, Point.IsInside, rotate180]
+
+-- @[grind? =]
+@[simp]
+lemma rect_spin_one (p : Point m n) : Rectangle.toSpin ⟨p, p, Fin.le_refl _, Fin.le_refl _⟩ =
+    ⟨Equiv.refl _, fun x => if x = p then 1 else 0⟩ := by
+  simp_all [Rectangle.toSpin, Equiv.ext_iff, rotate_around_one_eq_self]
+  funext
+  exact if_congr Point.isInside_one_iff rfl rfl
+
+grind_pattern rect_spin_one => Rectangle.toSpin (Rectangle.mk p p _ _)
 
 attribute [-instance] NeZero.charZero_one -- saves about 0.75s
 
 lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s.α)
     (hk : k = (.univ : Finset (Point m n)).toList.filterMap fun x =>
       if l.prod.u x ≠ s.u x
-      then some ⟨Equiv.refl _, fun j => if j = x then 1 else 0⟩
+      then RectSpin.fromRect ⟨x, x, Fin.le_refl _, Fin.le_refl _⟩ |>.toSpin
       else none) : (l ++ k).prod = s := by
   simp only [List.prod_append, Spin.mul_def]
   have k_refl : ∀ w ∈ k, w.α = Equiv.refl _ := by grind
@@ -91,30 +104,25 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
         have := congr(Spin.u $(hs2.2 ▸ hs1.2) a1)
         simpa
 
-      let x_i_def : Spin m n := ⟨Equiv.refl _, fun j => if j = i then 1 else 0⟩
+      let x_i_def : Spin m n := Rectangle.toSpin ⟨i, i, Fin.le_refl _, Fin.le_refl _⟩
       have x_i_in_k : x_i_def ∈ k := (hk ▸ List.mem_filterMap).mpr ⟨i, by simp [h2, x_i_def]⟩
       obtain ⟨a, ha1, ha2⟩ := List.getElem_of_mem x_i_in_k
 
       let k' := k.map fun x => x.u i
       have k_length : k'.length = k.length := List.length_map _
       have k'_cond (y : Fin k'.length) (hy : k'[y.val] = 1) : y = a := by
-        have : k[y.val] = x_i_def := by
-          have : k[y.val] ∈ k := List.getElem_mem _
-          nth_rw 1 [hk] at this
-          simp only [ne_eq, ite_not, List.mem_filterMap, Finset.mem_toList, Finset.mem_univ,
-            Option.ite_none_left_eq_some, Option.some.injEq, true_and] at this
-          obtain ⟨x, -, hx⟩ := this
-          ext : 1
-          · rw [← hx]
-          · have : i = x := by
-              simp_rw [k', List.getElem_map] at hy
-              have := congr(Spin.u $hx i)
-              simpa [hy]
-            rw [← hx, ← this]
-        contrapose! k_nodup with h
-        apply List.not_nodup_of_get_eq_of_ne k ⟨a, ha1⟩ ⟨y, k_length ▸ y.2⟩
-        · rw [List.get_eq_getElem, ha2, List.get_eq_getElem, this]
-        · exact Fin.ne_of_val_ne h.symm
+        rw [← k_nodup.getElem_inj_iff] <;> try omega
+        have : k[y.val] ∈ k := List.getElem_mem _
+        conv_lhs at this => rw [hk]
+        simp only [ne_eq, ite_not, List.mem_filterMap, Finset.mem_toList, Finset.mem_univ,
+          Option.ite_none_left_eq_some, Option.some.injEq, true_and] at this
+        obtain ⟨x, -, hx⟩ := this
+        ext : 1
+        · simp [ha2, ← hx, x_i_def]
+        · have (rfl) : i = x := by
+            rw [List.getElem_map] at hy
+            simpa [hy] using congr(($hx).u i)
+          rw [ha2, ← hx]
       simp only [k_prod_refl, Equiv.refl_symm, Equiv.refl_apply, h2, bam, Finset.sum_list_count,
         nsmul_eq_mul]
       have k'_one : 1 ∈ k' := by
@@ -127,18 +135,14 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
           have := k'_cond b1 hb1.symm
           have := k'_cond b2 hb2.symm
           omega
-        have := List.duplicate_iff_two_le_count.mpr.mt this
-        have := List.count_pos_iff.mpr k'_one
+        rw [List.duplicate_iff_two_le_count] at this
+        rw [← List.count_pos_iff] at k'_one
         omega
       rw [Finset.sum_eq_single 1]
       · rw [this, mul_one, Nat.cast_one, CharTwo.add_eq_iff_eq_add]
       · intro b _ hb
         rw [b.cases_two.resolve_right hb, mul_zero]
       · exact fun a => a (List.mem_toFinset.mpr k'_one) |>.elim
-
-lemma rotate_around_one_eq_self (h : p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩) :
-    rotate180 p ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ = p := by
-  ext <;> grind [Point.IsInside, rotate180]
 
 @[grind]
 def Point.IsAdjacent (p1 p2 : Point m n) : Prop :=
@@ -233,6 +237,7 @@ lemma List.map_attach_of_unattach {l : List α} {f : { x // x ∈ l } -> α} :
 def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
   |>.map ⟨(·.toSpin), RectSpin.toSpin_injective⟩
 
+/-- **Corollary 1**: `S₁ₓ₁ ∪ S₁ₓ₂` generates `Spinₘₓₙ`. -/
 lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
   let set1 : Set (Equiv.Perm (Point m n)) := SpinSet 1 2 m n |>.image (·.α)
 
@@ -321,7 +326,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
       dsimp [Point.IsAdjacent] at adj
       simp [Point.ext_iff]
       omega
-    have := Equiv.Perm.support_swap (r_corners)
+    have := Equiv.Perm.support_swap r_corners
     rw [← spin_eq_swap_of_adj adj (Rectangle.ext_iff.mp rfl)] at this
     have top_in : s.r.topLeft ∈ s.α.support.toList := by simp [this]
     have bot_in : s.r.bottomRight ∈ s.α.support.toList := by simp [this]
@@ -371,7 +376,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
   apply Subgroup.exists_list_of_mem_closure.mpr
   let k : List (Spin m n) := (.univ : Finset (Point m n)).toList.filterMap fun x =>
     if l.prod.u x ≠ s.u x
-    then some ⟨Equiv.refl _, fun j => if j = x then 1 else 0⟩
+    then RectSpin.fromRect ⟨x, x, Fin.le_refl _, Fin.le_refl _⟩ |>.toSpin
     else none
 
   use l ++ k, fun x hx => Or.inl ?_, Corollary1.aux1 hl1 rfl
@@ -386,6 +391,3 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
     · simp [SpinSet, rectSpinSet_cond_iff]
     · rw [Option.ite_none_right_eq_some, Option.some_inj] at c3
       simp only [Rectangle.toSpin, ← c3.2]
-      ext i : 1
-      · simp_all [rotate_around_one_eq_self]
-      · simp [Point.isInside_one_iff, eq_comm]

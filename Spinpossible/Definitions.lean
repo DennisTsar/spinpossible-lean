@@ -30,8 +30,8 @@ lemma Spin.ext {s1 s2 : Spin m n} (h1 : ∀ x, s1.α x = s2.α x) (h2 : ∀ x, s
   obtain ⟨a, b⟩ := s1
   obtain ⟨c, d⟩ := s2
   congr
-  · ext x : 1; exact h1 x
-  · ext x : 1; exact h2 x
+  · exact Equiv.ext h1
+  · exact funext h2
 
 namespace Spin
 

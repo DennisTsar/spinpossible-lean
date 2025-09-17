@@ -161,8 +161,7 @@ theorem lemma6_2 (l : List (RectSpin m n)) :
       ∧ l'.length = l.length ∧ l'.take i = l.take i ∧ l'.getLast? = l[i] ∧
       (∀ j, (_ : i ≤ j) → (_ : j < l.length - 1 ∧ j < l'.length) → SameShape l'[j].r l[j+1].r)) := by
   intro i hi hl
-  let l' := shiftWholeToEnd l i (by omega) hl
-  use l'
+  use shiftWholeToEnd l i (by omega) hl
   refine ⟨swte_prod_eq .., swte_length .., swte_eq_beg .., ?_, ?_⟩
   · grind [swte_last, List.getLast?_eq_getLast]
   · grind [swte_sameShape]

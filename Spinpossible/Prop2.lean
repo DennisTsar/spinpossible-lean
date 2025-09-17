@@ -97,6 +97,7 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
       by simp, by simp⟩
     simp [rectSpinSet_cond_iff.mpr, *]
 
+/-- `Sᵢₓⱼ = Rᵢₓⱼ ∪ Rⱼₓᵢ` -/
 def SpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
   RectSpinSet i j m n ∪ RectSpinSet j i m n
 
