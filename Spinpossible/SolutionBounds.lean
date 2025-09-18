@@ -24,7 +24,7 @@ def buildBasicPermSolution (row col : Nat) (hrow : row < m.val) (hcol : col < n.
         buildBasicPermSolution 0 (col + 1) m.2 hcol (s⁻¹ * next_spin)
       else []
     if m.val = 1 ∧ ¬ col + 1 < n then rest.reverse
-    else [next_spin] ++ rest.reverse
+    else next_spin :: rest.reverse
   else
     -- moves the tile into the correct row (by spinning along a column)
     let row_spin : RectSpin m n := if tile_pos.row.val < row then
@@ -41,8 +41,8 @@ def buildBasicPermSolution (row col : Nat) (hrow : row < m.val) (hcol : col < n.
         buildBasicPermSolution 0 (col + 1) m.2 hcol (s⁻¹ * row_spin * col_spin)
       else []
 
-    if col + 1 < n then [row_spin, col_spin] ++ rest.reverse
-    else if row + 1 < m then [row_spin] ++ rest.reverse
+    if col + 1 < n then row_spin :: col_spin :: rest.reverse
+    else if row + 1 < m then row_spin :: rest.reverse
     else rest.reverse
 termination_by (n.val - col, m.val - row)
 decreasing_by all_goals omega -- slightly quicker than default implementation
@@ -162,8 +162,8 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       ⟨⟨⟨0, hm⟩, ⟨col, hcol⟩⟩, tile_pos, by fin_omega, by omega⟩ := by
         simp (disch := omega) [next_spin, RectSpin.fromPoints, dif_pos, cur_pos]
 
-    simp only [zero_add, List.cons_append, List.nil_append, List.map_cons, List.map_reverse,
-      List.prod_cons, List.length_cons, List.length_reverse]
+    simp only [zero_add, List.map_cons, List.map_reverse, List.prod_cons, List.length_cons,
+      List.length_reverse]
     split_ifs with h1 h2
     · specialize ih1 h1
         (fun x hx => by simp only [next_spin_eq, Fin.mk_zero', Spin.mul_def, Spin.inv_perm,
@@ -180,7 +180,8 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
         intro x y hxy
         simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
         by_cases hg : x = col
-        · grind -ring -linarith [Rectangle.corners_rotate_perm]
+        · simp_rw [show y = 0 by omega, hg, next_spin_eq]
+          apply Rectangle.corners_rotate_perm.2
         · rw [hs_col2 x y (by omega), next_spin_eq, Rectangle.spin_perm_const (by fin_omega)]
       )
       constructor
@@ -239,7 +240,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
           Rectangle.spin_perm_const (by simp [cur_pos]; omega)])
       constructor
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih1.1]
-      · simp only [List.cons_append, List.nil_append, List.length_cons, List.length_reverse]
+      · simp only [List.length_cons, List.length_reverse]
         grw [ih1.2]
         simp [listSize, show n.val ≠ col + 1 by omega, hrow2, aux2, a1, h1]
     · rw [col_spin_eq, row_spin_eq] at ih2
@@ -247,7 +248,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       rw [← col_spin_eq, ← row_spin_eq] at ih2
       constructor
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih2.1]
-      · simp only [List.cons_append, List.nil_append, List.length_cons, List.length_reverse]
+      · simp only [List.length_cons, List.length_reverse]
         grw [ih2.2]
         simp [listSize, show m.val = row + 1 by omega, show n.val ≠ col + 1 by omega, hrow2]
         split_ifs with hn1
@@ -380,7 +381,7 @@ theorem theorem1 (b : Spin m n) :
       gcongr
       · exact Nat.le_mul_of_pos_right m.val n.2
       · exact Nat.le_mul_of_pos_left n.val m.2
-    grind
+    grind -ring -linarith only
 
   use buildBasicPermSolution 0 0 m.2 n.2 b⁻¹
   convert buildBasicPermSolution_correct 0 0 m.2 n.2 b⁻¹ (by omega) (by omega) using 2
@@ -388,4 +389,4 @@ theorem theorem1 (b : Spin m n) :
   split_ifs with h7 h8
   · rw [h7, h8]
   · rw [h7]; omega
-  · cases m.val <;> cases _ : n.val <;> grind [PNat.ne_zero]
+  · cases m.val <;> cases _ : n.val <;> grind -ring -linarith only [PNat.ne_zero]
