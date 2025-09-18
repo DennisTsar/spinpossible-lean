@@ -180,7 +180,8 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
         intro x y hxy
         simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
         by_cases hg : x = col
-        · grind -ring -linarith [Rectangle.corners_rotate_perm]
+        · simp_rw [show y = 0 by omega, hg, next_spin_eq]
+          apply Rectangle.corners_rotate_perm.2
         · rw [hs_col2 x y (by omega), next_spin_eq, Rectangle.spin_perm_const (by fin_omega)]
       )
       constructor
@@ -380,7 +381,7 @@ theorem theorem1 (b : Spin m n) :
       gcongr
       · exact Nat.le_mul_of_pos_right m.val n.2
       · exact Nat.le_mul_of_pos_left n.val m.2
-    grind
+    grind -ring -linarith only
 
   use buildBasicPermSolution 0 0 m.2 n.2 b⁻¹
   convert buildBasicPermSolution_correct 0 0 m.2 n.2 b⁻¹ (by omega) (by omega) using 2
@@ -388,4 +389,4 @@ theorem theorem1 (b : Spin m n) :
   split_ifs with h7 h8
   · rw [h7, h8]
   · rw [h7]; omega
-  · cases m.val <;> cases _ : n.val <;> grind [PNat.ne_zero]
+  · cases m.val <;> cases _ : n.val <;> grind -ring -linarith only [PNat.ne_zero]
