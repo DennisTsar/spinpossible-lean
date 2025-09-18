@@ -122,7 +122,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     (l.map RectSpin.toSpin).prod.α = s.α ∧ l.length ≤ listSize m n a b := by
   intro l
   fun_induction buildBasicPermSolution with
-  | case1 col hcol s d _ _ tile_pos next_spin k ih1 ih2 =>
+  | case1 col hcol s d _ cur_pos tile_pos next_spin k ih1 ih2 =>
     unfold l k
 
     -- is there a way to avoid repeating this in every case?
@@ -132,7 +132,9 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
       absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
+      suffices ¬tile_pos = cur_pos by rw [Point.eta]; simpa
+      simp only [cur_pos, not_and, Point.ext_iff, ← Fin.val_ne_iff]
+      omega
 
     split_ifs with h1 h2
     · grind
@@ -156,7 +158,9 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
       absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
+      suffices ¬tile_pos = cur_pos by rw [Point.eta]; simpa
+      simp only [cur_pos, not_and, Point.ext_iff, ← Fin.val_ne_iff]
+      omega
 
     have next_spin_eq : next_spin = RectSpin.fromRect
       ⟨⟨⟨0, hm⟩, ⟨col, hcol⟩⟩, tile_pos, by fin_omega, by omega⟩ := by
@@ -201,7 +205,9 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
       absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
+      suffices ¬tile_pos = cur_pos by rw [Point.eta]; simpa
+      simp [cur_pos, Point.ext_iff, ← Fin.val_ne_iff]
+      omega
 
     have col_spin_eq : col_spin =
         RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_refl _, by omega⟩ := by
@@ -228,7 +234,10 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
           · have hg4 : col ≠ tile_pos.col.val := by
               by_contra! hg4
               absurd hs_row2 tile_pos.row.val (by omega)
-              grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
+              suffices ¬tile_pos = cur_pos by simp_rw [hg4]; rw [Point.eta]; simpa
+              simp only [Point.ext_iff, not_and', ← Fin.val_ne_iff, cur_pos]
+              omega
+              -- grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
             rw [Rectangle.spin_perm_const (by fin_omega)]
           · rw [Rectangle.spin_perm_const (by fin_omega)]
       ) (fun x y hxy => by
@@ -265,7 +274,10 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
       absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
+      suffices ¬tile_pos = cur_pos by rw [Point.eta]; simpa
+      simp [cur_pos, Point.ext_iff, ← Fin.val_ne_iff]
+      omega
+      -- grind -ring -linarith [Fin.eta, EmbeddingLike.apply_eq_iff_eq]
 
     have col_spin_eq : col_spin =
         RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by simp [cur_pos], by omega⟩ := by
@@ -292,9 +304,12 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
           Rectangle.spin_perm_const (by simp [cur_pos]; omega), hs_row2 x (by omega)]
         split_ifs
         · have hg4 : col ≠ tile_pos.col.val := by
-            by_contra! hg4
+            by_contra hg4
             absurd hs_row2 tile_pos.row.val (by omega)
-            grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
+            suffices ¬tile_pos = cur_pos by simp_rw [hg4]; rw [Point.eta]; simpa
+            simp only [Point.ext_iff, not_and', ← Fin.val_ne_iff, cur_pos]
+            omega
+            -- grind -ring -linarith [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
           rw [Rectangle.spin_perm_const (by fin_omega)]
         · rw [Rectangle.spin_perm_const (by fin_omega)]
     ) (fun x y hxy => by
@@ -313,7 +328,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     · grw [ih1.2]
       simp [listSize, show n.val = col + 1 by omega, show m.val ≠ 1 by omega]
       omega
-  | case5 row col hrow hcol s _ tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
+  | case5 row col hrow hcol s cur_pos tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
     unfold l k
 
     have hs_row2 (x) (hx : x < row) : s.α⁻¹ ⟨⟨x, _⟩, ⟨col, _⟩⟩ = ⟨⟨x, _⟩, ⟨col, _⟩⟩ :=
@@ -327,11 +342,16 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have hb : col = tile_pos.col.val := by
       by_contra! hx
       absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      grind [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
+      suffices ¬tile_pos = cur_pos by rw [Point.eta]; simpa
+      simp only [Point.ext_iff, not_and, ← Fin.val_ne_iff, cur_pos]
+      omega
+      -- grind [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
     have hc : row = tile_pos.row.val := by
       by_contra! hx
       absurd hs_row2 tile_pos.row.val (by omega)
-      grind [EmbeddingLike.apply_eq_iff_eq, Fin.eta]
+      suffices ¬tile_pos = cur_pos by simp_rw [hb]; rw [Point.eta]; simpa
+      simp only [Point.ext_iff, not_and', ← Fin.val_ne_iff, cur_pos]
+      omega
     ext i : 1
     by_cases hx : i.col.val < col
     · simpa using hs_col i.col i.row (by omega) |>.symm
