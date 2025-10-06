@@ -34,67 +34,23 @@ theorem Stirling.le_log_factorial_stirling {n : ℕ} (hn : n ≠ 0) :
 
 -- end delete
 
-lemma exists_uniform_bound_min_witness :
-  ∃ z : ℕ,
-    ∀ (x : List (RectSpin m n)) (x₁ : Spin m n),
-      ((List.map RectSpin.toSpin x).prod = x₁⁻¹ ∧
-        ∀ (l' : List (RectSpin m n)),
-          (List.map RectSpin.toSpin l').prod = x₁⁻¹ → x.length ≤ l'.length) →
-      x.length ≤ z := by
-  classical
-  let zOf : Spin m n → ℕ := fun s =>
-    if h : ∃ x : List (RectSpin m n),
-        (List.map RectSpin.toSpin x).prod = s⁻¹
-    then
-      have : ∃ k, ∃ x : List (RectSpin m n),
-          (List.map RectSpin.toSpin x).prod = s⁻¹ ∧ x.length = k := by
-        rcases h with ⟨x0, hx0⟩
-        exact ⟨x0.length, x0, hx0, rfl⟩
-      Nat.find this
-    else 0
-  let z : ℕ := (Finset.univ : Finset (Spin m n)).sup zOf
-  refine ⟨z, ?_⟩
-  intro x s hx
-  have hxw : ∃ x : List (RectSpin m n),
-      (List.map RectSpin.toSpin x).prod = s⁻¹ := ⟨x, hx.1⟩
-  have hQ :
-      ∃ k, ∃ y : List (RectSpin m n),
-        (List.map RectSpin.toSpin y).prod = s⁻¹ ∧ y.length = k := by
-    rcases hxw with ⟨x0, hx0⟩
-    exact ⟨x0.length, x0, hx0, rfl⟩
-  have hlen_eq :
-      x.length = Nat.find hQ := by
-    obtain ⟨x0, hx0P, hx0len⟩ := Nat.find_spec hQ
-    have h1 : x.length ≤ x0.length := hx.2 _ hx0P
-    have h2 : Nat.find hQ ≤ x.length := by
-      have : ∃ y, (List.map RectSpin.toSpin y).prod = s⁻¹ ∧ y.length = x.length :=
-        ⟨x, hx.1, rfl⟩
-      simpa using (Nat.find_min' hQ this)
-    exact Nat.le_antisymm (by simpa [hx0len] using h1) h2
-  have hx_le_zOf : x.length ≤ zOf s := by
-    simp [zOf, dif_pos hxw, hlen_eq]
-  have zOf_le_z : zOf s ≤ z := by
-    simpa [z] using Finset.le_sup (s := (Finset.univ : Finset (Spin m n))) (by simp)
-  exact hx_le_zOf.trans zOf_le_z
-
 lemma a1 :
     Fintype.card (Spin m n) = 2 ^ (m.val * n) * Nat.factorial (m.val * n) := by
   simp [mul_comm (2 ^ _), Fintype.ofEquiv_card, Fintype.card_equiv 1]
 
+noncomputable instance : Fintype <| ⋃ s : Spin m n, {l | Spin.IsSolution l s} := by
+  refine (Set.finite_iUnion fun s => ?_).fintype
+  have ⟨x, hx⟩ := every_board_has_solution s
+  apply Set.Finite.subset (List.finite_length_le _ x.length)
+  grind [Spin.IsSolution]
+
 /-- Let `k(m, n)` denote the maximum length of a solution to a board in `Spinₘₓₙ`. -/
 noncomputable def k (m n : PNat) : Nat :=
-  letI s := {l | ∃ s : Spin m n, Spin.IsSolution l s}
-  haveI : s.Finite := by
-    have ⟨z, hz⟩ : ∃ z, ∀ x ∈ s, x.length ≤ z := by
-      simp [Spin.IsSolution, ge_iff_le, Set.mem_setOf_eq, -and_imp, -forall_and_index, s]
-      apply exists_uniform_bound_min_witness
-    let x := {l : List (RectSpin m n) | l.length ≤ z}
-    have : x.Finite := List.finite_length_le _ z
-    apply Set.Finite.subset this
-    intro a ha
-    exact hz a ha
-  letI := this.fintype
-  s.toFinset.sup (·.length)
+  ⋃ s : Spin m n, {l | Spin.IsSolution l s} |>.toFinset.sup (·.length)
+
+private lemma sanity_check :
+    ⋃ s : Spin m n, {l | Spin.IsSolution l s} = {l | ∃ s : Spin m n, Spin.IsSolution l s} :=
+  Set.iUnion_setOf _
 
 -- credit to GPT-5 Thinking
 lemma card_lists_len_le_pow [Fintype α] (k : ℕ) :
@@ -190,19 +146,8 @@ theorem theorem2 {m n : PNat} (hmn : m.val * n > 1) :
     use a
     simp [yo] at ha
 
-    let d := {l : List (RectSpin m n) | ∃ s, Spin.IsSolution l s}
-    have : a ∈ d := by use b⁻¹
-    have : d.Finite := by
-      simp [d]
-      have ⟨z, hz⟩ : ∃ z, ∀ x ∈ d, x.length ≤ z := by
-        simp [d, Spin.IsSolution, ge_iff_le, Set.mem_setOf_eq, -and_imp, -forall_and_index]
-        apply exists_uniform_bound_min_witness
-      let x := {l : List (RectSpin m n) | l.length ≤ z}
-      have : x.Finite := List.finite_length_le _ z
-      apply Set.Finite.subset this
-      intro a ha
-      exact hz a ha
-    let _ := this.fintype
+    let d := ⋃ s : Spin m n, {l | Spin.IsSolution l s}
+    have : a ∈ d := by simp [d]; use b⁻¹
     simp [Spin.IsSolution] at ha
     simp_all only [and_true, s]
     apply Finset.le_sup
