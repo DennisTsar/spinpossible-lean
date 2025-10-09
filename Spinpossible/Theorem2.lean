@@ -52,60 +52,17 @@ private lemma sanity_check :
     ⋃ s : Spin m n, {l | Spin.IsSolution l s} = {l | ∃ s : Spin m n, Spin.IsSolution l s} :=
   Set.iUnion_setOf _
 
--- credit to GPT-5 Thinking
-lemma card_lists_len_le_pow [Fintype α] (k : ℕ) :
-  let s := {l : List α | l.length ≤ k}
-  have sf : s.Finite := List.finite_length_le _ k
-  sf.toFinset.card
-    ≤ (Fintype.card α + 1) ^ k := by
-  intro s sf
-  simp [Set.Finite.toFinset, s]
-  classical
-
-  let s2 := {v : List (Option α) | v.length = k}
-  have sf2 : s2.Finite := by
-    have : {v : List (Option α) | v.length = k}.Finite :=
-      List.finite_length_eq _ k
-    apply Set.Finite.subset this
-    intro a ha
-    exact ha
-  -- Domain we'll count: fixed-length lists (= vectors) over `Option α`
-  have card_domain :
-      sf2.toFinset.card
-        = (Fintype.card (Option α)) ^ k := by
-    simp [Set.Finite.toFinset, s2]
-    rw [← Fintype.card_option, ← card_vector]
-    convert (Fintype.card_congr' rfl)
-    exact Vector.fintype
-
-  -- Surjection `g`: drop all `none`s (i.e. keep only `some a`) → a list over `α`
-  let g :
-      {v : List (Option α) // v.length = k} →
-      {l : List α // l.length ≤ k} :=
-    fun v => ⟨v.1.filterMap id, by simpa [v.2] using List.length_filterMap_le id v.1⟩
-
-  have g_surj : Function.Surjective g := by
-    intro l
-    let l' := l.1.map some
-    let l'' : List (Option α) := (List.replicate (k - l.1.length) none)
-    use ⟨l' ++ l'', ?_⟩
-    · simp [l', l'', g]
-    · simp [l', l'']
-      omega
-
-
-  -- From a surjection `g : X ↠ Y`, we get `|Y| ≤ |X|`
-  have hle :
-      sf.toFinset.card
-        ≤ sf2.toFinset.card := by
-    simp [Set.Finite.toFinset, s, s2]
-    let _ : Fintype { v : List (Option α) // v.length = k } := sf2.fintype
-    let _ : Fintype { v : List α  // v.length ≤ k } := sf.fintype
-    convert Fintype.card_le_of_surjective g g_surj
-
-  simp [card_domain, Fintype.card_option] at hle
-  -- Combine with the domain cardinality and `card_option`
-  simpa [card_domain, Fintype.card_option, Set.Finite.toFinset, sf] using hle
+-- Argument and original proof from GPT-5 Thinking
+lemma List.card_le_of_length_le (α k) [Fintype α] :
+    (List.finite_length_le α k).toFinset.card ≤ (Fintype.card α + 1) ^ k := by
+  generalize_proofs s
+  let := s.fintype
+  rw [Set.Finite.card_toFinset, ← Fintype.card_option, ← card_vector]
+  refine Fintype.card_le_of_surjective
+    (fun l => ⟨l.1.filterMap id, by simpa [l.2] using l.1.length_filterMap_le _⟩) fun l => ?_
+  use ⟨l.1.map some ++ .replicate (k - l.1.length) none, ?_⟩
+  · simp
+  · grind
 
 private lemma choose2_le_sq_sub_one {k : ℕ} (hk : 2 ≤ k) :
   (k + 1).choose 2 ≤ k^2 - 1 := by
@@ -131,8 +88,7 @@ theorem theorem2 {m n : PNat} (hmn : m.val * n > 1) :
 
   let s := {l : List (RectSpin m n) | l.length ≤ k m n}
   have sf : s.Finite := List.finite_length_le _ (k m n)
-  have f1 : sf.toFinset.card ≤ (Fintype.card (RectSpin m n) + 1) ^ (k m n) := by
-    apply card_lists_len_le_pow
+  have f1 := List.card_le_of_length_le (RectSpin m n) (k m n)
   have f2 : sf.toFinset.card ≥ Fintype.card (Spin m n) := by
     simp [Set.Finite.toFinset, s]
     let _ : Fintype { x : List (RectSpin m n) // x.length ≤ k m n } := sf.fintype
@@ -149,7 +105,7 @@ theorem theorem2 {m n : PNat} (hmn : m.val * n > 1) :
     let d := ⋃ s : Spin m n, {l | Spin.IsSolution l s}
     have : a ∈ d := by simp [d]; use b⁻¹
     simp [Spin.IsSolution] at ha
-    simp_all only [and_true, s]
+    simp_all only [and_true]
     apply Finset.le_sup
     exact Set.mem_toFinset.mpr this
   have : Fintype.card (Spin m n) ≤ (Fintype.card (RectSpin m n) + 1) ^ (k m n) := Nat.le_trans f2 f1
