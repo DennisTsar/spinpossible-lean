@@ -1,4 +1,3 @@
-import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Spinpossible.SolutionBounds
 
@@ -59,12 +58,15 @@ lemma List.card_le_of_length_le (α k) [Fintype α] :
   use ⟨l.1.map some ++ .replicate (k - l.1.length) none, by grind⟩
   simp
 
--- `(k + 1).choose r < k ^ r` is also true for all `r ≥ 2`, but we don't need that
-lemma Nat.choose_two_succ_le {k : Nat} (hk : 2 ≤ k) : (k + 1).choose 2 < k ^ 2 := by
-  have : (k + 1) * k < k ^ 2 * 2 := by
-    rw [add_one_mul, mul_two, pow_two]
-    exact Nat.add_lt_add_left (Nat.lt_mul_self_iff.mpr hk) (k * k)
-  grind [choose_two_right]
+-- only need `k = 2` case but why not prove the general version
+lemma Nat.choose_succ_lt_pow {n k : Nat} (hn : 2 ≤ n) (hk : 2 ≤ k) : (n + 1).choose k < n ^ k := by
+  obtain ⟨s, rfl⟩ := Nat.exists_eq_add_of_le hk
+  have hdesc : (s + 2).factorial * (n + 1).choose (s + 2) ≤ (n + 1) * n ^ (s + 1) := by
+    grw [← descFactorial_eq_factorial_mul_choose, succ_descFactorial_succ, descFactorial_le_pow]
+  grw [← self_le_factorial] at hdesc
+  have : n < n ^ 2 := lt_self_pow₀ hn (by simp)
+  have : n * n ^ s < n ^ 2 * n ^ s := mul_lt_mul_of_pos_right this (by positivity)
+  grind -ring -linarith only
 
 private lemma Stirling.le_log_factorial_stirling' {n : Nat} (hn : n ≠ 0) :
     Real.log (n.factorial) > n * Real.log n - n + (1 : Real) / 2 * Real.log n := by
@@ -95,10 +97,10 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
     rcases eq_or_lt_of_le <| @NeZero.one_le m _ with h1 | h1 <;>
     rcases eq_or_lt_of_le <| @NeZero.one_le n _ with h2 | h2
     · grind -ring -linarith only
-    · grind -ring -linarith [Nat.choose_self, Nat.choose_two_succ_le]
-    · grind -ring -linarith [Nat.choose_self, Nat.choose_two_succ_le]
-    · grw [Nat.le_sub_one_of_lt (Nat.choose_two_succ_le h1),
-        Nat.le_sub_one_of_lt (Nat.choose_two_succ_le h2), Nat.mul_sub_one, Nat.sub_one_mul]
+    · grind -ring -linarith [Nat.choose_self, Nat.choose_succ_lt_pow]
+    · grind -ring -linarith [Nat.choose_self, Nat.choose_succ_lt_pow]
+    · grw [Nat.choose_succ_lt_pow h1 (Nat.le_refl _),
+        Nat.le_sub_one_of_lt (Nat.choose_succ_lt_pow h2 (Nat.le_refl _)), Nat.mul_sub_one]
       grind -linarith only
 
   have bound := theorem2_1 m n
