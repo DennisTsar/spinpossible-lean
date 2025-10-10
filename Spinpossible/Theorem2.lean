@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Algebra.Order.Ring.Star
+import Mathlib.Analysis.SpecialFunctions.Stirling
 import Spinpossible.SolutionBounds
 
 -- TODO: delete when upgrading mathlib
@@ -34,9 +35,8 @@ theorem Stirling.le_log_factorial_stirling {n : ℕ} (hn : n ≠ 0) :
 
 -- end delete
 
-lemma a1 :
-    Fintype.card (Spin m n) = 2 ^ (m.val * n) * Nat.factorial (m.val * n) := by
-  simp [mul_comm (2 ^ _), Fintype.ofEquiv_card, Fintype.card_equiv 1]
+lemma Spin.card_eq : Fintype.card (Spin m n) = 2 ^ (m.val * n) * Nat.factorial (m.val * n) := by
+  simp [mul_comm, Fintype.ofEquiv_card, Fintype.card_equiv 1]
 
 noncomputable instance : Fintype <| ⋃ s : Spin m n, {l | Spin.IsSolution l s} := by
   refine (Set.finite_iUnion fun s => ?_).fintype
@@ -48,10 +48,6 @@ noncomputable instance : Fintype <| ⋃ s : Spin m n, {l | Spin.IsSolution l s} 
 noncomputable def k (m n : PNat) : Nat :=
   ⋃ s : Spin m n, {l | Spin.IsSolution l s} |>.toFinset.sup (·.length)
 
-private lemma sanity_check :
-    ⋃ s : Spin m n, {l | Spin.IsSolution l s} = {l | ∃ s : Spin m n, Spin.IsSolution l s} :=
-  Set.iUnion_setOf _
-
 -- Argument and original proof from GPT-5 Thinking
 lemma List.card_le_of_length_le (α k) [Fintype α] :
     (List.finite_length_le α k).toFinset.card ≤ (Fintype.card α + 1) ^ k := by
@@ -60,211 +56,64 @@ lemma List.card_le_of_length_le (α k) [Fintype α] :
   rw [Set.Finite.card_toFinset, ← Fintype.card_option, ← card_vector]
   refine Fintype.card_le_of_surjective
     (fun l => ⟨l.1.filterMap id, by simpa [l.2] using l.1.length_filterMap_le _⟩) fun l => ?_
-  use ⟨l.1.map some ++ .replicate (k - l.1.length) none, ?_⟩
-  · simp
-  · grind
+  use ⟨l.1.map some ++ .replicate (k - l.1.length) none, by grind⟩
+  simp
 
-private lemma choose2_le_sq_sub_one {k : ℕ} (hk : 2 ≤ k) :
-  (k + 1).choose 2 ≤ k^2 - 1 := by
-  refine Nat.le_sub_one_of_lt ?_
-  simp [Nat.choose_two_right]
+-- `(k + 1).choose r < k ^ r` is also true for all `r ≥ 2`, but we don't need that
+lemma Nat.choose_two_succ_le {k : Nat} (hk : 2 ≤ k) : (k + 1).choose 2 < k ^ 2 := by
   have : (k + 1) * k < k ^ 2 * 2 := by
-    rw [show k ^2 * 2 = k * k + k * k by group, show (k + 1) * k = k * k + k by group]
+    rw [add_one_mul, mul_two, pow_two]
     exact Nat.add_lt_add_left (Nat.lt_mul_self_iff.mpr hk) (k * k)
-  omega
+  grind [choose_two_right]
 
-lemma jo {n : Nat} (hn : n ≠ 0) :
-    Real.log (n.factorial) ≥ n * Real.log n - n + (1 : Real) / 2 * Real.log n := by
-  have := Stirling.le_log_factorial_stirling hn
-  have : Real.log (2 * Real.pi) / 2 > 0 := by
-    have := Real.two_le_pi
-    bound
-  grind
+private lemma Stirling.le_log_factorial_stirling' {n : Nat} (hn : n ≠ 0) :
+    Real.log (n.factorial) > n * Real.log n - n + (1 : Real) / 2 * Real.log n := by
+  have : 0 < Real.log (2 * Real.pi) / 2 := by grw [← Real.two_le_pi]; positivity
+  grind [Stirling.le_log_factorial_stirling]
 
-theorem theorem2 {m n : PNat} (hmn : m.val * n > 1) :
-  (k m n) ≥ (m * n : Real) / 2 - (1 - Real.log 2) / 2 * ((m * n : Real) / Real.log (m * n)) + 1 / 4 := by
-  have t1 : 2 ≤ m.val ∨ 2 ≤ n.val := by
-    grind [PNat.pos]
+instance : Nonempty (RectSpin m n) := .intro (RectSpin.fromRect default)
 
-  let s := {l : List (RectSpin m n) | l.length ≤ k m n}
-  have sf : s.Finite := List.finite_length_le _ (k m n)
-  have f1 := List.card_le_of_length_le (RectSpin m n) (k m n)
-  have f2 : sf.toFinset.card ≥ Fintype.card (Spin m n) := by
-    simp [Set.Finite.toFinset, s]
-    let _ : Fintype { x : List (RectSpin m n) // x.length ≤ k m n } := sf.fintype
-    refine Fintype.card_le_of_surjective (fun x => (x.1.map RectSpin.toSpin).prod) fun b => ?_
-    refine Subtype.exists.mpr ?_
-    simp [k]
-    let yo := {l | Spin.IsSolution l b⁻¹}
-    have ⟨a, ha⟩ : Nonempty yo := by
-      simp [yo]
-      apply every_board_has_solution
-    use a
-    simp [yo] at ha
+theorem theorem2_1 (m n : PNat) :
+    Fintype.card (Spin m n) ≤ (Fintype.card (RectSpin m n) + 1) ^ k m n := by
+  apply Nat.le_trans ?_ (List.card_le_of_length_le _ _)
+  let := List.finite_length_le (RectSpin m n) (k m n) |>.fintype
+  rw [Set.Finite.toFinset_eq_toFinset, Set.toFinset_card]
+  refine Fintype.card_le_of_surjective (fun x => (x.1.map RectSpin.toSpin).prod) fun b => ?_
+  have ⟨a, ha⟩ := every_board_has_solution b⁻¹
+  use ⟨a, Set.mem_setOf_eq ▸ Finset.le_sup ?_⟩, (inv_inv b ▸ ha.1)
+  simpa using .intro b⁻¹ ha
 
-    let d := ⋃ s : Spin m n, {l | Spin.IsSolution l s}
-    have : a ∈ d := by simp [d]; use b⁻¹
-    simp [Spin.IsSolution] at ha
-    simp_all only [and_true]
-    apply Finset.le_sup
-    exact Set.mem_toFinset.mpr this
-  have : Fintype.card (Spin m n) ≤ (Fintype.card (RectSpin m n) + 1) ^ (k m n) := Nat.le_trans f2 f1
-  have cc : Fintype.card (RectSpin m n) = (m.val + 1).choose 2 * (n.val + 1).choose 2 := by
-    simpa [validSpins] using total_valid_spins_card
-  have _ : 1 ≤ Fintype.card (RectSpin m n):= by
-    rw [cc]
-    have := m.1
-    have := n.1
-    refine Nat.one_le_iff_ne_zero.mpr ?_
-    apply Nat.mul_ne_zero
-    · refine Nat.choose_ne_zero ?_
-      exact Nat.AtLeastTwo.prop
-    · refine Nat.choose_ne_zero ?_
-      exact Nat.AtLeastTwo.prop
-  have this2 := this
-  rw [Nat.le_pow_iff_clog_le (by omega)] at this
-  rw [a1, cc] at this
-  rw [← Real.natCeil_logb_natCast] at this
-  simp at this
-  rw [← Real.log_div_log] at this
-
-  clear this
-
+theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
+    k m n ≥ (m * n) / 2 - (1 - Real.log 2) / 2 * ((m * n) / Real.log (m * n)) + 1 / 4 := by
+  have : 1 ≤ (m.val * n) ^ 2 := one_le_pow₀ (le_of_lt hmn)
+  have : 1 < Fintype.card (RectSpin m n) + 1 := Nat.AtLeastTwo.one_lt
   -- NOTE: original proof says `N^2 > c` but I believe it should be `N^2 ≥ c`
   -- Suppose `m=2, n=1`, then `N^2=4` and `c=choose(3,2)*choose(2,2)+1=4`
-  have : (Fintype.card (RectSpin m n) + 1) ≤ (m.val * n) ^ 2 := by
-    rw [cc]
-    rcases t1 with h1 | h1
-    · by_cases h2 : 2 ≤ n.val
-      · grw [choose2_le_sq_sub_one h1]
-        grw [choose2_le_sq_sub_one h2]
-        have : (m.val ^ 2 - 1) * (n.val ^ 2 - 1) + 1 = m.val ^ 2 * n.val ^ 2 - (m.val ^ 2 + n.val ^ 2) + 2 := by
-          rw [Nat.sub_one_mul (↑m ^ 2) (↑n ^ 2 - 1)]
-          rw [Nat.mul_sub_one (↑m ^ 2) (↑n ^ 2)]
-          rw [Nat.sub_sub_right (↑m ^ 2 * ↑n ^ 2 - ↑m ^ 2) (NeZero.one_le)]
-          group
-          rw [← Nat.add_sub_assoc ?_ 1]
-          · simp [← add_assoc]
-            rw [← Nat.Simproc.add_sub_add_ge 2 (↑n ^ 2) ?_]
-            · group
-              rw [← Nat.add_sub_assoc ?_ 2]
-              apply Nat.add_le_mul
-              · have := Nat.pow_le_pow_left h1 2
-                exact Nat.le_of_add_left_le this
-              · have := Nat.pow_le_pow_left h2 2
-                exact Nat.le_of_add_left_le this
-            · apply Nat.le_mul_of_pos_right
-              positivity
-          · set x := m.val ^ 2
-            set y := n.val ^ 2
-            rw [← Nat.mul_sub_one x y]
-            have : 4 ≤ x := Nat.pow_le_pow_left h1 2
-            have : y ≤ x * (y - 1) := by
-              grw [← this]
-              have : 4 ≤ y := Nat.pow_le_pow_left h2 2
-              omega
-            omega
-        rw [this]
-        rw [show (m.val * n) ^ 2 = m.val ^ 2 * n.val ^ 2 by ring]
-        rw [← tsub_tsub_assoc ?_ ?_]
-        · apply Nat.sub_le
-        · refine Nat.add_le_mul ?_ ?_
-          · grind
-          · grind
-        · grind
-      · have : n.val > 0 := n.2
-        have : n.val = 1 := by omega
-        simp [this]
-        simp [Nat.choose_two_right]
-        simp [add_mul]
-        have : 4 ≤ m.val ^ 2 := Nat.pow_le_pow_left h1 2
-        set x := m.val
-        have hmul : 0 ≤ 2 * (x : ℤ)^2 - (x : ℤ) * (x : ℤ) - (x : ℤ) - 2 := by
-          nlinarith
-        grind
-    · by_cases h2 : 2 ≤ m.val
-      · grw [choose2_le_sq_sub_one h1, choose2_le_sq_sub_one h2]
-        have : (m.val ^ 2 - 1) * (n.val ^ 2 - 1) + 1 = m.val ^ 2 * n.val ^ 2 - (m.val ^ 2 + n.val ^ 2) + 2 := by
-          rw [Nat.sub_one_mul (↑m ^ 2) (↑n ^ 2 - 1)]
-          rw [Nat.mul_sub_one (↑m ^ 2) (↑n ^ 2)]
-          rw [Nat.sub_sub_right (↑m ^ 2 * ↑n ^ 2 - ↑m ^ 2) (NeZero.one_le)]
-          group
-          rw [← Nat.add_sub_assoc ?_ 1]
-          · simp [← add_assoc]
-            rw [← Nat.Simproc.add_sub_add_ge 2 (↑n ^ 2) ?_]
-            · group
-              rw [← Nat.add_sub_assoc ?_ 2]
-              apply Nat.add_le_mul
-              · have := Nat.pow_le_pow_left h2 2
-                exact Nat.le_of_add_left_le this
-              · have := Nat.pow_le_pow_left h1 2
-                exact Nat.le_of_add_left_le this
-            · apply Nat.le_mul_of_pos_right
-              positivity
-          · set x := m.val ^ 2
-            set y := n.val ^ 2
-            rw [← Nat.mul_sub_one x y]
-            have : 4 ≤ x := Nat.pow_le_pow_left h2 2
-            have : y ≤ x * (y - 1) := by
-              grw [← this]
-              have : 4 ≤ y := Nat.pow_le_pow_left h1 2
-              omega
-            omega
-        rw [this]
-        rw [show (m.val * n) ^ 2 = m.val ^ 2 * n.val ^ 2 by ring]
-        rw [← tsub_tsub_assoc ?_ ?_]
-        · apply Nat.sub_le
-        · refine Nat.add_le_mul ?_ ?_
-          · grind
-          · grind
-        · grind
-      · have : m.val > 0 := m.2
-        have : m.val = 1 := by omega
-        simp [this]
-        simp [Nat.choose_two_right]
-        simp [add_mul]
-        have : 4 ≤ n.val ^ 2 := Nat.pow_le_pow_left h1 2
-        set x := n.val
-        have hmul : 0 ≤ 2 * (x : ℤ)^2 - (x : ℤ) * (x : ℤ) - (x : ℤ) - 2 := by
-          nlinarith
-        grind
-  grw [this, ← Nat.pow_mul] at this2
+  have : Fintype.card (RectSpin m n) + 1 ≤ (m.val * n) ^ 2 := by
+    rw [show Fintype.card (RectSpin m n) =
+      (m.val + 1).choose 2 * (n.val + 1).choose 2 from total_valid_spins_card]
+    rcases eq_or_lt_of_le <| @NeZero.one_le m _ with h1 | h1 <;>
+    rcases eq_or_lt_of_le <| @NeZero.one_le n _ with h2 | h2
+    · grind -ring -linarith only
+    · grind -ring -linarith [Nat.choose_self, Nat.choose_two_succ_le]
+    · grind -ring -linarith [Nat.choose_self, Nat.choose_two_succ_le]
+    · grw [Nat.le_sub_one_of_lt (Nat.choose_two_succ_le h1),
+        Nat.le_sub_one_of_lt (Nat.choose_two_succ_le h2), Nat.mul_sub_one, Nat.sub_one_mul]
+      grind -linarith only
 
-  have : 1 ≤ m.val * n.val := by
-    have : 1 ≤ m.val := m.2
-    have : 1 ≤ n.val := n.2
-    grind
-  have : 1 < m.val * n := by grind
+  have bound := theorem2_1 m n
+  grw [Spin.card_eq, Nat.le_pow_iff_clog_le Nat.AtLeastTwo.one_lt, this,
+    ← Real.natCeil_logb_natCast, Nat.ceil_le] at bound <;> try assumption
+  grw [← bound]
+  simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le, ]
+  conv_rhs => rw [← Real.log_div_log, Real.log_mul (by positivity) (by positivity)]
 
-  rw [Nat.le_pow_iff_clog_le this] at this2
-  rw [a1] at this2
-  -- grw [← Nat.log_le_clog] at this
-  rw [← Real.natCeil_logb_natCast] at this2
-  simp at this2
-  rw [← Real.log_div_log] at this2
-  rw [Real.log_mul (by positivity) (by positivity)] at this2
-  grw [jo (by omega)] at this2
-  · simp at this2
-    norm_cast at this2
-    ring_nf at this2
-    field_simp at this2
-    have : Real.log ↑↑(m * n) ≠ 0 := by
-      refine Real.log_ne_zero_of_pos_of_ne_one ?_ ?_
-      · norm_cast
-      · norm_cast
-        exact ne_of_gt this
-    rw [add_div (↑↑(m * n) * (Real.log 2 + (Real.log ↑↑(m * n) - 1)) * 2) (Real.log ↑↑(m * n))
-        (Real.log ↑↑(m * n) * 2)] at this2
-    rw [div_mul_cancel_left₀ this 2] at this2
-    rw [mul_div_mul_right (↑↑(m * n) * (Real.log 2 + (Real.log ↑↑(m * n) - 1))) (Real.log ↑↑(m * n))
-        (by grind)] at this2
-    rw [mul_div_right_comm (↑↑(m * n)) (Real.log 2 + (Real.log ↑↑(m * n) - 1))
-        (Real.log ↑↑(m * n))] at this2
-    have : Real.log 2 + (Real.log ↑↑(m * n) - 1)
-        = Real.log ↑↑(m * n) - (1 - Real.log 2) := by ring
-    rw [this] at this2
-    rw [mul_sub (↑↑(m * n) / Real.log ↑↑(m * n)) (Real.log ↑↑(m * n)) _] at this2
-    rw [div_mul_cancel₀ _ (by assumption)] at this2
-    simp at this2
-    linarith
-  · apply Real.log_nonneg (by norm_cast)
+  have : Real.log (↑↑m * ↑↑n) ≠ 0 := by
+    rw [← Nat.cast_mul]
+    exact Real.log_ne_zero_of_pos_of_ne_one (by positivity) (ne_of_gt (Nat.one_lt_cast.mpr hmn))
+  grw [Stirling.le_log_factorial_stirling' (by omega)]
+  · simp only [Real.log_pow, Nat.cast_mul, one_div, Nat.cast_ofNat, ge_iff_le]
+    field_simp
+    ring_nf
+    simp only [one_div, le_refl]
+  · exact Real.log_nonneg (by norm_cast0; assumption)
