@@ -2,6 +2,12 @@ import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 import Mathlib.GroupTheory.Perm.Sign
 import Mathlib.Tactic.Cases
 
+-- Note: Copied from `Spinpossible/Definitions.lean` since this file does not import it.
+-- In Lean 4.25.0, `get_elem_tactic_extensible` causes performance issues due to trying stuff
+-- relating to `Std.Range`, which we don't use, so we redefine it here to improve performance.
+macro_rules
+  | `(tactic| get_elem_tactic_extensible) => `(tactic| omega)
+
 theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
     a ∈ Subgroup.closure s ↔ ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
   constructor
