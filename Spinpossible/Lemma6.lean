@@ -3,7 +3,7 @@ import Spinpossible.Corollary1
 set_option pp.showLetValues true
 
 
--- seal SpinSet -- this prevents `get_elem_tactic` from doing weird and slow things
+seal SpinSet -- this prevents `get_elem_tactic` from doing weird and slow things
 
 lemma SameShape_rectSpinSet_mem {s1 s2 : RectSpin m n} (h : SameShape s1.r s2.r) :
     s1 ∈ RectSpinSet i j m n ↔ s2 ∈ RectSpinSet i j m n := by
