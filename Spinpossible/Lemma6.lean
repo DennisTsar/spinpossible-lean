@@ -2,6 +2,9 @@ import Spinpossible.Corollary1
 
 set_option pp.showLetValues true
 
+
+seal SpinSet -- this prevents `get_elem_tactic` from doing weird and slow things
+
 lemma SameShape_rectSpinSet_mem {s1 s2 : RectSpin m n} (h : SameShape s1.r s2.r) :
     s1 ∈ RectSpinSet i j m n ↔ s2 ∈ RectSpinSet i j m n := by
   grind [RectSpinSet, SameShape]
@@ -40,7 +43,7 @@ theorem sste_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
   fun_induction shiftSingleToEnd with
   | case1 => rfl
   | case2 l i _ _ _ x l2 h2 =>
-    have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
+    -- have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
     suffices l[i].toSpin * l[i + 1] = l[i + 1] * x.1 by
       rw [h2, show l = l.take i ++ [l[i], l[i+1]] ++ l.drop (i + 2) by simp]
       simp [- List.append_assoc, this, l2, mul_assoc]
@@ -106,7 +109,7 @@ theorem swte_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
   fun_induction shiftWholeToEnd with
   | case1 => rfl
   | case2 l i _ _ _ x l2 h2 =>
-    have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
+    -- have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
     suffices l[i].toSpin * l[i + 1] = x.1 * l[i]  by
       rw [h2, show l = l.take i ++ [l[i], l[i+1]] ++ l.drop (i + 2) by simp]
       simp [- List.append_assoc, this, l2, mul_assoc]
