@@ -132,7 +132,9 @@ lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 
   rw [Finset.sum_nat_sub_distrib (Nat.le_refl m), Nat.sub_mul, Finset.sum_range_id_mul_two,
     Nat.mul_sub_one, Nat.sub_eq_of_eq_add]
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
-  grind [Nat.le_mul_self]
+  -- grind [Nat.le_mul_self] -- used to work in 4.24.0
+  rw [← Nat.add_sub_assoc (Nat.le_mul_self _) _]
+  grind [Nat.add_sub_assoc]
 
 lemma sum_m_minus_x (m : PNat) :
     ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by grind [sum_m_minus_x_mul_two]

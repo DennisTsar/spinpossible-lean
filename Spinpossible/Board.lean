@@ -90,7 +90,7 @@ def board.toSpin (b : board m n) : Spin m n :=
           have (x) (hx : x ∈ Finset.range (m.val * n.val)) : (x + 1) - 1 ≠ to1d p :=
             qwe2 (x + 1) (by grind [Finset.mem_Icc])
           grind
-        grind [Fin.cast_val_eq_self, Nat.mod_eq_of_lt, Fin.val_natCast]
+        grind [Fin.cast_val_eq_self, Nat.mod_eq_of_lt, = Fin.val_natCast]
       )
       (by
         intro p

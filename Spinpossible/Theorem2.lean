@@ -1,39 +1,6 @@
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Spinpossible.SolutionBounds
 
--- TODO: delete when upgrading mathlib
--- https://github.com/leanprover-community/mathlib4/blob/586e9c386274d740624bd33abe9a67f7365a92fc/Mathlib/Analysis/SpecialFunctions/Stirling.lean#L242
-
-open Filter Real in
-theorem Stirling.sqrt_pi_le_stirlingSeq {n : ℕ} (hn : n ≠ 0) : √π ≤ stirlingSeq n :=
-  match n, hn with
-  | n + 1, _ =>
-    stirlingSeq'_antitone.le_of_tendsto (b := n) <|
-      tendsto_stirlingSeq_sqrt_pi.comp (tendsto_add_atTop_nat 1)
-
-open scoped Nat in
-open Real in
-theorem Stirling.le_factorial_stirling (n : ℕ) : √(2 * π * n) * (n / exp 1) ^ n ≤ n ! := by
-  obtain rfl | hn := eq_or_ne n 0
-  · simp
-  have : √(2 * π * n) * (n / exp 1) ^ n = √π * (√(2 * n) * (n / exp 1) ^ n) := by
-    simp [sqrt_mul']; ring
-  rw [this, ← le_div_iff₀ (by positivity)]
-  exact sqrt_pi_le_stirlingSeq hn
-
-open scoped Nat in
-open Real in
-theorem Stirling.le_log_factorial_stirling {n : ℕ} (hn : n ≠ 0) :
-    n * log n - n + log n / 2 + log (2 * π) / 2 ≤ log n ! := by
-  calc
-    _ = (log (2 * π) + log n) / 2 + n * (log n - 1) := by ring
-    _ = log (√(2 * π * n) * (n / rexp 1) ^ n) := by
-      rw [log_mul (x := √_), log_sqrt, log_mul (x := 2 * π), log_pow, log_div, log_exp] <;>
-      positivity
-    _ ≤ _ := log_le_log (by positivity) (le_factorial_stirling n)
-
--- end delete
-
 lemma Spin.card_eq : Fintype.card (Spin m n) = 2 ^ (m.val * n) * Nat.factorial (m.val * n) := by
   simp [mul_comm, Fintype.ofEquiv_card, Fintype.card_equiv 1]
 
@@ -104,7 +71,7 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
       grind -linarith only
 
   have bound := theorem2_1 m n
-  grw [Spin.card_eq, Nat.le_pow_iff_clog_le Nat.AtLeastTwo.one_lt, this,
+  grw [Spin.card_eq, ← Nat.clog_le_iff_le_pow Nat.AtLeastTwo.one_lt, this,
     ← Real.natCeil_logb_natCast, Nat.ceil_le] at bound <;> try assumption
   grw [← bound]
   simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le, ]
@@ -117,5 +84,5 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
   · simp only [Real.log_pow, Nat.cast_mul, one_div, Nat.cast_ofNat, ge_iff_le]
     field_simp
     ring_nf
-    simp only [one_div, le_refl]
+    simp only [le_refl]
   · exact Real.log_nonneg (by norm_cast0; assumption)

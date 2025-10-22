@@ -10,7 +10,7 @@ attribute [-simp]
 open scoped CharTwo -- useful since orient is in `ZMod 2` (specifically `CharTwo.two_eq_zero`)
 open Function.Involutive -- to make theorem names shorter
 
-attribute [grind] coe_toPerm
+attribute [grind =] coe_toPerm
 /-- We say that an element of `Spin m n` is a *spin* if it is a spin about some rectangle `r` -/
 @[ext]
 structure RectSpin (m n : PNat) extends Spin m n where
