@@ -69,10 +69,7 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
     have : s.Finite := Set.Finite.subset (List.finite_length_le _ l.length) (fun a b => b.2)
     let ⟨y, hy1, hy2⟩ := s.exists_min_image (·.length) this ⟨l, hl1, le_refl _⟩
     use y, hy1.1
-    intro z hz1
-    by_contra! hz2
-    have : z ∈ s := Set.mem_setOf.mpr ⟨hz1, by rw [Set.mem_setOf_eq] at hy1; omega⟩
-    exact Nat.not_le_of_lt hz2 (hy2 _ this)
+    grind
   have : b ∈ Subgroup.closure (mySet m n) := by rw [spin_s11_s12_closure]; trivial
   obtain ⟨l, hl1, rfl⟩ := Subgroup.exists_list_of_mem_closure.mp this
   have hl3 : l ⊆ (validSpins_spin m n).toList := by

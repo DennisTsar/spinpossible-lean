@@ -81,7 +81,7 @@ lemma rotate180_self_inverse (h : p.IsInside r) : rotate180 (rotate180 p r) r = 
   ext <;> grind
 
 lemma spin_stays_inside (h : p.IsInside r) : (rotate180 p r).IsInside r := by
-  dsimp [Point.IsInside, rotate180] at *; grind
+  grind [Point.IsInside, rotate180]
 
 grind_pattern spin_stays_inside => (rotate180 p r).IsInside r
 

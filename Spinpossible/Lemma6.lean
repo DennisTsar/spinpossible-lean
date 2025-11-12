@@ -17,8 +17,7 @@ theorem uniq_s1s2s1_of_single (s1 s2 : RectSpin m n) (hl : s2 ∈ SpinSet 1 1 m 
     refine fun h => Or.inl fun p hp => ?_
     have : s2.r.topLeft = s2.r.bottomRight := by
       simp [SpinSet, RectSpinSet] at hl
-      have : _ ∧ _ := ⟨s2.r.validRow, s2.r.validCol⟩
-      ext <;> omega
+      grind [Rectangle.validRow, Rectangle.validCol]
     grind [Point.IsInside, Rectangle.Contains]
   · exact fun a b ha hb => RectSpin.toSpin_injective (ha.1 ▸ hb.1)
 
@@ -56,7 +55,7 @@ theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
     shiftSingleToEnd l' i' hi' hl' = l'.eraseIdx i' ++
       [(shiftSingleToEnd l' i' hi' hl').getLast (by grind [sste_length])] := by
   fun_induction shiftSingleToEnd with
-  | case1 => simp (disch := omega) [shiftSingleToEnd, List.eraseIdx_eq_take_drop_succ]
+  | case1 => grind [shiftSingleToEnd, List.take_append_getLast]
   | case2 l i _ hl hi x l2 h2 =>
     -- a bit too slow
     -- grind [shiftSingleToEnd, add_tsub_cancel_left, List.drop_drop, List.getElem_cons_drop]

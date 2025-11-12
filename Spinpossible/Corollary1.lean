@@ -49,9 +49,7 @@ lemma prod_eq_refl_of_refl {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.
   · simp_all [Spin.mul_def]
 
 lemma Point.isInside_one_iff {p a : Point m n} :
-    p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ ↔ p = a := by
-  simp [Point.IsInside, Point.ext_iff]
-  omega
+  p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ ↔ p = a := by grind [Point.IsInside]
 
 lemma ZMod.cases_two : (a : ZMod 2) → a = 0 ∨ a = 1
   | 0 => Or.inl rfl
@@ -59,7 +57,7 @@ lemma ZMod.cases_two : (a : ZMod 2) → a = 0 ∨ a = 1
 
 lemma rotate_around_one_eq_self (h : p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩) :
     rotate180 p ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ = p := by
-  ext <;> grind [Fin.ext_iff, Point.IsInside, rotate180]
+  ext <;> grind [Point.IsInside, rotate180]
 
 -- @[grind? =]
 @[simp]
@@ -172,8 +170,7 @@ lemma Equiv.Perm.IsAdjacentSwap.isAdjacent {m n : PNat} {p : Equiv.Perm (Point m
   p.support.toList[0].IsAdjacent p.support.toList[1] := by grind
 
 lemma Point.IsAdjacent.lt_or_lt {a b : Point m n} (h2 : a.IsAdjacent b) :
-    (a.row ≤ b.row ∧ a.col ≤ b.col) ∨ (b.row ≤ a.row ∧ b.col ≤ a.col) := by
-  cases h2 <;> omega
+  (a.row ≤ b.row ∧ a.col ≤ b.col) ∨ (b.row ≤ a.row ∧ b.col ≤ a.col) := by grind
 
 lemma Rectangle.swap_iff {s : RectSpin m n} :
     s ∈ SpinSet 1 2 m n ↔ s.r.topLeft.IsAdjacent s.r.bottomRight := by
@@ -192,11 +189,8 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjac
     split_ifs with h8 h9
     · simp [h8]
     · have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
-      ext <;> grind [→ Fin.val_le_of_le]
-    · have : s ∈ SpinSet 1 2 m n := Rectangle.swap_iff.mpr h
-      simp [SpinSet, rectSpinSet_cond_iff] at this
-      simp [Point.ext_iff, Point.IsInside] at *
-      omega
+      ext <;> grind
+    · grind [Point.ext_iff, Point.IsInside]
   · rw [Equiv.swap_apply_of_ne_of_ne] <;> grind [Rectangle.corners_inside]
 
 lemma exists_swap_spin_of_adj {p1 p2 : Point m n} (h : p1.IsAdjacent p2) :
@@ -221,16 +215,6 @@ lemma Equiv.Perm.swap_support [DecidableEq α] [Fintype α] {p : Perm α}
   have : l2 = p.support.toList[0] ∨ l2 = p.support.toList[1] := List.eq_one_of_two h (by simp_all)
   grind [swap_comm]
 
-lemma Nat.mod_succ_le_of_not_dvd {a b : Nat} (h : ¬b ∣ a + 1) (hb : 0 < b) : a % b + 1 < b := by
-  apply lt_of_le_of_ne (mod_lt a hb)
-  contrapose! h
-  simpa [dvd_iff_mod_eq_zero] using congr($h % b)
-
-lemma Nat.mod_succ_of_not_dvd {a b : Nat} (h : ¬b ∣ a + 1) (hb : 0 < b) :
-    (a + 1) % b = a % b + 1 := by
-  have := mod_succ_le_of_not_dvd h hb
-  rw [add_mod, one_mod_eq_one.mpr (by omega), mod_eq_of_lt this]
-
 lemma List.map_attach_of_unattach {l : List α} {f : { x // x ∈ l } -> α} :
     f = (fun x => x.1) → l.attach.map f = l := (· ▸ attach_map_subtype_val l)
 
@@ -248,7 +232,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
     use s.r.topLeft, s.r.bottomRight
     simp [SpinSet, rectSpinSet_cond_iff] at hs1
     have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
-    grind [spin_eq_swap_of_adj, → Fin.val_le_of_le, ← Fin.val_inj]
+    grind [spin_eq_swap_of_adj]
 
   let x1 : SimpleGraph (Point m n) := SimpleGraph.fromRel (fun x y => Equiv.swap x y ∈ set1)
   have : x1.Connected := by
@@ -322,10 +306,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
     have perm_length : s.α.support.toList.length = 2 :=
       Equiv.Perm.card_support_eq_two.mpr sw ▸ Finset.length_toList _
     have adj := Rectangle.swap_iff.mp hs1
-    have r_corners : s.r.topLeft ≠ s.r.bottomRight := by
-      dsimp [Point.IsAdjacent] at adj
-      simp [Point.ext_iff]
-      omega
+    have r_corners : s.r.topLeft ≠ s.r.bottomRight := by grind
     have := Equiv.Perm.support_swap r_corners
     rw [← spin_eq_swap_of_adj adj (Rectangle.ext_iff.mp rfl)] at this
     have top_in : s.r.topLeft ∈ s.α.support.toList := by simp [this]
@@ -385,7 +366,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) =
   · simp only [mySet, Finset.map_union, Finset.coe_union, Finset.coe_map,
       Function.Embedding.coeFn_mk, Set.mem_union, Set.mem_image, Finset.mem_coe]
     left
-    let ⟨c1, _, c3⟩ := List.mem_filterMap.mp hx
+    obtain ⟨c1, -, c3⟩ := List.mem_filterMap.mp hx
     use RectSpin.fromRect ⟨c1, c1, Fin.le_refl _, Fin.le_refl _⟩
     constructor
     · simp [SpinSet, rectSpinSet_cond_iff]

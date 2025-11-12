@@ -43,10 +43,7 @@ lemma rectSpinSet_cond_iff {s : RectSpin m n} :
 
 /-- "The set `Rᵢₓⱼ` is necessarily empty if `i > m` or `j > n`" -/
 lemma rectSpinSet_empty_if {i j m n : PNat} :
-    (i > m.val ∨ j > n.val) → RectSpinSet i j m n = ∅ := by
-  intro
-  apply Finset.filter_eq_empty_iff.mpr
-  omega
+  (i > m.val ∨ j > n.val) → RectSpinSet i j m n = ∅ := by grind [RectSpinSet]
 
 /-- "we may have `Rᵢₓⱼ = ∅` even when `Rⱼₓᵢ ≠ ∅` (although this can occur only when `m ≠ n`)" -/
 lemma rectSpinSet_empty_nonempty {m n : PNat} :
@@ -80,12 +77,8 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
   apply Finset.card_bij (fun s _ => ⟨s.r.topLeft.row, s.r.topLeft.col⟩)
   · grind [rectSpinSet_cond_iff]
   · intro s1 hs1 s2 hs2 h3
-    rw [Prod.mk.injEq] at h3
-    have : _ ∧ _ := ⟨rectSpinSet_cond_iff.mp hs1, rectSpinSet_cond_iff.mp hs2⟩
-    have : _ ∧ _ := ⟨s1.r.validRow, s1.r.validCol⟩
-    have : _ ∧ _ := ⟨s2.r.validRow, s2.r.validCol⟩
     apply RectSpin.r_bijective.1
-    ext <;> omega
+    ext <;> grind [rectSpinSet_cond_iff, Rectangle.validRow, Rectangle.validCol]
   · intro ⟨p1, p2⟩ hp
     have ⟨hp1, hp2⟩ := Finset.mem_product.mp hp
     simp only [Finset.mem_range] at hp1 hp2
@@ -95,7 +88,7 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
       ⟨⟨p1, by omega⟩, ⟨p2, by omega⟩⟩,
       ⟨⟨i - 1 + p1, by omega⟩, ⟨j - 1 + p2, by omega⟩⟩,
       by simp, by simp⟩
-    simp [rectSpinSet_cond_iff.mpr, *]
+    simp [rectSpinSet_cond_iff, *]
 
 /-- `Sᵢₓⱼ = Rᵢₓⱼ ∪ Rⱼₓᵢ` -/
 def SpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
@@ -201,7 +194,7 @@ def spinSetsFromNums (m n : PNat) : Finset (Finset (RectSpin m n)) :=
   (spinSetNums m n).attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
     intro ⟨⟨a1, a2⟩, ha⟩ ⟨⟨b1, b2⟩, hb⟩ h_eq
     simp only at h_eq
-    rw [Subtype.mk_eq_mk, Prod.mk.injEq]
+    rw [Subtype.mk_eq_mk, Prod.mk_inj]
     by_cases op_eq : a1 = b2 ∧ a2 = b1
     · grind
     · obtain h | h : (a1 < m ∧ a2 < n) ∨ (a1 < n ∧ a2 < m) := by grind
@@ -221,9 +214,7 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
   · intro hs
     apply Finset.mem_map.mpr
     let ⟨x, y, _, h_nonempty⟩ : ∃ x y : Nat,
-        s = numsToSpinSet x y m n ∧ (numsToSpinSet x y m n).Nonempty := by
-      simp [spinSetTypes] at hs
-      grind
+      s = numsToSpinSet x y m n ∧ (numsToSpinSet x y m n).Nonempty := by grind [spinSetTypes]
 
     let ⟨c, d, hcd⟩ : ∃ c d : Nat,
         (c < m ∧ d < n) ∧ numsToSpinSet c d m n = numsToSpinSet x y m n := by
