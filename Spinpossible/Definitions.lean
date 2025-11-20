@@ -4,6 +4,9 @@ import Mathlib.Data.PNat.Defs
 import Mathlib.Data.ZMod.Defs
 import Mathlib.Tactic.DeriveFintype
 
+-- Should be in Lean 4.27.0
+attribute [grind ext] Fin.ext
+
 -- In Lean 4.25.0, `get_elem_tactic_extensible` causes performance issues due to trying stuff
 -- relating to `Std.Range`, which we don't use, so we redefine it here to improve performance.
 macro_rules

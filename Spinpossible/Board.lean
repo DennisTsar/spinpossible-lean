@@ -49,6 +49,7 @@ def Spin.toBoard (s : Spin m n) : board m n :=
 private def Matrix.toList (M : Matrix (Fin m) (Fin n) α) : List α :=
   (List.finRange m).flatMap (fun i => (List.finRange n).map (fun j => M i j))
 
+attribute [- grind] Fin.ext -- seems like a Lean bug
 def board.toSpin (b : board m n) : Spin m n :=
   let tiles_list : List tile := b.toList
   have tiles_list_def : b.toList = tiles_list := rfl

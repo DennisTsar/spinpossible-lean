@@ -57,7 +57,7 @@ theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
   fun_induction shiftSingleToEnd with
   | case1 => grind [shiftSingleToEnd, List.take_append_getLast]
   | case2 l i _ hl hi x l2 h2 =>
-    -- a bit too slow
+    -- a bit too slow (doesn't work anymire)
     -- grind [shiftSingleToEnd, add_tsub_cancel_left, List.drop_drop, List.getElem_cons_drop]
     unfold shiftSingleToEnd
     simp only [hi, ↓reduceDIte]
@@ -148,8 +148,7 @@ theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
       have := List.getElem_take ▸ congr($this[j]'(by grind))
       grind -ring -linarith
     · convert h2 (by grind) ha (by grind) using 2
-      simp [l2, List.getElem_cons, List.getElem_append]
-      grind -ring -linarith only [= Nat.min_def, getElem_congr_idx]
+      grind -ring -linarith
 
 -- Original: "If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = sᵢ⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i ≤ j ≤ k`."
 -- Corrected (I think?): If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = s₁⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i < j ≤ k`.

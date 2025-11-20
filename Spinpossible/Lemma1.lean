@@ -16,7 +16,7 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
       ⟨[], List.forall_mem_nil _, rfl⟩ ?_ ?_
     · intro a b _ _ ⟨La, _⟩ ⟨Lb, _⟩
       use La ++ Lb
-      grind [List.prod_append]
+      grind
     · rintro a _ ⟨L, hL⟩
       use L.map (·⁻¹) |>.reverse
       grind [inv_inv, List.prod_inv_reverse]
@@ -30,12 +30,6 @@ theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
       exact subset_closure hs
 
 open Equiv
-
-lemma scanl_last_eq_foldl_perm {α β : Type*} (l : List α) (f : β → α → β) (x : β) :
-    (List.scanl f x l)[l.length]'(by simp [List.length_scanl]) = List.foldl f x l := by
-  induction' l with head _ ih generalizing x
-  · rfl
-  · exact ih _
 
 lemma foldl_perm_eq_prod_rev {α : Type*} (l : List (Perm α)) (x : α) :
     List.foldl (fun a τ => τ a) x l = l.reverse.prod x := by
@@ -63,8 +57,8 @@ private lemma graph_connected.aux1 [DecidableEq α]
   have h_prod_reverse : l.reverse.prod = l.prod⁻¹ := by
     have : ∀ w ∈ l, w⁻¹ = w := fun w hw => isSwap_inv_eq_self (hl w hw) |>.symm
     simpa [List.map_eq_map_iff.mpr this, List.map_id] using l.prod_reverse_noncomm
-  rw [scanl_last_eq_foldl_perm, foldl_perm_eq_prod_rev,
-    h_prod_reverse, h, swap_inv, swap_apply_left]
+  rw [List.getElem_scanl, List.take_length, foldl_perm_eq_prod_rev, h_prod_reverse, h,
+    swap_inv, swap_apply_left]
 
 lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
     (hE : ∀ σ ∈ E, σ.IsSwap) (h_closure : Subgroup.closure E = ⊤) :

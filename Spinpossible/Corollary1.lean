@@ -222,7 +222,7 @@ def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
   |>.map ⟨(·.toSpin), RectSpin.toSpin_injective⟩
 
 /-- **Corollary 1**: `S₁ₓ₁ ∪ S₁ₓ₂` generates `Spinₘₓₙ`. -/
-lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure ((mySet m n).toSet) = ⊤ := by
+lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure (SetLike.coe (mySet m n)) = ⊤ := by
   let set1 : Set (Equiv.Perm (Point m n)) := SpinSet 1 2 m n |>.image (·.α)
 
   have set1_swap : ∀ e ∈ set1, e.IsSwap := by

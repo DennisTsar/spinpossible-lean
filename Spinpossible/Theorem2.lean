@@ -33,7 +33,7 @@ lemma Nat.choose_succ_lt_pow {n k : Nat} (hn : 2 ≤ n) (hk : 2 ≤ k) : (n + 1)
   grw [← self_le_factorial] at hdesc
   have : n < n ^ 2 := lt_self_pow₀ hn (by simp)
   have : n * n ^ s < n ^ 2 * n ^ s := mul_lt_mul_of_pos_right this (by positivity)
-  grind -ring -linarith only
+  grind -ring -linarith only [Nat.pow_add_one] -- in `4.25.0`, a plain `grind` worked
 
 private lemma Stirling.le_log_factorial_stirling' {n : Nat} (hn : n ≠ 0) :
     Real.log (n.factorial) > n * Real.log n - n + (1 : Real) / 2 * Real.log n := by
@@ -77,7 +77,7 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
   simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le, ]
   conv_rhs => rw [← Real.log_div_log, Real.log_mul (by positivity) (by positivity)]
 
-  have : Real.log (↑↑m * ↑↑n) ≠ 0 := by
+  have : Real.log (m * n) ≠ 0 := by
     rw [← Nat.cast_mul]
     exact Real.log_ne_zero_of_pos_of_ne_one (by positivity) (ne_of_gt (Nat.one_lt_cast.mpr hmn))
   grw [Stirling.le_log_factorial_stirling' (by omega)]
