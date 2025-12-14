@@ -6,8 +6,7 @@ import Mathlib.Data.Set.Finite.List
 lemma RectSpin.perm_symm (s : RectSpin m n) : s.α.symm = s.α := by simp [s.h, Rectangle.toSpin]
 
 lemma RectSpin.orient_def (s : RectSpin m n) : ∀ x, s.u (s.α x) = s.u x := by
-  simp [s.h, Rectangle.toSpin]
-  grind
+  grind [s.h, Rectangle.toSpin]
 
 lemma RectSpin.inv_self (s : RectSpin m n) : s.toSpin⁻¹ = s.toSpin := by
   simp [s.h, Rectangle.toSpin, Spin.inv_def]
@@ -54,8 +53,7 @@ def spinSet_to_rectSpin (l : List (Spin m n))
 lemma spinSet_to_rectSpin_inv : (spinSet_to_rectSpin l h).map RectSpin.toSpin = l := by
   induction' l with hd tl ih
   · rfl
-  · simp [spinSet_to_rectSpin] at ih h ⊢
-    exact ⟨Finset.choose_property (fun x : RectSpin _ _ => x.toSpin = hd) _ _, @ih h.2⟩
+  · grind [spinSet_to_rectSpin, List.map_attach_of_unattach]
 
 lemma spin_prod_inv_eq_reverse_prod {l : List (Spin m n)}
     (h : l ⊆ (validSpins_spin m n).toList) : l.prod⁻¹ = l.reverse.prod := by

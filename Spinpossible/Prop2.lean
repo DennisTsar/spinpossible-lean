@@ -54,19 +54,16 @@ lemma rectSpinSet_empty_nonempty {m n : PNat} :
   · apply Finset.nonempty_iff_ne_empty.mp
     have : m.val > 0 ∧ n.val > 0 := ⟨m.2, n.2⟩
     use RectSpin.fromRect ⟨⟨0, 0⟩, ⟨⟨m.val - 1, by omega⟩, ⟨n.val - 1, by omega⟩⟩, by simp, by simp⟩
-    simp [rectSpinSet_cond_iff]
-    omega
+    grind [rectSpinSet_cond_iff]
   · have := Finset.filter_nonempty_iff.mp (Finset.nonempty_iff_ne_empty.mpr h2)
     have : i.val > m.val ∨ j.val > n.val := by
       contrapose! h1
-      rw [← Finset.nonempty_iff_ne_empty]
       use RectSpin.fromRect ⟨
         ⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩,
         ⟨⟨i.val - 1, by omega⟩, ⟨j.val - 1, by omega⟩⟩,
         by simp, by simp⟩
-      simp [rectSpinSet_cond_iff]
-      omega
-    grind
+      grind [rectSpinSet_cond_iff]
+    lia
 
 /-- **Proposition 2.1**
     NOTE: The original conditions `i ≤ m`, `j ≤ n`, an `m ≤ n` are not necessary.
@@ -118,8 +115,7 @@ lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
   apply sum_nat_sub_distrib.aux1
   zify
   convert Finset.sum_sub_distrib _ _ with a ha
-  have : a < m := Finset.mem_range.mp ha
-  omega
+  grind
 
 lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 = (m + 1) * m := by
   rw [Finset.sum_nat_sub_distrib (Nat.le_refl m), Nat.sub_mul, Finset.sum_range_id_mul_two,
@@ -127,7 +123,7 @@ lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
   -- grind [Nat.le_mul_self] -- used to work in 4.24.0
   rw [← Nat.add_sub_assoc (Nat.le_mul_self _) _]
-  grind [Nat.add_sub_assoc]
+  lia
 
 lemma sum_m_minus_x (m : PNat) :
     ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by grind [sum_m_minus_x_mul_two]
@@ -173,9 +169,9 @@ lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
     · simp [s] -- this could be a single `grind` but it doesn't understand `Function.Embedding.coeFn_mk`
       grind
     · intro hx
-      simp
+      simp only [Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]
       use x.1, x.2
-      grind [Finset.mem_Ico, Function.Embedding.coeFn_mk]
+      grind [Function.Embedding.coeFn_mk]
   rw [this, Finset.card_biUnion]
   · simp only [Finset.card_map, Nat.card_Ico]
     apply Nat.eq_div_of_mul_eq_right (by omega)

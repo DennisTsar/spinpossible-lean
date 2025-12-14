@@ -132,12 +132,13 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
       absurd hs_col tile_pos.col.val tile_pos.row.val (by omega)
-      grind -ring -linarith [Point.ext]
+      grind -ring -linarith
 
     split_ifs with h1 h2
     · grind
     · grind
-    · simp [Spin.one_def, Equiv.ext_iff]
+    · simp only [List.reverse_nil, List.map_nil, List.prod_nil, Spin.one_def, Equiv.ext_iff,
+        Equiv.refl_apply, List.length_nil, zero_le, and_true]
       intro i
       by_cases hy : col = i.col
       · contrapose! hs_col2 with heq
@@ -185,9 +186,9 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       constructor
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih2.1]
       · grw [ih2.2]
-        simp [listSize, show m.val = 1 by omega]
-        split_ifs <;> omega
-    · grind
+        simp only [listSize]
+        lia
+    · lia
   | case3 row col hrow hcol s cur_pos tile_pos hrow2 row_spin col_spin k a1 ih1 ih2 =>
     unfold l k
 
@@ -248,10 +249,11 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih2.1]
       · simp only [List.length_cons, List.length_reverse]
         grw [ih2.2]
-        simp [listSize, show m.val = row + 1 by omega, show n.val ≠ col + 1 by omega, hrow2]
+        simp only [listSize, show m.val = row + 1 by omega, Nat.add_eq_right, hrow2, ↓reduceIte,
+          show n.val ≠ col + 1 by omega]
         split_ifs with hn1
-        · rw [show n.val - col - 1 = 1 by omega]; omega
-        · exact aux1 n row col (by omega)
+        · lia
+        · exact aux1 n row col (by lia)
   | case4 row col hrow hcol s cur_pos tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
     unfold l k
 
@@ -277,7 +279,8 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       split_ifs with hr <;>
       simp (disch := omega) [hr, row_spin, RectSpin.fromPoints, dif_pos, ← Fin.val_fin_le]
 
-    simp [a2]
+    simp only [a2, ↓reduceDIte, List.map_cons, List.map_reverse, List.prod_cons, List.length_cons,
+      List.length_reverse]
     -- TODO: this is shared with case3
     specialize ih1 a2 (by
       intro x hx
@@ -306,31 +309,30 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     · have col_spin_eq' : col_spin.α = Equiv.refl _ := by
         ext i : 1
         simp [col_spin_eq, cur_pos, Rectangle.toSpin, Point.IsInside, rotate180, rotateCalc]
-        intros
-        ext <;> fin_omega
+        grind -ring -linarith
       simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih1.1, col_spin_eq']
     · grw [ih1.2]
-      simp [listSize, show n.val = col + 1 by omega, show m.val ≠ 1 by omega]
-      omega
+      simp only [listSize]
+      lia
   | case5 row col hrow hcol s _ tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
     unfold l k
-    simp [a2, a1, Spin.one_def]
+    simp only [a2, ↓reduceDIte, a1, List.reverse_nil, List.length_nil, zero_le, and_true]
 
     have hb : col = tile_pos.col.val := by
       by_contra! hx
       absurd hs_col tile_pos.col.val tile_pos.row.val (by omega)
-      grind -ring -linarith [Point.ext]
+      grind -ring -linarith
     have hc : row = tile_pos.row.val := by
       by_contra! hx
       absurd hs_row tile_pos.row.val (by omega)
-      grind -ring -linarith [Point.ext]
+      grind -ring -linarith
     ext i : 1
     by_cases hx : i.col.val < col
     · simpa using hs_col i.col i.row (by omega) |>.symm
     · have : i.col.val = col := by omega
       by_cases i.row.val < row
       · simpa [← this] using hs_row i.row.val (by omega) |>.symm
-      · grind -ring -linarith [Point.ext]
+      · grind -ring -linarith [Spin.one_def]
 
 open scoped CharTwo in
 /-- Every element of `Spinₘₓₙ` can be expressed as a product of at most `3mn - (m + n)` spins. -/
@@ -354,7 +356,7 @@ theorem theorem1 (b : Spin m n) :
     · have : (.univ : Finset (Point m n)).card = (.univ : Finset (Fin m × Fin n)).card := by
         apply Finset.card_bij (fun r _ => (r.row, r.col)) (by simp) (by simp [Point.ext_iff])
         exact fun b _ => ⟨⟨b.1, b.2⟩, by simp⟩
-      grind [Finset.length_toList, Finset.card_univ, Fintype.card_prod, Fintype.card_fin]
+      grind [Fintype.card_prod, Fintype.card_fin]
   suffices h2 : ∃ l : List (RectSpin m n), (l.map RectSpin.toSpin).prod.α = b.α.symm ∧
       l.length ≤ 2 * m * n - (m + n) by
     obtain ⟨l2, hl2⟩ := h2
@@ -362,19 +364,19 @@ theorem theorem1 (b : Spin m n) :
     have zz : (List.map RectSpin.toSpin (l1 ++ l2)).prod = b⁻¹ := by
       simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def]
     intro l5 hl5
-    simp [Spin.IsSolution] at hl5
-    grw [hl5.2 (l1 ++ l2) zz, List.length_append, hl2.2, hl1.2]
+    simp only [Spin.IsSolution] at hl5
+    grw [← hl5.2 (l1 ++ l2) zz, List.length_append, hl2.2, hl1.2]
     have : m.val + n.val ≤ 2 * (m.val * n.val) := by
       rw [two_mul]
       gcongr
       · exact Nat.le_mul_of_pos_right m.val n.2
       · exact Nat.le_mul_of_pos_left n.val m.2
-    grind -ring -linarith only
+    lia
 
   use buildBasicPermSolution 0 0 m.2 n.2 b⁻¹
   convert buildBasicPermSolution_correct 0 0 m.2 n.2 b⁻¹ (by omega) (by omega) using 2
-  simp only [listSize, zero_add, tsub_zero, ↓reduceIte]
+  simp only [listSize]
   split_ifs with h7 h8
   · rw [h7, h8]
-  · rw [h7]; omega
+  · lia
   · cases m.val <;> cases _ : n.val <;> grind -ring -linarith only [PNat.ne_zero]

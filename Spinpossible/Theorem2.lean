@@ -63,12 +63,12 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
       (m.val + 1).choose 2 * (n.val + 1).choose 2 from total_valid_spins_card]
     rcases eq_or_lt_of_le <| @NeZero.one_le m _ with h1 | h1 <;>
     rcases eq_or_lt_of_le <| @NeZero.one_le n _ with h2 | h2
-    · grind -ring -linarith only
+    · lia
     · grind -ring -linarith [Nat.choose_self, Nat.choose_succ_lt_pow]
     · grind -ring -linarith [Nat.choose_self, Nat.choose_succ_lt_pow]
     · grw [Nat.choose_succ_lt_pow h1 (Nat.le_refl _),
         Nat.le_sub_one_of_lt (Nat.choose_succ_lt_pow h2 (Nat.le_refl _)), Nat.mul_sub_one]
-      grind -linarith only
+      lia
 
   have bound := theorem2_1 m n
   grw [Spin.card_eq, ← Nat.clog_le_iff_le_pow Nat.AtLeastTwo.one_lt, this,
@@ -83,6 +83,5 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
   grw [Stirling.le_log_factorial_stirling' (by omega)]
   · simp only [Real.log_pow, Nat.cast_mul, one_div, Nat.cast_ofNat, ge_iff_le]
     field_simp
-    ring_nf
-    simp only [le_refl]
+    lia
   · exact Real.log_nonneg (by norm_cast0; assumption)

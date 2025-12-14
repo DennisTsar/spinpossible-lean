@@ -161,5 +161,5 @@ theorem lemma6_2 (l : List (RectSpin m n)) :
   intro i hi hl
   use shiftWholeToEnd l i (by omega) hl
   refine ⟨swte_prod_eq .., swte_length .., swte_eq_beg .., ?_, ?_⟩
-  · grind [swte_last, List.getLast?_eq_getLast]
+  · grind [swte_last, List.getLast?_eq_some_getLast]
   · grind [swte_sameShape]

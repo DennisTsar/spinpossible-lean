@@ -57,15 +57,13 @@ lemma ZMod.cases_two : (a : ZMod 2) → a = 0 ∨ a = 1
 
 lemma rotate_around_one_eq_self (h : p.IsInside ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩) :
     rotate180 p ⟨a, a, Fin.le_refl _, Fin.le_refl _⟩ = p := by
-  ext <;> grind [Point.IsInside, rotate180]
+  grind [Point.IsInside, rotate180]
 
 -- @[grind? =]
 @[simp]
 lemma rect_spin_one (p : Point m n) : Rectangle.toSpin ⟨p, p, Fin.le_refl _, Fin.le_refl _⟩ =
     ⟨Equiv.refl _, fun x => if x = p then 1 else 0⟩ := by
-  simp_all [Rectangle.toSpin, Equiv.ext_iff, rotate_around_one_eq_self]
-  funext
-  exact if_congr Point.isInside_one_iff rfl rfl
+  simp_all [Rectangle.toSpin, Equiv.ext_iff, rotate_around_one_eq_self, Point.isInside_one_iff]
 
 grind_pattern rect_spin_one => Rectangle.toSpin (Rectangle.mk p p _ _)
 
@@ -113,7 +111,7 @@ lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s
         have : k[y.val] ∈ k := List.getElem_mem _
         conv_lhs at this => rw [hk]
         simp only [ne_eq, ite_not, List.mem_filterMap, Finset.mem_toList, Finset.mem_univ,
-          Option.ite_none_left_eq_some, Option.some.injEq, true_and] at this
+          Option.ite_none_left_eq_some, Option.some_inj, true_and] at this
         obtain ⟨x, -, hx⟩ := this
         ext : 1
         · simp [ha2, ← hx, x_i_def]
@@ -160,9 +158,7 @@ def Equiv.Perm.IsAdjacentSwap {m n : PNat} (p : Equiv.Perm (Point m n)) : Prop :
     False
 
 lemma Equiv.Perm.IsAdjacentSwap.list_card {m n : PNat} {p : Equiv.Perm (Point m n)}
-    (h : p.IsAdjacentSwap) : p.support.toList.length = 2 := by
-  simp [Equiv.Perm.IsAdjacentSwap] at h
-  exact Equiv.Perm.card_support_eq_two.mpr h.choose ▸ Finset.length_toList _
+  (h : p.IsAdjacentSwap) : p.support.toList.length = 2 := by grind
 
 lemma Equiv.Perm.IsAdjacentSwap.isAdjacent {m n : PNat} {p : Equiv.Perm (Point m n)}
   (h : p.IsAdjacentSwap) :
@@ -188,10 +184,9 @@ lemma spin_eq_swap_of_adj {p1 p2 : Point m n} {s : RectSpin m n} (h : p1.IsAdjac
   · simp [Equiv.swap, Equiv.swapCore, rotate180, rotateCalc]
     split_ifs with h8 h9
     · simp [h8]
-    · have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
-      ext <;> grind
-    · grind [Point.ext_iff, Point.IsInside]
-  · rw [Equiv.swap_apply_of_ne_of_ne] <;> grind [Rectangle.corners_inside]
+    · grind [s.r.validRow, s.r.validCol]
+    · grind [Point.IsInside]
+  · grind [Rectangle.corners_inside]
 
 lemma exists_swap_spin_of_adj {p1 p2 : Point m n} (h : p1.IsAdjacent p2) :
     ∃ s : RectSpin m n, s ∈ SpinSet 1 2 m n ∧ s.α = Equiv.swap p1 p2 := by
@@ -227,12 +222,11 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure (SetLike.coe (mySet m
 
   have set1_swap : ∀ e ∈ set1, e.IsSwap := by
     intro e
-    simp [set1]
+    simp only [Finset.coe_image, Set.mem_image, SetLike.mem_coe, forall_exists_index, and_imp, set1]
     rintro s hs1 rfl
     use s.r.topLeft, s.r.bottomRight
     simp [SpinSet, rectSpinSet_cond_iff] at hs1
-    have : _ ∧ _ := ⟨s.r.validRow, s.r.validCol⟩
-    grind [spin_eq_swap_of_adj]
+    grind [spin_eq_swap_of_adj, s.r.validRow, s.r.validCol]
 
   let x1 : SimpleGraph (Point m n) := SimpleGraph.fromRel (fun x y => Equiv.swap x y ∈ set1)
   have : x1.Connected := by
@@ -240,7 +234,6 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure (SetLike.coe (mySet m
     use ⟨0, 0⟩, fun v => SimpleGraph.Walk.reachable ?_
     by_cases h : v = ⟨0, 0⟩
     · rw [h]
-    have : n.val ≥ 1 := n.2
 
     let rec build_walk_horiz (row col col_end : Nat)
         (hrow : row < m.val := by omega) (hcol : col < n.val := by omega)
@@ -284,7 +277,7 @@ lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure (SetLike.coe (mySet m
 
         SimpleGraph.Walk.cons edge tail
     decreasing_by all_goals omega -- faster than default
-    exact build_walk_full ⟨⟨0, _⟩, ⟨0, _⟩⟩ (by grind)
+    exact build_walk_full ⟨⟨0, _⟩, ⟨0, _⟩⟩ (by lia)
   have top := transpositions_generate_symm_group_iff_connected_graph set1_swap |>.mpr this
   rw [Subgroup.eq_top_iff']
   intro s

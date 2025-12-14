@@ -4,9 +4,6 @@ import Mathlib.Data.PNat.Defs
 import Mathlib.Data.ZMod.Defs
 import Mathlib.Tactic.DeriveFintype
 
--- Should be in Lean 4.27.0
-attribute [grind ext] Fin.ext
-
 -- In Lean 4.25.0, `get_elem_tactic_extensible` causes performance issues due to trying stuff
 -- relating to `Std.Range`, which we don't use, so we redefine it here to improve performance.
 macro_rules
@@ -92,5 +89,5 @@ grind_pattern spin_stays_inside => (rotate180 p r).IsInside r
 def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
   α := Function.Involutive.toPerm
     (fun p => if p.IsInside r then rotate180 p r else p)
-    (fun _ => by grind [spin_stays_inside])
+    (fun _ => by grind)
   u p := if p.IsInside r then 1 else 0

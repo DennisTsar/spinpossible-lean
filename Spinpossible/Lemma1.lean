@@ -72,7 +72,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
   have h_swap_in_H : swap x y ∈ H := hH_top ▸ Subgroup.mem_top _
   -- Express swap x y as a product of elements from E
   let ⟨l, hlE, hl_prod⟩ : ∃ l : List (Perm α), (∀ τ ∈ l, τ ∈ E) ∧ l.prod = swap x y := by
-    grind [Subgroup.exists_list_of_mem_closure, Subgroup.mem_top, isSwap_inv_eq_self']
+    grind [Subgroup.exists_list_of_mem_closure, isSwap_inv_eq_self']
   -- Build the sequence of vertices starting from x by applying the permutations in l
   let vertices := l.scanl (fun a τ => τ a) x
   have : vertices.length = l.length + 1 := l.length_scanl x

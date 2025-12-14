@@ -49,7 +49,6 @@ def Spin.toBoard (s : Spin m n) : board m n :=
 private def Matrix.toList (M : Matrix (Fin m) (Fin n) α) : List α :=
   (List.finRange m).flatMap (fun i => (List.finRange n).map (fun j => M i j))
 
-attribute [- grind] Fin.ext -- seems like a Lean bug
 def board.toSpin (b : board m n) : Spin m n :=
   let tiles_list : List tile := b.toList
   have tiles_list_def : b.toList = tiles_list := rfl
@@ -62,7 +61,7 @@ def board.toSpin (b : board m n) : Spin m n :=
     have : x.id ∈ (tiles_list.map (·.id)).toFinset := by
       simp only [List.mem_toFinset, List.mem_map]
       use x
-    grind [Finset.mem_Icc]
+    grind
   have fact2 : ∀ x y : Fin tiles_list.length,
       tiles_list[x.val].id = tiles_list[y.val].id → x = y := by
     intro x y hxy
@@ -86,7 +85,7 @@ def board.toSpin (b : board m n) : Spin m n :=
           have (x : Nat) : x ∈ (tiles_list.map (·.id)).toFinset → x - 1 ≠ to1d p := by
             grind [List.mem_toFinset]
           have (x) (hx : x ∈ Finset.range (m.val * n.val)) : x + 1 - 1 ≠ to1d p :=
-            this (x + 1) (by grind [Finset.mem_Icc])
+            this (x + 1) (by grind)
           grind
         grind [Fin.cast_val_eq_self, Nat.mod_eq_of_lt, = Fin.val_natCast]
       )
