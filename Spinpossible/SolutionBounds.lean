@@ -181,7 +181,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
         by_cases hg : x = col
         · simp_rw [show y = 0 by omega, hg, next_spin_eq]
           apply Rectangle.corners_rotate_perm.2
-        · rw [hs_col2 x y (by omega), next_spin_eq, Rectangle.spin_perm_const (by fin_omega)]
+        · rw [hs_col2 x y (by omega), next_spin_eq, Rectangle.spin_perm_const (by lia)]
       )
       constructor
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih2.1]
@@ -229,8 +229,8 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
               by_contra! hg4
               absurd hs_row2 tile_pos.row.val (by omega)
               grind -ring -linarith [Equiv.apply_eq_iff_eq, Point.ext]
-            rw [Rectangle.spin_perm_const (by fin_omega)]
-          · rw [Rectangle.spin_perm_const (by fin_omega)]
+            rw [Rectangle.spin_perm_const (by lia)]
+          · rw [Rectangle.spin_perm_const (by lia)]
       ) (fun x y hxy => by
         simp only [row_spin_eq, Spin.mul_def, Spin.inv_perm, col_spin_eq, Equiv.trans_apply,
           hs_col2 _ _ hxy, Rectangle.spin_eq_iff]
@@ -297,8 +297,8 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
             by_contra! hg4
             absurd hs_row2 tile_pos.row.val (by omega)
             grind -ring -linarith [Equiv.apply_eq_iff_eq, Point.ext]
-          rw [Rectangle.spin_perm_const (by fin_omega)]
-        · rw [Rectangle.spin_perm_const (by fin_omega)]
+          rw [Rectangle.spin_perm_const (by lia)]
+        · rw [Rectangle.spin_perm_const (by lia)]
     ) (fun x y hxy => by
         simp only [row_spin_eq, Spin.mul_def, Spin.inv_perm, col_spin_eq, Equiv.trans_apply,
           hs_col2 _ _ hxy, Rectangle.spin_eq_iff]
