@@ -1,5 +1,8 @@
+module
+
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Spinpossible.SolutionBounds
+public import Spinpossible.SolutionBounds
 
 lemma Spin.card_eq : Fintype.card (Spin m n) = 2 ^ (m.val * n) * Nat.factorial (m.val * n) := by
   simp [mul_comm, Fintype.ofEquiv_card, Fintype.card_equiv 1]
@@ -11,7 +14,7 @@ noncomputable instance : Fintype <| ⋃ s : Spin m n, {l | Spin.IsSolution l s} 
   grind [Spin.IsSolution]
 
 /-- Let `k(m, n)` denote the maximum length of a solution to a board in `Spinₘₓₙ`. -/
-noncomputable def k (m n : PNat) : Nat :=
+public noncomputable def k (m n : PNat) : Nat :=
   ⋃ s : Spin m n, {l | Spin.IsSolution l s} |>.toFinset.sup (·.length)
 
 -- Argument and original proof from GPT-5 Thinking
@@ -42,7 +45,7 @@ private lemma Stirling.le_log_factorial_stirling' {n : Nat} (hn : n ≠ 0) :
 
 instance : Nonempty (RectSpin m n) := .intro (RectSpin.fromRect default)
 
-theorem theorem2_1 (m n : PNat) :
+public theorem theorem2_1 (m n : PNat) :
     Fintype.card (Spin m n) ≤ (Fintype.card (RectSpin m n) + 1) ^ k m n := by
   apply Nat.le_trans ?_ (List.card_le_of_length_le _ _)
   let := List.finite_length_le (RectSpin m n) (k m n) |>.fintype
@@ -52,7 +55,7 @@ theorem theorem2_1 (m n : PNat) :
   use ⟨a, Set.mem_setOf_eq ▸ Finset.le_sup ?_⟩, (inv_inv b ▸ ha.1)
   simpa using .intro b⁻¹ ha
 
-theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
+public theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
     k m n ≥ (m * n) / 2 - (1 - Real.log 2) / 2 * ((m * n) / Real.log (m * n)) + 1 / 4 := by
   have : 1 ≤ (m.val * n) ^ 2 := one_le_pow₀ (le_of_lt hmn)
   have : 1 < Fintype.card (RectSpin m n) + 1 := Nat.AtLeastTwo.one_lt

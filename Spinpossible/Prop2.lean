@@ -1,4 +1,6 @@
-import Spinpossible.Proofs
+module
+
+public import Spinpossible.Proofs
 import Mathlib.Algebra.BigOperators.Intervals
 
 lemma Rectangle.toSpin_injective : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
@@ -11,7 +13,7 @@ lemma Rectangle.toSpin_injective : Function.Injective (Rectangle.toSpin : Rectan
     · simpa [corners_inside] using app r1.bottomRight
     · simpa [corners_inside] using app r2.bottomRight
 
-abbrev RectSpin.fromRect (r : Rectangle m n) : RectSpin m n := ⟨r.toSpin, r, rfl⟩
+public abbrev RectSpin.fromRect (r : Rectangle m n) : RectSpin m n := ⟨r.toSpin, r, rfl⟩
 
 lemma RectSpin.r_bijective : Function.Bijective (RectSpin.r : RectSpin m n -> _) where
   left s1 s2 h := by
@@ -21,21 +23,21 @@ lemma RectSpin.r_bijective : Function.Bijective (RectSpin.r : RectSpin m n -> _)
     · exact h
   right r := ⟨fromRect r, rfl⟩
 
-lemma RectSpin.toSpin_injective : Function.Injective (RectSpin.toSpin : RectSpin m n -> _)
+public lemma RectSpin.toSpin_injective : Function.Injective (RectSpin.toSpin : RectSpin m n -> _)
   | s1, s2, h => r_bijective.1 (Rectangle.toSpin_injective (s1.h ▸ s2.h ▸ h))
 
-abbrev validSpins (m n : PNat) : Finset (RectSpin m n) := Finset.univ
+public abbrev validSpins (m n : PNat) : Finset (RectSpin m n) := Finset.univ
 
 -- @[simp]
 -- lemma validSpins_eq_univ {m n : PNat} : validSpins m n = Finset.univ := rfl
 
 -- Define the set of spins R(i x j), which are the spins about i x j rectangles
 -- Technically the return type is over-broad, but it works for now
-def RectSpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
+@[expose] public def RectSpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
   (validSpins m n).filter (fun s => s.r.bottomRight.row.val - s.r.topLeft.row.val + 1 = i ∧
                                     s.r.bottomRight.col.val - s.r.topLeft.col.val + 1 = j)
 
-lemma rectSpinSet_cond_iff {s : RectSpin m n} :
+public lemma rectSpinSet_cond_iff {s : RectSpin m n} :
   s ∈ RectSpinSet i j m n ↔
     s.r.bottomRight.row.val - s.r.topLeft.row.val + 1 = i ∧
     s.r.bottomRight.col.val - s.r.topLeft.col.val + 1 = j :=
@@ -88,7 +90,7 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
     simp [rectSpinSet_cond_iff, *]
 
 /-- `Sᵢₓⱼ = Rᵢₓⱼ ∪ Rⱼₓᵢ` -/
-def SpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
+@[expose] public def SpinSet (i j : PNat) (m n : PNat) : Finset (RectSpin m n) :=
   RectSpinSet i j m n ∪ RectSpinSet j i m n
 
 /-- **Proposition 2.2** -/
@@ -129,7 +131,7 @@ lemma sum_m_minus_x (m : PNat) :
     ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by grind [sum_m_minus_x_mul_two]
 
 /-- **Proposition 2.3** -/
-theorem total_valid_spins_card {m n : PNat} :
+public theorem total_valid_spins_card {m n : PNat} :
   (validSpins m n).card = (m.val + 1).choose 2 * (n.val + 1).choose 2 := by
   rw [validSpins_union_rectSpinSet, Finset.card_biUnion]
   · simp only [rectSpinSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]

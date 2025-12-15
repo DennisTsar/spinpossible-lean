@@ -1,4 +1,8 @@
+module
+
 import Mathlib.Tactic
+
+public section
 
 -- I don't need these anymore, but don't want to delete them.
 

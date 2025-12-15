@@ -1,13 +1,18 @@
-import Spinpossible.Prop2
+module
+
+public import Spinpossible.Prop2
 import Spinpossible.Lemma1
+import Mathlib.Algebra.Field.ZMod
 
 open scoped CharTwo
+
+public section
 
 def Spin.inv (x : Spin m n) : Spin m n := ⟨x.α.symm, fun i => -x.u (x.α i)⟩
 
 instance : Inv (Spin m n) := ⟨Spin.inv⟩
 
-lemma Spin.inv_def (x : Spin m n) : x⁻¹ = ⟨x.α.symm, fun i => -x.u (x.α i)⟩ := rfl
+lemma Spin.inv_def (x : Spin m n) : x⁻¹ = ⟨x.α.symm, fun i => -x.u (x.α i)⟩ := (rfl)
 
 theorem Spin.mul_assoc (x y z : Spin m n) : x * y * z = x * (y * z) := by
   ext : 1
@@ -35,6 +40,10 @@ instance : Group (Spin m n) where
   mul_one := Spin.mul_one
   inv_mul_cancel := Spin.inv_mul_cancel
 
+@[simp]
+lemma Spin.inv_perm (s : Spin m n) : s⁻¹.α = s.α⁻¹ := (rfl)
+
+end
 
 lemma spin_prod_perm_eq_perm_prod {l : List (Spin m n)} :
     l.prod.α = (l.map (·.α)).reverse.prod := by
@@ -69,7 +78,7 @@ grind_pattern rect_spin_one => Rectangle.toSpin (Rectangle.mk p p _ _)
 
 attribute [-instance] NeZero.charZero_one -- saves about 0.75s
 
-lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s.α)
+public lemma Corollary1.aux1 {s : Spin m n} {l k : List (Spin m n)} (hl : l.prod.α = s.α)
     (hk : k = (.univ : Finset (Point m n)).toList.filterMap fun x =>
       if l.prod.u x ≠ s.u x
       then RectSpin.fromRect ⟨x, x, Fin.le_refl _, Fin.le_refl _⟩ |>.toSpin
@@ -210,14 +219,14 @@ lemma Equiv.Perm.swap_support [DecidableEq α] [Fintype α] {p : Perm α}
   have : l2 = p.support.toList[0] ∨ l2 = p.support.toList[1] := List.eq_one_of_two h (by simp_all)
   grind [swap_comm]
 
-lemma List.map_attach_of_unattach {l : List α} {f : { x // x ∈ l } -> α} :
+public lemma List.map_attach_of_unattach {l : List α} {f : { x // x ∈ l } -> α} :
     f = (fun x => x.1) → l.attach.map f = l := (· ▸ attach_map_subtype_val l)
 
-def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
+@[expose] public def mySet (m n : PNat) := (SpinSet 1 1 m n ∪ SpinSet 1 2 m n)
   |>.map ⟨(·.toSpin), RectSpin.toSpin_injective⟩
 
 /-- **Corollary 1**: `S₁ₓ₁ ∪ S₁ₓ₂` generates `Spinₘₓₙ`. -/
-lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure (SetLike.coe (mySet m n)) = ⊤ := by
+public lemma spin_s11_s12_closure (m n : PNat) : Subgroup.closure (SetLike.coe (mySet m n)) = ⊤ := by
   let set1 : Set (Equiv.Perm (Point m n)) := SpinSet 1 2 m n |>.image (·.α)
 
   have set1_swap : ∀ e ∈ set1, e.IsSwap := by

@@ -1,13 +1,18 @@
-import Mathlib.Data.Fintype.Perm
-import Mathlib.Data.Fintype.Pi
-import Mathlib.Data.PNat.Defs
-import Mathlib.Data.ZMod.Defs
-import Mathlib.Tactic.DeriveFintype
+module
+
+public import Mathlib.Data.Fintype.Perm
+public import Mathlib.Data.Fintype.Pi
+public import Mathlib.Data.Fintype.Sigma
+public import Mathlib.Data.PNat.Defs
+public import Mathlib.Data.ZMod.Defs
+public import Mathlib.Tactic.DeriveFintype
 
 -- In Lean 4.25.0, `get_elem_tactic_extensible` causes performance issues due to trying stuff
 -- relating to `Std.Range`, which we don't use, so we redefine it here to improve performance.
 macro_rules
   | `(tactic| get_elem_tactic_extensible) => `(tactic| omega)
+
+@[expose] public section
 
 @[ext, grind ext, pp_using_anonymous_constructor]
 structure Point (m n : PNat) where

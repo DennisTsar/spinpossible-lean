@@ -1,5 +1,11 @@
-import Spinpossible.Definitions
-import Mathlib.Tactic
+module
+
+public import Spinpossible.Definitions
+public import Mathlib.Tactic
+public import Batteries.Tactic.ShowUnused
+public import Batteries.Tactic.SqueezeScope
+
+public section
 
 -- I don't know how to make `#synth CharZero (ZMod 2)` fail faster,
 -- so instead we disable the `@[simp]` lemmas that search for `CharZero`.
@@ -65,7 +71,7 @@ lemma commonCenter_if_rotate_eq (h1 : p.IsInside r1) (h2 : p.IsInside r2)
   grind [CommonCenter, Point.IsInside, rotate180]
 
 /-- `r1` contains `r2` -/
-def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
+@[expose] def Rectangle.Contains (r1 r2 : Rectangle m n) : Prop :=
   ∀ p : Point .., p.IsInside r2 → p.IsInside r1
 
 lemma rect_eq_if_corners_inside {r1 r2 : Rectangle m n}
@@ -246,7 +252,7 @@ theorem s1s2_not_spin (s1 s2 : RectSpin m n) :
       · apply s1s2_not_spin.aux2 r2.corners_inside.1 hs3 h ?_ (Or.inl rfl)
         exact r2.corners_rotate.1 ▸ h_corner
 
-def DisjointRect (r1 r2 : Rectangle m n) : Prop :=
+@[expose] def DisjointRect (r1 r2 : Rectangle m n) : Prop :=
   ∀ p : Point .., p.IsInside r1 → ¬p.IsInside r2
 
 lemma DisjointRect.symm (h : DisjointRect r1 r2) : DisjointRect r2 r1 :=
@@ -313,7 +319,7 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
       · grind -ring -linarith [toPerm_symm, → CommonCenter.symm,
           spin_stays_inside_cent, spin_stays_outside_cent]
 
-def SameShape (r1 r2 : Rectangle m n) : Prop :=
+@[expose] def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
   (r1.bottomRight.col.val - r1.topLeft.col.val) = (r2.bottomRight.col.val - r2.topLeft.col.val)
   deriving Decidable

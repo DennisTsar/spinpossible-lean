@@ -1,4 +1,7 @@
-import Spinpossible.Corollary1
+module
+
+public import Spinpossible.Corollary1
+import Mathlib.Data.Fintype.Inv
 
 set_option pp.showLetValues true
 
@@ -71,7 +74,7 @@ theorem sste_last_mem_single (l : List (RectSpin m n)) (i : Nat) (hi : i < l.len
   fun_induction shiftSingleToEnd <;> grind [shiftSingleToEnd]
 
 -- the `i = l.length - 1` case is trivial but still true
-theorem lemma6_1 (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
+public theorem lemma6_1 (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet 1 1 m n) :
     ∃ t : RectSpin m n, t ∈ SpinSet 1 1 m n ∧
       ((l.eraseIdx i).map RectSpin.toSpin).prod * t.toSpin = (l.map RectSpin.toSpin).prod := by
@@ -153,7 +156,7 @@ theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
 -- Original: "If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = sᵢ⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i ≤ j ≤ k`."
 -- Corrected (I think?): If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = s₁⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i < j ≤ k`.
 -- Corrected (reindexed version): If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = s₀⋯sᵢ₋₁tᵢ⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ₊₁`, for `i ≤ j < k`.
-theorem lemma6_2 (l : List (RectSpin m n)) :
+public theorem lemma6_2 (l : List (RectSpin m n)) :
     ∀ i, (_ : i < l.length - 1) → l[i] ∈ SpinSet m n m n →
     (∃ l' : List (RectSpin m n), (l'.map RectSpin.toSpin).prod = (l.map RectSpin.toSpin).prod
       ∧ l'.length = l.length ∧ l'.take i = l.take i ∧ l'.getLast? = l[i] ∧

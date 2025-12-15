@@ -1,6 +1,8 @@
-import Spinpossible.Solution
+module
 
-instance : Inhabited (Rectangle m n) := ⟨⟨0, 0⟩, ⟨0, 0⟩, by simp, by simp⟩
+public import Spinpossible.Solution
+
+public instance : Inhabited (Rectangle m n) := ⟨⟨0, 0⟩, ⟨0, 0⟩, by simp, by simp⟩
 
 /-- Create a `RectSpin` from the given points if they form a valid rectangle,
   or panic / return a default value if they do not -/
@@ -46,9 +48,6 @@ def buildBasicPermSolution (row col : Nat) (hrow : row < m.val) (hcol : col < n.
     else rest.reverse
 termination_by (n.val - col, m.val - row)
 decreasing_by all_goals omega -- slightly quicker than default implementation
-
-@[simp]
-lemma Spin.inv_perm (s : Spin m n) : s⁻¹.α = s.α⁻¹ := rfl
 
 lemma Rectangle.spin_perm_const {p : Point m n} {r : Rectangle m n}
     (h : p.row.val < r.topLeft.row.val ∨ p.col.val < r.topLeft.col.val) :
@@ -336,7 +335,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
 
 open scoped CharTwo in
 /-- Every element of `Spinₘₓₙ` can be expressed as a product of at most `3mn - (m + n)` spins. -/
-theorem theorem1 (b : Spin m n) :
+public theorem theorem1 (b : Spin m n) :
     ∀ l, Spin.IsSolution l b → l.length ≤ 3 * m * n - (m + n) := by
   have h3 v : ∃ l : List (RectSpin m n), (l.map RectSpin.toSpin).prod =
       ⟨1, b.u + v⟩⁻¹ ∧ l.length ≤ m * n := by
@@ -375,6 +374,7 @@ theorem theorem1 (b : Spin m n) :
 
   use buildBasicPermSolution 0 0 m.2 n.2 b⁻¹
   convert buildBasicPermSolution_correct 0 0 m.2 n.2 b⁻¹ (by omega) (by omega) using 2
+  · simp [Equiv.Perm.inv_def]
   simp only [listSize]
   split_ifs with h7 h8
   · rw [h7, h8]
