@@ -103,7 +103,10 @@ private lemma s1s2_not_spin.aux1 {s1 s2 s3 : RectSpin m n} {p : Point m n}
       absurd hs3_orient (rotate180 p r1)
       simp [h2, spin_stays_inside p_in_r1, h]
     specialize hs3_perm (rotate180 p r1)
-    grind
+    grind =>
+      instantiate only [#3513, = coe_toPerm, = Equiv.trans_apply]
+      instantiate only [= coe_toPerm, = Equiv.symm_apply_apply]
+      instantiate only [= rotate180_self_inverse]
 
   have ⟨r1_top_in_r3, r1_bot_in_r3⟩ : r1.topLeft.IsInside r3 ∧ r1.bottomRight.IsInside r3 := by
     cases p_is_corner <;> grind [Rectangle.corners_rotate]
@@ -160,7 +163,9 @@ private lemma s1s2_not_spin.aux2 {s1 s2 s3 : RectSpin m n}
     simp [r1_bot_in_r3, spin_stays_inside, r2_eq_r3, r1.corners_inside]
 
   specialize hs3_perm (rotate180 p r2)
-  grind
+  grind =>
+    instantiate only [#2a55, = coe_toPerm, = Equiv.trans_apply]
+    instantiate only [usr spin_stays_inside, = coe_toPerm, = Equiv.symm_apply_apply]
 
 private lemma s1s2_not_spin.aux3 {r1 r2 : Rectangle m n}
     (h_contains : r1.Contains r2) (h_r1_ne_r2 : r1 ≠ r2) :
@@ -304,7 +309,10 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     specialize h_perm p
     specialize h_orient p
     simp [hp_r1, hp_r2] at h_perm h_orient
-    grind -ring -linarith
+    grind -ring -linarith =>
+      cases #49fe
+      · cases #97b2
+      · cases #97b2 <;> instantiate only [usr spin_stays_inside]
   · intro h
     -- For some reason `grind` doesn't work well without the `set`s
     set r1 := s1.r with ← hr1
@@ -312,12 +320,54 @@ theorem s1s2_eq_s2s1_iff {s1 s2 : RectSpin m n} :
     simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
     rcases h with a | a
     · ext p : 1
-      · grind -ring -linarith [DisjointRect]
-      · grind -ring -linarith [toPerm_symm, DisjointRect]
+      · grind -ring -linarith =>
+        instantiate only [DisjointRect, = Equiv.trans_apply]
+        instantiate only [= coe_toPerm]
+        instantiate only [#3a09]
+        cases #90fe
+        cases #d4e4
+        cases #09f4
+        · cases #611d
+          · instantiate only [usr spin_stays_inside]
+          · cases #1f99 <;> instantiate only [usr spin_stays_inside]
+        · cases #611d
+      · grind -ring -linarith =>
+        instantiate only [!toPerm_symm, DisjointRect]
+        instantiate only [= coe_toPerm, #3a09]
+        cases #7f0b
+        · instantiate only [usr spin_stays_inside]
+          ac
+        · cases #9411 <;> instantiate only [usr spin_stays_inside] <;> ac
     · ext p : 1
-      · grind -ring -linarith [→ CommonCenter.rotate_eq, spin_stays_outside_cent]
-      · grind -ring -linarith [toPerm_symm, → CommonCenter.symm,
-          spin_stays_inside_cent, spin_stays_outside_cent]
+      · grind -ring -linarith =>
+        instantiate only [= Equiv.trans_apply]
+        instantiate only [= coe_toPerm]
+        instantiate only [→ CommonCenter.rotate_eq]
+        cases #90fe
+        cases #d4e4
+        cases #09f4
+        · cases #611d
+          · instantiate only [spin_stays_outside_cent, usr spin_stays_inside,
+              = rotate180_self_inverse]
+            instantiate only [spin_stays_outside_cent]
+            cases #1f99
+          ·
+            cases #1f99 <;>
+              instantiate only [spin_stays_outside_cent] <;>
+                instantiate only [→ CommonCenter.rotate_eq] <;>
+                  instantiate only [→ CommonCenter.rotate_eq, usr spin_stays_inside,
+                      = rotate180_self_inverse] <;>
+                    instantiate only [usr spin_stays_inside]
+        · cases #611d <;> instantiate only [usr spin_stays_inside] <;> cases #1f99
+      · grind -ring -linarith =>
+        instantiate only [!toPerm_symm, → CommonCenter.symm]
+        instantiate only [= coe_toPerm]
+        cases #7f0b
+        · instantiate only [spin_stays_inside_cent, spin_stays_outside_cent]
+          cases #9411
+          · instantiate only [spin_stays_inside_cent]
+          · ac
+        · cases #9411 <;> instantiate only [spin_stays_outside_cent] <;> ac
 
 @[expose] def SameShape (r1 r2 : Rectangle m n) : Prop :=
   (r1.bottomRight.row.val - r1.topLeft.row.val) = (r2.bottomRight.row.val - r2.topLeft.row.val) ∧
@@ -356,7 +406,9 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
   · rw [s1s2_eq_s2s1_iff, or_iff_not_imp_right, or_iff_not_imp_left]
     rintro ⟨s3, h3, -⟩ h1 h2
     have r2_corner_not_in_r1 : ¬r2.topLeft.IsInside r1 ∨ ¬r2.bottomRight.IsInside r1 := by
-      grind [Point.IsInside, Rectangle.Contains]
+      grind =>
+        instantiate only [Point.IsInside, Rectangle.Contains]
+        instantiate only [Point.IsInside]
 
     simp only [RectSpin.h, Rectangle.toSpin, Spin.mul_def, Spin.ext_iff] at h3
     obtain ⟨h_perm, h_orient⟩ := h3
@@ -369,11 +421,29 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
       · specialize h_perm r2.topLeft
         specialize h_orient r2.topLeft
         simp [r2_top_r1, r2.corners_inside] at h_perm h_orient
-        grind [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
+        grind =>
+          instantiate only [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
+          instantiate only [Point.IsInside]
+          cases #5680
+          · cases #c1d4
+            · cases #8bec
+            · cases #8bec <;> instantiate only [usr spin_stays_inside]
+          · cases #c1d4
+            · cases #8bec <;> cases #bf37 <;> cases #84a3 <;> lia
+            · cases #8bec <;> instantiate only [usr spin_stays_inside]
       · specialize h_perm r2.bottomRight
         specialize h_orient r2.bottomRight
         simp [r2_bot_r1, r2.corners_inside] at h_perm h_orient
-        grind [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
+        grind =>
+          instantiate only [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
+          instantiate only [Point.IsInside]
+          cases #5680
+          · cases #4a34
+            · cases #9164
+            · cases #9164 <;> instantiate only [usr spin_stays_inside]
+          · cases #4a34
+            · cases #9164 <;> cases #9cc8 <;> cases #6249 <;> lia
+            · cases #9164 <;> instantiate only [usr spin_stays_inside]
 
     specialize h_perm p
     specialize h_orient p
@@ -390,7 +460,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
     · use s2, h ▸ ?_, rfl
       ext : 1 <;>
       · simp [RectSpin.h, Rectangle.toSpin, Spin.mul_def, hr1, hr2]
-        grind
+        grind only [usr spin_stays_inside, = rotate180_self_inverse]
     · let r3 : Rectangle m n := ⟨
         rotate180 r2.bottomRight r1,
         rotate180 r2.topLeft r1,
@@ -421,6 +491,14 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
           ext <;> apply s1s2s1_is_spin_iff.aux1 <;> omega
         · specialize r3_in_r1 p
           specialize this p
-          grind [toPerm_symm, Rectangle.Contains]
-      · dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
+          grind -order -linarith =>
+            instantiate only [!toPerm_symm, Rectangle.Contains]
+            instantiate only [= coe_toPerm, #9d90]
+            instantiate only [usr spin_stays_inside]
+            cases #ff17
+            · ring
+              instantiate only [usr spin_stays_inside]
+            · cases #7f0b <;> ring
+      · -- grind (config := fast) [SameShape, Point.IsInside, rotate180] -- TODO: bench
+        dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
         omega
