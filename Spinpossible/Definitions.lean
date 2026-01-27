@@ -1,5 +1,6 @@
 import Mathlib.Data.Fintype.Perm
 import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.Fintype.Sigma
 import Mathlib.Data.PNat.Defs
 import Mathlib.Data.ZMod.Defs
 import Mathlib.Tactic.DeriveFintype

@@ -70,9 +70,9 @@ private lemma aux1 (n row col : Nat) (hcol : col + 2 < n) :
       (n - col - 1) * (2 * (row + 1) - 1) + (row + 1) - 2 * row := by
   set N := n - (col + 1)
   rw [show n - col = N + 1 by omega]
-  cases h : N <;> grind
+  cases h : N <;> lia
 
-private lemma aux2 (m n row col : Nat) (hcol : col + 1 < n) (hrow : row + 1 < m) :
+private lemma aux2 {m n row col : Nat} (hcol : col + 1 < n) (hrow : row + 1 < m) :
     (n - col - 1) * (2 * m - 1) + m - 2 * (row + 1) + 1 + 1 ≤
       (n - col - 1) * (2 * m - 1) + m - 2 * row := by
   have : (n - col - 1) * (2 * m - 1) ≥ 2 * m - 1 := by
@@ -101,8 +101,11 @@ private lemma aux3 {row col : Nat} (hrow : row < m.val) (hcol : col < n.val) (s 
   simp [Spin.mul_def]
   by_cases hg : x < col
   · grind [Rectangle.spin_perm_const]
-  · grind [Rectangle.corners_rotate_perm, Rectangle.spin_eq_iff, Rectangle.spin_perm_const,
-      Equiv.apply_eq_iff_eq, Point.mk.injEq]
+  · by_cases hy : y = row
+    · grind [Rectangle.corners_rotate_perm]
+    · simp [show x = col by grind, hs_row2 y (by grind)] -- `grind` used to be able to do this
+      grind [Rectangle.corners_rotate_perm, Rectangle.spin_perm_const, Equiv.apply_eq_iff_eq,
+        Point.mk.injEq]
 
 private def listSize (m n : PNat) (row col : Nat) :=
   if n.val = col + 1 then
@@ -241,7 +244,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih1.1]
       · simp only [List.length_cons, List.length_reverse]
         grw [ih1.2]
-        simp [listSize, show n.val ≠ col + 1 by omega, hrow2, aux2, a1, h1]
+        simp [listSize, show n.val ≠ col + 1 by omega, hrow2, aux2 a1 h1]
     · rw [col_spin_eq, row_spin_eq] at ih2
       specialize ih2 a1 (by omega) (aux3 hrow hcol s h1 a1 this hs_row2 hs_col2)
       rw [← col_spin_eq, ← row_spin_eq] at ih2

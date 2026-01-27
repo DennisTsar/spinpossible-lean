@@ -1,4 +1,5 @@
 import Mathlib.Analysis.SpecialFunctions.Stirling
+import Mathlib.Analysis.SpecialFunctions.Log.Base
 import Spinpossible.SolutionBounds
 
 lemma Spin.card_eq : Fintype.card (Spin m n) = 2 ^ (m.val * n) * Nat.factorial (m.val * n) := by

@@ -87,7 +87,7 @@ def board.toSpin (b : board m n) : Spin m n :=
           have (x) (hx : x ∈ Finset.range (m.val * n.val)) : x + 1 - 1 ≠ to1d p :=
             this (x + 1) (by grind)
           grind
-        grind [Fin.cast_val_eq_self, Nat.mod_eq_of_lt, = Fin.val_natCast]
+        grind [Nat.mod_eq_of_lt, = Fin.val_natCast]
       )
       (fun p => by
         simp only [Fin.ofNat_eq_cast, to1d_to2d_inverse, ← to1d_inj, Fin.val_natCast]
