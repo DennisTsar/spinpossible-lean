@@ -82,7 +82,5 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
     rw [← Nat.cast_mul]
     exact Real.log_ne_zero_of_pos_of_ne_one (by positivity) (ne_of_gt (Nat.one_lt_cast.mpr hmn))
   grw [Stirling.le_log_factorial_stirling' (by omega)]
-  · simp only [Real.log_pow, Nat.cast_mul, one_div, Nat.cast_ofNat, ge_iff_le]
-    field_simp
-    lia
+  · simp [Real.log_pow, field]; grind
   · exact Real.log_nonneg (by norm_cast0; assumption)

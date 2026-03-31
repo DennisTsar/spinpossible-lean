@@ -144,7 +144,7 @@ theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
   | case1 => omega
   | case2 l i _ _ _ x l2 h2 =>
     by_cases hj' : j = i
-    · have := swte_eq_beg l2 (i + 1) (by lia) (by lia)
+    · have := swte_eq_beg l2 (i + 1) (by grind) (by lia)
       have := List.getElem_take ▸ congr($this[j]'(by grind))
       grind -ring -linarith
     · convert h2 (by grind) ha (by grind) using 2
