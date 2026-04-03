@@ -1,6 +1,8 @@
 import Spinpossible.Proofs
 import Mathlib.Algebra.BigOperators.Intervals
 
+disable_grind_instances
+
 lemma Rectangle.toSpin_injective : Function.Injective (Rectangle.toSpin : Rectangle m n -> _)
   | r1, r2, h => by
     have app := congr(Spin.u $h)
@@ -118,11 +120,9 @@ lemma Finset.sum_nat_sub_distrib {m n : Nat} (h : n ≥ m) :
   grind
 
 lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 = (m + 1) * m := by
-  rw [Finset.sum_nat_sub_distrib (Nat.le_refl m), Nat.sub_mul, Finset.sum_range_id_mul_two,
+  rw [Finset.sum_nat_sub_distrib le_rfl, Nat.sub_mul, Finset.sum_range_id_mul_two,
     Nat.mul_sub_one, Nat.sub_eq_of_eq_add]
-  simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
-  -- grind [Nat.le_mul_self] -- used to work in 4.24.0
-  rw [← Nat.add_sub_assoc (Nat.le_mul_self _) _]
+  simp [Nat.le_mul_self, ← Nat.add_sub_assoc]
   lia
 
 lemma sum_m_minus_x (m : PNat) :
@@ -174,17 +174,11 @@ lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
       grind [Function.Embedding.coeFn_mk]
   rw [this, Finset.card_biUnion]
   · simp only [Finset.card_map, Nat.card_Ico]
-    apply Nat.eq_div_of_mul_eq_right (by omega)
-    rw [Finset.sum_nat_sub_distrib h, Finset.sum_const, Finset.card_range, smul_eq_mul,
-      Finset.sum_range_id]
-    set x1 := m.val
-    set x2 := n.val
-    have : x1 ≥ 1 := NeZero.one_le
-    rw [Nat.mul_sub_left_distrib, Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self x1),
-      show 2 * x2 - x1 + 1 = 2 * x2 - (x1 - 1) by omega,
-      Nat.mul_sub_left_distrib x1 (2 * x2) _, Nat.mul_left_comm]
-  · intro x _ y _ hxy
-    grind [Finset.disjoint_left, Function.Embedding.coeFn_mk]
+    apply Nat.eq_div_of_mul_eq_left (by lia)
+    rw [Finset.sum_nat_sub_distrib h, Nat.sub_mul, Finset.sum_range_id_mul_two, Finset.sum_const,
+      Finset.card_range, smul_eq_mul, Nat.mul_assoc, ← Nat.mul_sub]
+    lia
+  · grind [Finset.pairwiseDisjoint_iff, Function.Embedding.coeFn_mk]
 
 def spinSetsFromNums (m n : PNat) : Finset (Finset (RectSpin m n)) :=
   (spinSetNums m n).attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
@@ -217,10 +211,10 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
       rcases Finset.union_nonempty.mp h_nonempty with h5 | h5
       · use x, y, ?_
         by_contra
-        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by grind [PNat.mk_coe])
+        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by simp; lia)
       · use y, x, ?_, spinSet_comm
         by_contra
-        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by grind [PNat.mk_coe])
+        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by simp; lia)
 
     simp only [Finset.mem_attach, Function.Embedding.coeFn_mk, true_and,
       Subtype.exists, Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]
@@ -250,7 +244,7 @@ lemma spinSetTypes_finite {m n : PNat} (h : m.val ≤ n) : (spinSetTypes m n).Fi
 
 /-- **Proposition 2.4** -/
 theorem spinSetsTypes_card (m n : PNat) (h : m.val ≤ n) :
-    let _ := (spinSetTypes_finite h).fintype
+    letI _ := (spinSetTypes_finite h).fintype
     (spinSetTypes m n).toFinset.card = m * (2 * n - m + 1) / 2 := by
   simp [spinSetTypes_eq h]
   simp [spinSetsFromNums, spinSetNums_card h]

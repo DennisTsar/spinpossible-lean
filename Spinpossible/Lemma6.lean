@@ -1,5 +1,11 @@
 import Spinpossible.Corollary1
 
+disable_grind_instances
+seal SpinSet -- not sure why `grind` is unfolding this, but we tell it to stop
+-- A bunch of `grind -ac` are used below for a slight performance boost.
+-- The issue seems to be related to the instane `Semigroup.to_isAssociative`,
+-- but just disablig it breaks proofs that need associativity.
+
 set_option pp.showLetValues true
 
 lemma SameShape_rectSpinSet_mem {s1 s2 : RectSpin m n} (h : SameShape s1.r s2.r) :
@@ -15,9 +21,7 @@ theorem uniq_s1s2s1_of_single (s1 s2 : RectSpin m n) (hl : s2 ∈ SpinSet 1 1 m 
   refine existsUnique_of_exists_of_unique ?_ ?_
   · rw [s1s2s1_is_spin_iff, or_iff_not_imp_right, s1s2_eq_s2s1_iff]
     refine fun h => Or.inl fun p hp => ?_
-    have : s2.r.topLeft = s2.r.bottomRight := by
-      simp [SpinSet, RectSpinSet] at hl
-      grind [Rectangle.validRow, Rectangle.validCol]
+    simp only [SpinSet, RectSpinSet, PNat.val_ofNat] at hl
     grind [Point.IsInside, Rectangle.Contains]
   · exact fun a b ha hb => RectSpin.toSpin_injective (ha.1 ▸ hb.1)
 
@@ -28,7 +32,7 @@ def shiftSingleToEnd (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
   haveI : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
   let x := Fintype.chooseX _ (uniq_s1s2s1_of_single l[i+1] l[i] hl)
   let l' := l.take i ++ l[i+1] :: x.1 :: l.drop (i + 2)
-  shiftSingleToEnd l' (i + 1) (by grind) (by grind [SameShape_spinSet_mem])
+  shiftSingleToEnd l' (i + 1) (by grind -ac) (by grind -ac [SameShape_spinSet_mem])
   termination_by l.length - i
   decreasing_by grind -- about 20x faster than default
 
@@ -48,7 +52,7 @@ theorem sste_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
 theorem sste_length (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet 1 1 m n) :
     (shiftSingleToEnd l i hi hl).length = l.length := by
-  fun_induction shiftSingleToEnd <;> grind -ring -linarith
+  fun_induction shiftSingleToEnd <;> grind -ac
 
 theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
     (hi' : i' < l'.length) (hl' : l'[i'] ∈ SpinSet 1 1 m n) :
@@ -57,18 +61,16 @@ theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
   fun_induction shiftSingleToEnd with
   | case1 => grind [shiftSingleToEnd, List.take_append_getLast]
   | case2 l i _ hl hi x l2 h2 =>
-    -- a bit too slow (doesn't work anymire)
-    -- grind [shiftSingleToEnd, add_tsub_cancel_left, List.drop_drop, List.getElem_cons_drop]
     unfold shiftSingleToEnd
     simp only [hi, ↓reduceDIte]
     convert h2 using 2
-    rw [List.eraseIdx_append_of_length_le (by simp) _]
+    rw [List.eraseIdx_append_of_length_le (by simp)]
     simp [show min i l.length = i by omega, List.eraseIdx_eq_take_drop_succ]
 
 theorem sste_last_mem_single (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet 1 1 m n) :
     (shiftSingleToEnd l i hi hl).getLast (by grind [sste_length]) ∈ SpinSet 1 1 m n := by
-  fun_induction shiftSingleToEnd <;> grind [shiftSingleToEnd]
+  fun_induction shiftSingleToEnd <;> grind -ac [shiftSingleToEnd]
 
 -- the `i = l.length - 1` case is trivial but still true
 theorem lemma6_1 (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
@@ -94,9 +96,9 @@ def shiftWholeToEnd (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
   haveI : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
   let x := Fintype.chooseX _ (uniq_s1s2s1_of_whole l[i] l[i+1] hl)
   let l' := l.take i ++ x.1 :: l[i] :: l.drop (i + 2)
-  shiftWholeToEnd l' (i + 1) (by grind) (by grind)
+  shiftWholeToEnd l' (i + 1) (by grind -ac) (by grind -ac)
   termination_by l.length - i
-  decreasing_by grind -- about 20x faster than default
+  decreasing_by grind -ac -- about 20x faster than default
 
 theorem swte_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length)
     (hl' : l'[i'] ∈ SpinSet m n m n) :
@@ -106,7 +108,7 @@ theorem swte_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
   | case1 => rfl
   | case2 l i _ _ _ x l2 h2 =>
     have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
-    suffices l[i].toSpin * l[i + 1] = x.1 * l[i]  by
+    suffices l[i].toSpin * l[i + 1] = x.1 * l[i] by
       rw [h2, show l = l.take i ++ [l[i], l[i+1]] ++ l.drop (i + 2) by simp]
       simp [- List.append_assoc, this, l2, mul_assoc]
     simp_rw [← x.2.1, mul_assoc, spin_is_own_inverse, mul_one]
@@ -114,27 +116,22 @@ theorem swte_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length
 theorem swte_length (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
     (shiftWholeToEnd l i hi hl).length = l.length := by
-  fun_induction shiftWholeToEnd <;> grind -ring -linarith
+  fun_induction shiftWholeToEnd <;> grind -ac
 
 lemma List.take_something {l1 l2 : List α} (h : l1.take n = l2.take n) (m : Nat) (hmn : m ≤ n) :
-    l1.take m = l2.take m := by
-  induction n with
-  | zero => grind
-  | succ n ih =>
-    rw [show take m l1 = take m (take (n + 1) l1) by grind]
-    grind
+  l1.take m = l2.take m := by grind [show take m l1 = take m (take (n + 1) l1) by grind]
 
 theorem swte_eq_beg (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
     (shiftWholeToEnd l i hi hl).take i = l.take i := by
   fun_induction shiftWholeToEnd with
   | case1 => rfl
-  | case2 => grind [List.take_left', List.take_something]
+  | case2 => grind -ac [List.take_left', List.take_something]
 
 theorem swte_last (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
     (shiftWholeToEnd l i hi hl).getLast (by grind [swte_length]) = l[i] := by
-  fun_induction shiftWholeToEnd <;> unfold shiftWholeToEnd <;> grind
+  fun_induction shiftWholeToEnd <;> unfold shiftWholeToEnd <;> grind -ac
 
 theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
     (hi : i < l.length) (hj : i ≤ j ∧ j < l.length - 1) (hl : l[i] ∈ SpinSet m n m n) :
@@ -145,10 +142,11 @@ theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
   | case2 l i _ _ _ x l2 h2 =>
     by_cases hj' : j = i
     · have := swte_eq_beg l2 (i + 1) (by grind) (by lia)
-      have := List.getElem_take ▸ congr($this[j]'(by grind))
-      grind -ring -linarith
-    · convert h2 (by grind) ha (by grind) using 2
-      grind -ring -linarith
+      have := List.getElem_take ▸ congr($this[j]'(by grind -ac))
+      grind -ac only [List.getElem_append, List.getElem_take, List.length_take, min_def,
+        List.getElem_cons]
+    · convert h2 (by grind -ac) ha (by grind -ac) using 2
+      grind -ac
 
 -- Original: "If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = sᵢ⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i ≤ j ≤ k`."
 -- Corrected (I think?): If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = s₁⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i < j ≤ k`.

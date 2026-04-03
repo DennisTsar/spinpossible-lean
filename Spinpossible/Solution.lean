@@ -65,7 +65,7 @@ lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
     obtain ⟨l, hl1⟩ := this
     let s := {l' : List (RectSpin m n) | (l'.map RectSpin.toSpin).prod = b⁻¹ ∧ l'.length ≤ l.length}
     have : s.Finite := Set.Finite.subset (List.finite_length_le _ l.length) (fun a b => b.2)
-    let ⟨y, hy1, hy2⟩ := s.exists_min_image (·.length) this ⟨l, hl1, le_refl _⟩
+    let ⟨y, hy1, hy2⟩ := s.exists_min_image (·.length) this ⟨l, hl1, le_rfl⟩
     use y, hy1.1
     grind
   have : b ∈ Subgroup.closure (mySet m n) := by rw [spin_s11_s12_closure]; trivial

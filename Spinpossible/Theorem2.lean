@@ -55,7 +55,7 @@ theorem theorem2_1 (m n : PNat) :
 
 theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
     k m n ≥ (m * n) / 2 - (1 - Real.log 2) / 2 * ((m * n) / Real.log (m * n)) + 1 / 4 := by
-  have : 1 ≤ (m.val * n) ^ 2 := one_le_pow₀ (le_of_lt hmn)
+  have : 1 ≤ (m.val * n) ^ 2 := one_le_pow₀ hmn.le
   have : 1 < Fintype.card (RectSpin m n) + 1 := Nat.AtLeastTwo.one_lt
   -- NOTE: original proof says `N^2 > c` but I believe it should be `N^2 ≥ c`
   -- Suppose `m=2, n=1`, then `N^2=4` and `c=choose(3,2)*choose(2,2)+1=4`
@@ -67,8 +67,8 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
     · lia
     · grind -ring -linarith [Nat.choose_self, Nat.choose_succ_lt_pow]
     · grind -ring -linarith [Nat.choose_self, Nat.choose_succ_lt_pow]
-    · grw [Nat.choose_succ_lt_pow h1 (Nat.le_refl _),
-        Nat.le_sub_one_of_lt (Nat.choose_succ_lt_pow h2 (Nat.le_refl _)), Nat.mul_sub_one]
+    · grw [Nat.choose_succ_lt_pow h1 le_rfl,
+        Nat.le_sub_one_of_lt (Nat.choose_succ_lt_pow h2 le_rfl), Nat.mul_sub_one]
       lia
 
   have bound := theorem2_1 m n
@@ -78,9 +78,7 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
   simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le, ]
   conv_rhs => rw [← Real.log_div_log, Real.log_mul (by positivity) (by positivity)]
 
-  have : Real.log (m * n) ≠ 0 := by
-    rw [← Nat.cast_mul]
-    exact Real.log_ne_zero_of_pos_of_ne_one (by positivity) (ne_of_gt (Nat.one_lt_cast.mpr hmn))
+  have : Real.log (m * n) ≠ 0 := Real.log_pos (mod_cast hmn) |>.ne'
   grw [Stirling.le_log_factorial_stirling' (by omega)]
   · simp [Real.log_pow, field]; grind
   · exact Real.log_nonneg (by norm_cast0; assumption)

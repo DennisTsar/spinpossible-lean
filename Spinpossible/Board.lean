@@ -94,7 +94,7 @@ def board.toSpin (b : board m n) : Spin m n :=
         have := fact1 tiles_list[to1d p] (List.getElem_mem _)
         let (eq := he) e := tiles_list.findIdx (fun j => j.id - 1 == tiles_list[to1d p].id - 1)
         suffices e = to1d p by rw [Nat.mod_eq_of_lt (by omega), ← he, this, Fin.cast_val_eq_self]
-        apply Fin.mk.inj (fact2 ⟨e, ?_⟩ ⟨to1d p, ?_⟩ ?_) <;> grind [=> Fin.getElem_fin]
+        apply Fin.mk.inj (fact2 ⟨e, ?_⟩ ⟨to1d p, by omega⟩ ?_) <;> grind [=> Fin.getElem_fin]
       ),
     u i := if (b i.row i.col).orient = orientation.positive then 0 else 1
   }

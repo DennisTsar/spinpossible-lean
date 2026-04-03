@@ -4,6 +4,7 @@ defaultTargets = ["Spinpossible"]
 
 [leanOptions]
 relaxedAutoImplicit = false
+trace.profiler.useHeartbeats = true
 # weak.linter.haveLet = 2
 weak.linter.mathlibStandardSet = true
 weak.linter.style.longLine = false
