@@ -70,7 +70,10 @@ theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
 theorem sste_last_mem_single (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet 1 1 m n) :
     (shiftSingleToEnd l i hi hl).getLast (by grind [sste_length]) ∈ SpinSet 1 1 m n := by
-  fun_induction shiftSingleToEnd <;> grind -ac [shiftSingleToEnd]
+  fun_induction shiftSingleToEnd
+  · grind -ac [shiftSingleToEnd]
+  · unfold shiftSingleToEnd
+    simpa [*]
 
 -- the `i = l.length - 1` case is trivial but still true
 theorem lemma6_1 (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
@@ -131,7 +134,11 @@ theorem swte_eq_beg (l : List (RectSpin m n)) (i : Nat)
 theorem swte_last (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
     (shiftWholeToEnd l i hi hl).getLast (by grind [swte_length]) = l[i] := by
-  fun_induction shiftWholeToEnd <;> unfold shiftWholeToEnd <;> grind -ac
+  fun_induction shiftWholeToEnd <;> unfold shiftWholeToEnd
+  · grind
+  · rename_i l i _ _ h1 x l2 h2
+    simp [h1, l2, x, h2]
+    grind
 
 theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
     (hi : i < l.length) (hj : i ≤ j ∧ j < l.length - 1) (hl : l[i] ∈ SpinSet m n m n) :

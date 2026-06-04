@@ -347,7 +347,7 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
       · specialize h_perm r2.topLeft
         specialize h_orient r2.topLeft
         simp [r2_top_r1, r2.corners_inside] at h_perm h_orient
-        grind -linarith  [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
+        grind -linarith [Point.IsInside, CommonCenter, commonCenter_if_rotate_eq]
       · specialize h_perm r2.bottomRight
         specialize h_orient r2.bottomRight
         simp [r2_bot_r1, r2.corners_inside] at h_perm h_orient
@@ -400,5 +400,4 @@ theorem s1s2s1_is_spin_iff {s1 s2 : RectSpin m n} :
         · specialize r3_in_r1 p
           specialize this p
           grind [toPerm_symm, Rectangle.Contains]
-      · dsimp +zetaDelta only [SameShape, Point.IsInside, rotate180] at r2_bot_in_r1 r2_top_in_r1 ⊢
-        omega
+      · grind [SameShape, Point.IsInside, rotate180]

@@ -70,15 +70,13 @@ lemma Spin.perm_distrib (s1 s2 : Spin m n) : (s1 * s2).α = s2.α * s1.α := rfl
 private lemma aux1 (n row col : Nat) (hcol : col + 2 < n) :
     (n - (col + 1) - 1) * (2 * (row + 1) - 1) + row + 1 + 1 ≤
       (n - col - 1) * (2 * (row + 1) - 1) + (row + 1) - 2 * row := by
-  set N := n - (col + 1)
-  rw [show n - col = N + 1 by omega]
+  generalize h : n - (col + 1) = N
   cases h : N <;> lia
 
 private lemma aux2 {m n row col : Nat} (hcol : col + 1 < n) (hrow : row + 1 < m) :
     (n - col - 1) * (2 * m - 1) + m - 2 * (row + 1) + 1 + 1 ≤
       (n - col - 1) * (2 * m - 1) + m - 2 * row := by
-  have : (n - col - 1) * (2 * m - 1) ≥ 2 * m - 1 := by
-    nlinarith [show 1 ≤ 2 * m - 1 by omega, show 1 ≤ n - col - 1 by omega]
+  have : (n - col - 1) * (2 * m - 1) ≥ 2 * m - 1 := Nat.le_mul_of_pos_left _ (by grind)
   omega
 
 private lemma aux3 {row col : Nat} (hrow : row < m.val) (hcol : col < n.val) (s : Spin m n)
@@ -106,7 +104,7 @@ private lemma aux3 {row col : Nat} (hrow : row < m.val) (hcol : col < n.val) (s 
   · by_cases hy : y = row
     · grind [Rectangle.corners_rotate_perm]
     · grind [hs_row2 y (by grind), Rectangle.corners_rotate_perm, Rectangle.spin_perm_const,
-        Equiv.apply_eq_iff_eq, Point.mk.injEq]
+        Equiv.apply_eq_iff_eq, Point.ext]
 
 private def listSize (m n : PNat) (row col : Nat) :=
   if n.val = col + 1 then
@@ -305,7 +303,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
         rw [Rectangle.spin_perm_const (by simp only; omega),
           Rectangle.spin_perm_const (by simp [cur_pos]; omega)])
     constructor
-    · have col_spin_eq' : col_spin.α = Equiv.refl _ := by
+    · have col_spin_eq' : col_spin.α = 1 := by
         ext i : 1
         simp [col_spin_eq, cur_pos, Rectangle.toSpin, Point.IsInside, rotate180, rotateCalc]
         clear * - row_spin_eq a1; grind
@@ -325,10 +323,10 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       clear * - hb; grind
     ext i : 1
     by_cases hx : i.col.val < col
-    · simpa using hs_col i.col i.row (by omega) |>.symm
+    · simpa [Spin.one_def] using hs_col i.col i.row (by omega) |>.symm
     · have : i.col.val = col := by omega
       by_cases hx2 : i.row.val < row
-      · simpa [← this] using hs_row i.row.val (by omega) |>.symm
+      · simpa [← this, Spin.one_def] using hs_row i.row.val (by omega) |>.symm
       · grind [Spin.one_def]
 
 open scoped CharTwo in
@@ -347,7 +345,7 @@ theorem theorem1 (b : Spin m n) :
     constructor
     · unfold z1 z2
       rw [List.map_append]
-      apply Corollary1.aux1 (by simp [Spin.one_def, Equiv.Perm.one_def])
+      apply Corollary1.aux1 (by simp [Spin.one_def, pull_end])
       -- `ite_not` doesn't work well with `Option.map_if`
       simp [-ite_not, -Classical.ite_not, List.map_filterMap, Spin.inv_def, z1]
     · have : (.univ : Finset (Point m n)).card = (.univ : Finset (Fin m × Fin n)).card := by
@@ -359,7 +357,7 @@ theorem theorem1 (b : Spin m n) :
     obtain ⟨l2, hl2⟩ := h2
     obtain ⟨l1, hl1⟩ := h3 ((l2.map RectSpin.toSpin).prod.u ∘ (b.α.symm))
     have zz : (List.map RectSpin.toSpin (l1 ++ l2)).prod = b⁻¹ := by
-      simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def]
+      simp [hl1, hl2.1, Spin.inv_def, Spin.mul_def, pull_end]
     intro l5 hl5
     simp only [Spin.IsSolution] at hl5
     grw [← hl5.2 (l1 ++ l2) zz, List.length_append, hl2.2, hl1.2]

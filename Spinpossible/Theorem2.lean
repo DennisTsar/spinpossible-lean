@@ -73,7 +73,7 @@ theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
 
   have bound := theorem2_1 m n
   grw [Spin.card_eq, ← Nat.clog_le_iff_le_pow Nat.AtLeastTwo.one_lt, this,
-    ← Real.natCeil_logb_natCast, Nat.ceil_le] at bound <;> try assumption
+    ← Real.natCeil_logb_natCast, Nat.ceil_le] at bound
   grw [← bound]
   simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le, ]
   conv_rhs => rw [← Real.log_div_log, Real.log_mul (by positivity) (by positivity)]

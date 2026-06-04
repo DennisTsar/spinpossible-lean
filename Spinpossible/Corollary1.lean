@@ -47,8 +47,7 @@ lemma spin_prod_perm {l : List (Spin m n)} :
 
 lemma spin_prod_perm_of_refl {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.refl _) :
     l.prod.α = Equiv.refl _ := by
-  rw [spin_prod_perm, List.map_congr_left h, List.prod_reverse_noncomm]
-  simpa using Equiv.Perm.one_def
+  simp [spin_prod_perm, List.map_congr_left h, push_end]
 
 lemma spin_prod_orient_of_refl {l : List (Spin m n)} (h : ∀ w ∈ l, w.α = Equiv.refl _) :
     l.prod.u i = (l.map (fun x => x.u i)).sum := by

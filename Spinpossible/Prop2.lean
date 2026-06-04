@@ -165,20 +165,16 @@ lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
     |>.map ⟨fun j => (i, j), Prod.mk_right_injective i⟩)
   have : spinSetNums m n = s := by
     ext x
-    constructor
-    · simp [s] -- this could be a single `grind` but it doesn't understand `Function.Embedding.coeFn_mk`
-      grind
-    · intro hx
-      simp only [Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]
-      use x.1, x.2
-      grind [Function.Embedding.coeFn_mk]
+    simp [s] -- this could be a single `grind` but it doesn't understand `Function.Embedding.coeFn_mk`
+    grind
   rw [this, Finset.card_biUnion]
   · simp only [Finset.card_map, Nat.card_Ico]
     apply Nat.eq_div_of_mul_eq_left (by lia)
     rw [Finset.sum_nat_sub_distrib h, Nat.sub_mul, Finset.sum_range_id_mul_two, Finset.sum_const,
       Finset.card_range, smul_eq_mul, Nat.mul_assoc, ← Nat.mul_sub]
-    lia
-  · grind [Finset.pairwiseDisjoint_iff, Function.Embedding.coeFn_mk]
+    grind
+  · simp [Finset.pairwiseDisjoint_iff]
+    grind [Function.Embedding.coeFn_mk]
 
 def spinSetsFromNums (m n : PNat) : Finset (Finset (RectSpin m n)) :=
   (spinSetNums m n).attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
