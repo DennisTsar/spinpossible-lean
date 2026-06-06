@@ -1,7 +1,8 @@
-import Spinpossible.Prop2
+module
+
 import Spinpossible.Lemma1
-import Spinpossible.Corollary1
-import Mathlib.Data.Set.Finite.List
+public import Spinpossible.Corollary1
+public import Mathlib.Data.Set.Finite.List
 
 lemma RectSpin.perm_symm (s : RectSpin m n) : s.α.symm = s.α := by simp [s.h, Rectangle.toSpin]
 
@@ -24,7 +25,7 @@ lemma exists_rectSpin {s : Spin m n} (hs : s ∈ l) (hl : l ⊆ (validSpins_spin
   intro b rfl
   exact RectSpin.toSpin_injective ha.2.symm
 
-lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
+public lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
     (l.map RectSpin.toSpin).prod⁻¹ = (l.map RectSpin.toSpin).reverse.prod := by
   rw [Spin.inv_def]
   induction' l with hd tl ih
@@ -36,7 +37,7 @@ lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
     (the starting board), write `b⁻¹` as a product `s₁s₂s₃⋯sₖ` of elements in `S`, with `k`
     as small as possible (a solution)."
 -/
-def Spin.IsSolution (l : List (RectSpin m n)) (b : Spin m n) : Prop :=
+@[expose] public def Spin.IsSolution (l : List (RectSpin m n)) (b : Spin m n) : Prop :=
   (l.map RectSpin.toSpin).prod = b⁻¹ ∧
   ∀ l' : List (RectSpin m n), (l'.map RectSpin.toSpin).prod = b⁻¹ → l'.length ≥ l.length
 
@@ -60,7 +61,7 @@ lemma spin_prod_inv_eq_reverse_prod {l : List (Spin m n)}
   simpa using rectSpin_prod_inv_eq_reverse_prod (spinSet_to_rectSpin l h)
 
 /-- "every starting board in the Spinpossible game has a solution." -/
-lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
+public lemma every_board_has_solution (b : Spin m n) : ∃ l, Spin.IsSolution l b := by
   suffices ∃ l : List (RectSpin m n), (l.map RectSpin.toSpin).prod = b⁻¹ by
     obtain ⟨l, hl1⟩ := this
     let s := {l' : List (RectSpin m n) | (l'.map RectSpin.toSpin).prod = b⁻¹ ∧ l'.length ≤ l.length}

@@ -1,6 +1,10 @@
-import Spinpossible.Definitions
-import Mathlib.LinearAlgebra.Matrix.Defs
+module
+
+public import Spinpossible.Definitions
+public import Mathlib.LinearAlgebra.Matrix.Defs
 import Mathlib.Order.Interval.Finset.Nat
+
+public section
 
 inductive orientation
   | positive
@@ -12,7 +16,7 @@ structure tile where
   orient : orientation
   deriving DecidableEq, Repr
 
-def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
+@[expose] def board (m n : PNat) := Matrix (Fin m) (Fin n) tile
   deriving DecidableEq
 
 private def to1d (pos : Point m n) : Fin (m * n) where

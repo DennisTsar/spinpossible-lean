@@ -1,6 +1,9 @@
-import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
-import Mathlib.GroupTheory.Perm.Sign
+module
+
+public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
+public import Mathlib.GroupTheory.Perm.Sign
 import Mathlib.Tactic.Cases
+import Mathlib.Data.Finite.Defs
 
 -- Note: Copied from `Spinpossible/Definitions.lean` since this file does not import it.
 -- In Lean 4.25.0, `get_elem_tactic_extensible` causes performance issues due to trying stuff
@@ -8,7 +11,7 @@ import Mathlib.Tactic.Cases
 macro_rules
   | `(tactic| get_elem_tactic_extensible) => `(tactic| omega)
 
-theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
+public theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M} :
     a ∈ Subgroup.closure s ↔ ∃ l : List M, (∀ x ∈ l, x ∈ s ∨ x⁻¹ ∈ s) ∧ l.prod = a := by
   constructor
   · refine Subgroup.closure_induction
@@ -41,7 +44,7 @@ lemma isSwap_inv_eq_self [DecidableEq α] {x : Perm α} (h : x.IsSwap) : x = x�
   let ⟨_, _, _, hswap⟩ := h
   rw [hswap, swap_inv]
 
-lemma isSwap_inv_eq_self' [DecidableEq α] {x : Perm α} (h : x⁻¹.IsSwap) : x = x⁻¹ := by
+public lemma isSwap_inv_eq_self' [DecidableEq α] {x : Perm α} (h : x⁻¹.IsSwap) : x = x⁻¹ := by
   let ⟨_, _, _, hswap⟩ := h
   have := congr($hswap⁻¹)
   rwa [inv_inv, swap_inv, ← hswap] at this
@@ -106,7 +109,7 @@ lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
   Let `G` be the undirected graph on `α` with edge set `E`.
   Then `E` generates the symmetric group `Perm α` if and only if `G` is connected.
 -/
-theorem transpositions_generate_symm_group_iff_connected_graph
+public theorem transpositions_generate_symm_group_iff_connected_graph
     {α : Type*} [DecidableEq α] [Finite α] [Nonempty α]
     {E : Set (Perm α)}
     (hE : ∀ σ ∈ E, σ.IsSwap) :

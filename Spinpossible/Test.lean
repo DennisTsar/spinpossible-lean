@@ -1,5 +1,10 @@
-import Spinpossible.Board
-import Spinpossible.Proofs
+module
+
+import all Spinpossible.Board
+import all Spinpossible.Proofs
+import all Spinpossible.Definitions
+
+set_option linter.privateModule false
 
 def board3by3 := standardBoard 3 3
 
