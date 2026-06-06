@@ -1,5 +1,6 @@
 module
 
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.SpecialFunctions.Log.Base
 public import Spinpossible.SolutionBounds
@@ -84,3 +85,38 @@ public theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
   grw [Stirling.le_log_factorial_stirling' (by omega)]
   · simp [Real.log_pow, field]; grind
   · exact Real.log_nonneg (by norm_cast0; assumption)
+
+lemma k_upper_bound (m n) : k m n ≤ 3 * m * n - (m + n) := by
+  simp only [k, Finset.sup_le_iff, Set.mem_toFinset, Set.mem_iUnion, forall_exists_index]
+  exact fun b s hs => theorem1 s b hs
+
+private lemma eventually_error_lt_mul (ε : ℝ) (hε : 0 < ε) :
+    ∃ N₀ : Nat, ∀ {m n : PNat}, (N₀ : ℝ) < (m * n) →
+      (1 - Real.log 2) / 2 * ((m * n) / Real.log (m * n)) - 1 / 4 < ε * (m * n) := by
+  obtain ⟨R, hR⟩ := Real.tendsto_log_atTop.eventually_gt_atTop (((1 - Real.log 2) / 2) / ε)
+    |>.exists_forall_of_atTop
+  obtain ⟨N₀, hN₀⟩ := exists_nat_gt R
+  use N₀, fun {m n} hN => ?_
+  have : 1 - Real.log 2 > 0 := by grw [Real.log_two_lt_d9]; positivity
+  grw [← hR (m * n) (by linarith)]
+  simp [field]
+
+/-- **Corollary 2**: The asymptotic growth of `k(m, n)` is linear in `N = mn`.
+    Note: The paper says `(1 / 2 + ε)` instead of `(1 / 2 - ε)`, but that is incorrect
+    (See the example below).
+-/
+theorem corollary_2 : ∀ ε > 0, ∃ N₀ : Nat, ∀ {m n : PNat}, N₀ < m * n →
+    ((1 / 2 : ℝ) - ε) * (m * n) < (k m n : ℝ) ∧ (k m n : ℝ) ≤ 3 * (m * n) := by
+  intro ε hε
+  obtain ⟨N₁, hN₁⟩ := eventually_error_lt_mul ε hε
+  use max N₁ 1, fun hN => ⟨?_, ?_⟩
+  · linarith [theorem2_2 <| hN.trans_le' <| by simp, hN₁ <| mod_cast hN.trans_le' <| by simp]
+  · grw [k_upper_bound, Nat.sub_le, mul_assoc]; norm_cast
+
+-- It is *not* true that `k(m, n)` grows asymptotically like `(1 / 2 + ε) * N` for any `ε > 0`.
+example (h : ∀ ε > 0, ∃ N₀ : Nat, ∀ {m n : PNat}, N₀ < m * n →
+    ((1 / 2 : ℝ) + ε) * (m * n) < (k m n : ℝ)) : False := by
+  obtain ⟨N₀, hN₀⟩ := h 3 (by norm_num)
+  absurd hN₀ (m := ⟨N₀ + 2, by omega⟩) (n := 1) (by simp)
+  grw [k_upper_bound, Nat.sub_le, mul_assoc]
+  simp [- PNat.mk_coe]
