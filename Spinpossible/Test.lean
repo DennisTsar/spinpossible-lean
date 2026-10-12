@@ -4,31 +4,38 @@ import all Spinpossible.Board
 import all Spinpossible.Proofs
 import all Spinpossible.Definitions
 
-set_option linter.privateModule false
+-- Override the instance to avoid a weird 'Could not find native implementation of external declaration'
+-- error when running the build from cmd.
+attribute [-instance] ZMod.instField
+instance [hp : Fact p.Prime] : Field (ZMod p) where
+  mul_inv_cancel := ZMod.instField p |>.mul_inv_cancel
+  inv_zero := ZMod.inv_zero p
+  nnqsmul := _
+  qsmul := _
 
 def board3by3 := standardBoard 3 3
 
 namespace Basics
 
--- def perm1 : perm 3 where
---   toFun := ![1, 0, 2]
---   invFun := ![1, 0, 2]
---   left_inv := by decide
---   right_inv := by decide
+def perm1 : Equiv.Perm (Fin 3) where
+  toFun := ![1, 0, 2]
+  invFun := ![1, 0, 2]
+  left_inv := by decide
+  right_inv := by decide
 
--- def perm2 : perm 3 where
---   toFun := fun i => i + 1
---   invFun := fun i => i - 1
---   left_inv := by exact leftInverse_sub_add_left 1
---   right_inv := by -- or just `by decide`
---     apply Function.rightInverse_of_injective_of_leftInverse
---     · exact sub_left_injective
---     · exact leftInverse_sub_add_left 1
+def perm2 : Equiv.Perm (Fin 3) where
+  toFun := fun i => i + 1
+  invFun := fun i => i - 1
+  left_inv := by exact leftInverse_sub_add_left 1
+  right_inv := by -- or just `by decide`
+    apply Function.rightInverse_of_injective_of_leftInverse
+    · exact sub_left_injective
+    · exact leftInverse_sub_add_left 1
 
--- #guard perm1.toFun = ![1, 0, 2]
--- #guard perm2.toFun = ![1, 2, 0]
--- #guard (perm1.trans perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
--- #guard (perm2.trans perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
+#guard perm1.toFun = ![1, 0, 2]
+#guard perm2.toFun = ![1, 2, 0]
+#guard (perm1.trans perm2).toFun = ![2, 1, 0] -- perm1 applied first, then perm2
+#guard (perm2.trans perm1).toFun = ![0, 2, 1] -- perm2 applied first, then perm1
 
 end Basics
 

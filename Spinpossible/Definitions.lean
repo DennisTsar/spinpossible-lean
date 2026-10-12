@@ -94,5 +94,6 @@ grind_pattern spin_stays_inside => (rotate180 p r).IsInside r
 def Rectangle.toSpin (r : Rectangle m n) : Spin m n where
   α := Function.Involutive.toPerm
     (fun p => if p.IsInside r then rotate180 p r else p)
-    (fun _ => by grind)
+    -- Make sure `Rectangle.toSpin._proof_2` has type `Function.Involutive _`, not `∀ x, _`.
+    (by intro; grind)
   u p := if p.IsInside r then 1 else 0

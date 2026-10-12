@@ -32,7 +32,7 @@ def shiftSingleToEnd (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet 1 1 m n) : List (RectSpin m n) :=
   if hi' : i = l.length - 1 then l else
   haveI : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
-  let x := Fintype.chooseX _ (uniq_s1s2s1_of_single l[i+1] l[i] hl)
+  let +nondep x := Fintype.chooseX _ (uniq_s1s2s1_of_single l[i+1] l[i] hl)
   let l' := l.take i ++ l[i+1] :: x.1 :: l.drop (i + 2)
   shiftSingleToEnd l' (i + 1) (by grind -ac) (by grind -ac [SameShape_spinSet_mem])
   termination_by l.length - i
@@ -61,7 +61,7 @@ theorem sste_eq (l' : List (RectSpin m n)) (i' : Nat)
     shiftSingleToEnd l' i' hi' hl' = l'.eraseIdx i' ++
       [(shiftSingleToEnd l' i' hi' hl').getLast (by grind [sste_length])] := by
   fun_induction shiftSingleToEnd with
-  | case1 => grind [shiftSingleToEnd, List.take_append_getLast]
+  | case1 => simp [shiftSingleToEnd, List.dropLast_append_getLast]
   | case2 l i _ hl hi x l2 h2 =>
     unfold shiftSingleToEnd
     simp only [hi, ↓reduceDIte]
@@ -99,7 +99,7 @@ def shiftWholeToEnd (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet m n m n) : List (RectSpin m n) :=
   if hi' : i = l.length - 1 then l else
   haveI : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
-  let x := Fintype.chooseX _ (uniq_s1s2s1_of_whole l[i] l[i+1] hl)
+  let +nondep x := Fintype.chooseX _ (uniq_s1s2s1_of_whole l[i] l[i+1] hl)
   let l' := l.take i ++ x.1 :: l[i] :: l.drop (i + 2)
   shiftWholeToEnd l' (i + 1) (by grind -ac) (by grind -ac)
   termination_by l.length - i
@@ -151,10 +151,10 @@ theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
   | case2 l i _ _ _ x l2 h2 =>
     by_cases hj' : j = i
     · have := swte_eq_beg l2 (i + 1) (by grind) (by lia)
-      have := List.getElem_take ▸ congr($this[j]'(by grind -ac))
+      have := congr($this[j]'(by clear * - this hj'; grind -ac))
       grind -ac only [List.getElem_append, List.getElem_take, List.length_take, min_def,
         List.getElem_cons]
-    · convert h2 (by grind -ac) ha (by grind -ac) using 2
+    · convert h2 (by grind -ac) ha (by clear * - hj; grind -ac) using 2
       grind -ac
 
 -- Original: "If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = sᵢ⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i ≤ j ≤ k`."
@@ -169,4 +169,4 @@ public theorem lemma6_2 (l : List (RectSpin m n)) :
   use shiftWholeToEnd l i (by omega) hl
   refine ⟨swte_prod_eq .., swte_length .., swte_eq_beg .., ?_, ?_⟩
   · grind [swte_last, List.getLast?_eq_some_getLast]
-  · grind [swte_sameShape]
+  · lia [swte_sameShape]

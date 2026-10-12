@@ -58,7 +58,7 @@ lemma rectSpinSet_empty_nonempty {m n : PNat} :
   · apply Finset.nonempty_iff_ne_empty.mp
     have : m.val > 0 ∧ n.val > 0 := ⟨m.2, n.2⟩
     use RectSpin.fromRect ⟨⟨0, 0⟩, ⟨⟨m.val - 1, by omega⟩, ⟨n.val - 1, by omega⟩⟩, by simp, by simp⟩
-    grind [rectSpinSet_cond_iff]
+    lia [rectSpinSet_cond_iff]
   · have := Finset.filter_nonempty_iff.mp (Finset.nonempty_iff_ne_empty.mpr h2)
     have : i.val > m.val ∨ j.val > n.val := by
       contrapose! h1
@@ -66,7 +66,7 @@ lemma rectSpinSet_empty_nonempty {m n : PNat} :
         ⟨⟨0, m.2⟩, ⟨0, n.2⟩⟩,
         ⟨⟨i.val - 1, by omega⟩, ⟨j.val - 1, by omega⟩⟩,
         by simp, by simp⟩
-      grind [rectSpinSet_cond_iff]
+      lia [rectSpinSet_cond_iff]
     lia
 
 /-- **Proposition 2.1**
@@ -79,7 +79,7 @@ theorem rectSpinSet_card_val {i j m n : PNat} :
   · grind [rectSpinSet_cond_iff]
   · intro s1 hs1 s2 hs2 h3
     apply RectSpin.r_bijective.1
-    ext <;> grind [rectSpinSet_cond_iff, Rectangle.validRow, Rectangle.validCol]
+    ext : 1 <;> lia +extAll [rectSpinSet_cond_iff, Rectangle.validRow, Rectangle.validCol]
   · intro ⟨p1, p2⟩ hp
     have ⟨hp1, hp2⟩ := Finset.mem_product.mp hp
     simp only [Finset.mem_range] at hp1 hp2
@@ -106,6 +106,9 @@ theorem prop2 {i j m n : PNat} :
   intros
   simp_all only [PNat.coe_inj, false_and, not_false_eq_true]
 
+-- See https://leanprover.zulipchat.com/#narrow/channel/287929-mathlib4/topic/reducible.20constructors.20for.20PNat/near/606804388
+attribute [local implicit_reducible] PNat
+
 lemma validSpins_union_rectSpinSet : validSpins m n =
   ((Finset.range m) ×ˢ (Finset.range n)).biUnion
     (fun p => RectSpinSet ⟨p.1 + 1, Nat.zero_lt_succ _⟩ ⟨p.2 + 1, Nat.zero_lt_succ _⟩ m n) := by
@@ -128,7 +131,7 @@ lemma sum_m_minus_x_mul_two (m : Nat) : (∑ x ∈ Finset.range m, (m - x)) * 2 
   lia
 
 lemma sum_m_minus_x (m : PNat) :
-    ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by grind [sum_m_minus_x_mul_two]
+    ∑ i ∈ Finset.range m, (m - i) = (m + 1) * m / 2 := by lia [sum_m_minus_x_mul_two]
 
 /-- **Proposition 2.3** -/
 public theorem total_valid_spins_card {m n : PNat} :
@@ -137,7 +140,7 @@ public theorem total_valid_spins_card {m n : PNat} :
   · simp only [rectSpinSet_card_val, PNat.mk_coe, Nat.reduceSubDiff, Nat.choose_two_right]
     rw [Finset.sum_product, ← Finset.sum_mul_sum, sum_m_minus_x m, sum_m_minus_x n]
   · intro h
-    grind [rectSpinSet_cond_iff, Finset.disjoint_left, PNat.mk_coe]
+    lia +extAll [rectSpinSet_cond_iff, Finset.disjoint_left, PNat.mk_coe]
 
 -- More convenient version of `ne_of_mem_of_not_mem'`
 lemma ne_of_mem_of_not_mem'' {a b : Finset α} (x : α) : x ∈ a ∧ x ∉ b → a ≠ b :=
@@ -180,6 +183,10 @@ lemma spinSetNums_card {m n : PNat} (h : m.val ≤ n) :
 
 def spinSetsFromNums (m n : PNat) : Finset (Finset (RectSpin m n)) :=
   (spinSetNums m n).attach.map ⟨fun ⟨(a,b), _⟩ => numsToSpinSet a b m n, by
+    -- In Lean 4.33.0-rc1, Lean started being slightly silly, so we need to abstract the proof
+    --- into a separate lemma to avoid confusing the types. Alternatively, we can
+    -- `generalize_proofs` where needed, but that's more work to do everywhere than to do this here once.
+    as_aux_lemma =>
     intro ⟨⟨a1, a2⟩, ha⟩ ⟨⟨b1, b2⟩, hb⟩ h_eq
     simp only at h_eq
     rw [Subtype.mk_eq_mk, Prod.mk_inj]
@@ -193,7 +200,7 @@ def spinSetsFromNums (m n : PNat) : Finset (Finset (RectSpin m n)) :=
 
 def spinSetTypes (m n : PNat) :=
   { (a, b) : Nat × Nat | (numsToSpinSet a b m n).Nonempty }
-  |>.image (fun (a,b) => numsToSpinSet a b m n)
+  |>.image (fun (a, b) => numsToSpinSet a b m n)
 
 lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
     spinSetTypes m n = spinSetsFromNums m n := by
@@ -209,10 +216,10 @@ lemma spinSetTypes_eq {m n : PNat} (h : m.val ≤ n) :
       rcases Finset.union_nonempty.mp h_nonempty with h5 | h5
       · use x, y, ?_
         by_contra
-        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by simp; lia)
+        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by lia [PNat.mk_coe])
       · use y, x, ?_, spinSet_comm
         by_contra
-        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by simp; lia)
+        exact Finset.nonempty_iff_ne_empty.mp h5 <| rectSpinSet_empty_if (by lia [PNat.mk_coe])
 
     simp only [Finset.mem_attach, Function.Embedding.coeFn_mk, true_and,
       Subtype.exists, Finset.mem_image, Finset.mem_product, Finset.mem_range, Prod.exists]

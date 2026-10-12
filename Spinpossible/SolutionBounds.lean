@@ -75,7 +75,7 @@ private lemma aux1 (n row col : Nat) (hcol : col + 2 < n) :
 private lemma aux2 {m n row col : Nat} (hcol : col + 1 < n) (hrow : row + 1 < m) :
     (n - col - 1) * (2 * m - 1) + m - 2 * (row + 1) + 1 + 1 ≤
       (n - col - 1) * (2 * m - 1) + m - 2 * row := by
-  have : (n - col - 1) * (2 * m - 1) ≥ 2 * m - 1 := Nat.le_mul_of_pos_left _ (by grind)
+  have : (n - col - 1) * (2 * m - 1) ≥ 2 * m - 1 := Nat.le_mul_of_pos_left _ (by lia)
   omega
 
 private lemma aux3 {row col : Nat} (hrow : row < m.val) (hcol : col < n.val) (s : Spin m n)
@@ -97,13 +97,20 @@ private lemma aux3 {row col : Nat} (hrow : row < m.val) (hcol : col < n.val) (s 
       (s⁻¹ * row_spin.toSpin * col_spin.toSpin).α ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩
         = ⟨⟨y, by omega⟩, ⟨x, by omega⟩⟩ := by
   intro tile_pos row_spin col_spin x y hxy
-  simp [Spin.mul_def]
+  simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
+  rw [Rectangle.spin_eq_iff, Equiv.Perm.inv_def s.α]
   by_cases hg : x < col
-  · grind [Rectangle.spin_perm_const]
-  · by_cases hy : y = row
-    · grind [Rectangle.corners_rotate_perm]
-    · grind [hs_row2 y (by grind), Rectangle.corners_rotate_perm, Rectangle.spin_perm_const,
-        Equiv.apply_eq_iff_eq, Point.ext]
+  · specialize hs_col2 x y
+    lia [Rectangle.spin_perm_const]
+  · -- `grind` used to be able to do more here
+    clear hs_col2
+    obtain rfl : x = col := by omega
+    by_cases hy : y = row
+    · lia [Rectangle.corners_rotate_perm]
+    · rw [hs_row2 y (by lia), Rectangle.spin_perm_const (by lia)]
+      specialize hs_row2 tile_pos.row.val
+      lia +extAll [Rectangle.corners_rotate_perm, Rectangle.spin_perm_const,
+        Equiv.apply_eq_iff_eq, Point.mk.injEq]
 
 private def listSize (m n : PNat) (row col : Nat) :=
   if n.val = col + 1 then
@@ -131,11 +138,6 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     have hs_col2 (x y) (hxy : x < col ∧ y < m.val) : s.α.symm ⟨⟨y, _⟩, ⟨x, _⟩⟩ = ⟨⟨y, _⟩, ⟨x, _⟩⟩ :=
       Equiv.Perm.eq_inv_iff_eq.mp (hs_col x y hxy |>.symm)
 
-    have : tile_pos.col.val ≥ col := by
-      by_contra hx
-      absurd hs_col tile_pos.col.val tile_pos.row.val (by omega)
-      clear * - hs_col; grind
-
     split_ifs with h1 h2
     · lia
     · lia
@@ -146,7 +148,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       · contrapose! hs_col2 with heq
         let r := s.α i
         have : r.row = i.row := by omega
-        have : r.col ≠ i.col := by clear * - this heq; grind
+        have : r.col ≠ i.col := by clear * - this heq; lia +extAll
         use r.col, r.row, by omega
         rwa [Equiv.symm_apply_apply]
       · simpa using hs_col i.col i.row (by omega) |>.symm
@@ -158,12 +160,12 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
-      absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      clear * - hs_col; grind
+      absurd hs_col2 tile_pos.col.val tile_pos.row.val
+      simp [tile_pos]
+      clear * - hx; lia
 
     have next_spin_eq : next_spin = RectSpin.fromRect
-      ⟨⟨⟨0, hm⟩, ⟨col, hcol⟩⟩, tile_pos, by fin_omega, by omega⟩ := by
-        simp (disch := omega) [next_spin, RectSpin.fromPoints, dif_pos, cur_pos]
+      ⟨⟨⟨0, hm⟩, ⟨col, hcol⟩⟩, tile_pos, by fin_omega, by omega⟩ := by lia
 
     simp only [zero_add, List.map_cons, List.map_reverse, List.prod_cons, List.length_cons,
       List.length_reverse]
@@ -176,7 +178,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
           Rectangle.spin_eq_iff, Rectangle.spin_perm_const (Or.inr hxy.1), hs_col2 x y hxy])
       constructor
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih1.1]
-      · clear * - ih1; grind [listSize]
+      · clear * - ih1; lia [listSize]
     · specialize ih2 (by omega) (by omega) (by
         intro x y hxy
         simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
@@ -187,7 +189,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
       )
       constructor
       · simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih2.1]
-      · grw [ih2.2, listSize, listSize]; lia
+      · lia [listSize]
     · omega
   | case3 row col hrow hcol s cur_pos tile_pos hrow2 row_spin col_spin k a1 ih1 ih2 =>
     unfold l k
@@ -200,18 +202,19 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
-      absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      clear * - hs_col; grind
+      absurd hs_col2 tile_pos.col.val tile_pos.row.val
+      simp [tile_pos]
+      clear * - hx; lia
 
     have col_spin_eq : col_spin =
         RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, le_rfl, by omega⟩ := by
-      clear * -; grind
+      clear * -; lia
     have row_spin_eq : row_spin =
         if ht : tile_pos.row.val < row then
           RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, ht.le, by simp⟩
         else
           RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, Fin.not_lt.mp ht, by simp⟩ := by
-      clear * -; grind
+      clear * -; lia
 
     split_ifs with h1
     · specialize ih1 h1 (fun x hx => by
@@ -223,11 +226,12 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
           · simp [Rectangle.spin_eq_iff, Rectangle.corners_rotate_perm.1]
         · rw [col_spin_eq, row_spin_eq, Rectangle.spin_eq_iff,
             Rectangle.spin_perm_const (by simp [cur_pos]; omega), hs_row2 x (by omega)]
-          split_ifs with m1
+          split_ifs
           · have hg4 : col ≠ tile_pos.col.val := by
-              by_contra! hg4
-              absurd hs_row2 tile_pos.row.val (by omega)
-              clear * - hs_row hg4; grind
+              specialize hs_row2 tile_pos.row.val (by omega)
+              specialize hs_row tile_pos.row.val
+              clear * - hs_row hs_row2
+              grind
             rw [Rectangle.spin_perm_const (by fin_omega)]
           · rw [Rectangle.spin_perm_const (by fin_omega)]
       ) (fun x y hxy => by
@@ -249,7 +253,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
         simp only [listSize, show m.val = row + 1 by omega, Nat.add_eq_right, hrow2, ↓reduceIte,
           show n.val ≠ col + 1 by omega]
         split_ifs with hn1
-        · lia
+        · clear * - hn1; lia
         · exact aux1 n row col (by lia)
   | case4 row col hrow hcol s cur_pos tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
     unfold l k
@@ -262,24 +266,24 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
 
     have : tile_pos.col.val ≥ col := by
       by_contra hx
-      absurd hs_col2 tile_pos.col.val tile_pos.row.val (by omega)
-      clear * - hs_col; grind
+      absurd hs_col2 tile_pos.col.val tile_pos.row.val
+      simp [tile_pos]
+      clear * - hx; lia
 
     have col_spin_eq : col_spin =
         RectSpin.fromRect ⟨cur_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, by simp [cur_pos], by omega⟩ := by
-      clear * -; grind
+      clear * -; lia
     have row_spin_eq : row_spin =
         if ht : tile_pos.row.val < row then
           RectSpin.fromRect ⟨tile_pos, ⟨⟨row, hrow⟩, tile_pos.col⟩, Fin.le_of_lt ht, by simp⟩
         else
           RectSpin.fromRect ⟨⟨⟨row, hrow⟩, tile_pos.col⟩, tile_pos, Fin.not_lt.mp ht, by simp⟩ := by
-      clear * -; grind
+      clear * -; lia
 
     simp only [a2, ↓reduceDIte, List.map_cons, List.map_reverse, List.prod_cons, List.length_cons,
       List.length_reverse]
     -- TODO: this is shared with case3
-    specialize ih1 a2 (by
-      intro x hx
+    specialize ih1 a2 (fun x hx => by
       simp only [Spin.mul_def, Spin.inv_perm, Equiv.trans_apply]
       by_cases hg : x = row
       · simp only [hg, cur_pos, col_spin_eq, row_spin_eq, tile_pos]
@@ -290,9 +294,10 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
           Rectangle.spin_perm_const (by simp [cur_pos]; omega), hs_row2 x (by omega)]
         split_ifs
         · have hg4 : col ≠ tile_pos.col.val := by
-            by_contra! hg4
-            absurd hs_row2 tile_pos.row.val (by omega)
-            clear * - hs_row hg4; grind
+            specialize hs_row2 tile_pos.row.val (by omega)
+            specialize hs_row tile_pos.row.val
+            clear * - hs_row hs_row2
+            grind
           rw [Rectangle.spin_perm_const (by fin_omega)]
         · rw [Rectangle.spin_perm_const (by fin_omega)]
     ) (fun x y hxy => by
@@ -305,7 +310,7 @@ lemma buildBasicPermSolution_correct {m n} (a b : Nat) (hrow : a < m.val) (hcol 
     · have col_spin_eq' : col_spin.α = 1 := by
         ext i : 1
         simp [col_spin_eq, cur_pos, Rectangle.toSpin, Point.IsInside, rotate180, rotateCalc]
-        clear * - row_spin_eq a1; grind
+        clear * - row_spin_eq a1; lia +extAll
       simp [← rectSpin_prod_inv_eq_reverse_prod, Spin.perm_distrib, ih1.1, col_spin_eq']
     · grw [ih1.2, listSize, listSize]; lia
   | case5 row col hrow hcol s _ tile_pos hrow2 row_spin col_spin k a1 a2 ih1 ih2 =>
@@ -374,4 +379,4 @@ public theorem theorem1 (b : Spin m n) :
   split_ifs with h7 h8
   · rw [h7, h8]
   · lia
-  · cases m.val <;> cases _ : n.val <;> grind [PNat.ne_zero]
+  · cases m.val <;> cases _ : n.val <;> lia [PNat.ne_zero]

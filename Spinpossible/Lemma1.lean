@@ -3,7 +3,6 @@ module
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import Mathlib.GroupTheory.Perm.Sign
 import Mathlib.Tactic.Cases
-import Mathlib.Data.Finite.Defs
 
 -- Note: Copied from `Spinpossible/Definitions.lean` since this file does not import it.
 -- In Lean 4.25.0, `get_elem_tactic_extensible` causes performance issues due to trying stuff
@@ -27,7 +26,6 @@ public theorem Subgroup.exists_list_of_mem_closure [Group M] {s : Set M} {a : M}
     apply list_prod_mem
     intro x hx
     rcases hl x hx with hs | hs
-    -- this proof was simplified by https://demo.projectnumina.ai/
     · exact subset_closure hs
     · rw [← Subgroup.inv_mem_iff]
       exact subset_closure hs
@@ -76,9 +74,9 @@ lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
   -- Build the sequence of vertices starting from x by applying the permutations in l
   let vertices := l.scanl (fun a τ => τ a) x
   have : vertices.length = l.length + 1 := l.length_scanl
-  have h_adj i (hi : i < l.length) (hj : vertices[i] ≠ vertices[i+1]) :
+  have h_adj i (hi : i < l.length) (hj : vertices[i + 1] ≠ vertices[i]) :
       G.Adj vertices[i] vertices[i+1] := by
-    refine (SimpleGraph.fromRel_adj ..).mpr ⟨hj, Or.inl ?_⟩
+    refine (SimpleGraph.fromRel_adj ..).mpr ⟨hj.symm, Or.inl ?_⟩
     let τ := l[i]
     have hτE : τ ∈ E := hlE τ (l.getElem_mem hi)
     obtain ⟨a, b, _, hτ_eq⟩ := hE τ hτE
@@ -86,23 +84,23 @@ lemma graph_connected [DecidableEq α] [Nonempty α] {E : Set (Perm α)}
     rw [h_next, hτ_eq]
     by_cases h_case : vertices[i] = a
     · rwa [h_case, swap_apply_left, ← hτ_eq]
-    · grind [swap_apply_of_ne_of_ne, swap_apply_right, swap_comm]
+    · lia [swap_apply_of_ne_of_ne, swap_apply_right, swap_comm]
   -- Construct the path from x to y using the sequence of vertices
   let rec build_walk (n : Nat) (hn : n ≤ l.length) : G.Walk vertices[n] vertices[l.length] :=
     if h_eq : n = l.length then
       SimpleGraph.Walk.nil.copy rfl (by congr)
     else
       let tail := build_walk (n + 1) (by omega)
-      if v_eq : vertices[n] = vertices[n+1] then
-        v_eq ▸ tail
+      if v_eq : vertices[n + 1] = vertices[n] then
+        tail.copy v_eq rfl
       else
-        have edge : G.Adj vertices[n] vertices[n+1] := h_adj n (by omega) v_eq
-        SimpleGraph.Walk.cons edge tail
+        have edge : G.Adj vertices[n] vertices[n + 1] := h_adj n (by omega) v_eq
+        tail.cons edge
+    decreasing_by omega -- 2x speedup of whole theorem
   -- Build the walk starting from n = 0
   let walk := build_walk 0 l.length.zero_le
-  have h_start : vertices[0] = x := List.getElem_scanl_zero
-  have h_end : vertices[l.length] = y := graph_connected.aux1 (fun τ a => hE τ (hlE τ a)) hl_prod
-  exact ⟨h_start ▸ h_end ▸ walk⟩
+  refine walk.copy List.getElem_scanl_zero ?_ |>.reachable
+  exact graph_connected.aux1 (fun τ a => hE τ (hlE τ a)) hl_prod
 
 /--
   **Lemma 1**: Let `E ⊆ Perm α` be a set of transpositions acting on a finite type `α`.

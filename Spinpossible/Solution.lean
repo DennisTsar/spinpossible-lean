@@ -30,8 +30,7 @@ public lemma rectSpin_prod_inv_eq_reverse_prod (l : List (RectSpin m n)) :
   rw [Spin.inv_def]
   induction' l with hd tl ih
   · simp [Spin.one_def]
-  · simp [Spin.mul_def, RectSpin.orient_def, ZMod.neg_eq_self_mod_two, ← ih,
-      RectSpin.perm_symm, Equiv.ext_iff]
+  · simp [Spin.mul_def, RectSpin.orient_def, ← ih, RectSpin.perm_symm]
 
 /-- "In mathematical terms, the game works as follows: given an element `b ∈ Spinₘₓₙ`
     (the starting board), write `b⁻¹` as a product `s₁s₂s₃⋯sₖ` of elements in `S`, with `k`

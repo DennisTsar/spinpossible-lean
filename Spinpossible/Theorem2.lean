@@ -37,7 +37,7 @@ lemma Nat.choose_succ_lt_pow {n k : Nat} (hn : 2 ≤ n) (hk : 2 ≤ k) : (n + 1)
   grw [← self_le_factorial] at hdesc
   have : n < n ^ 2 := lt_self_pow₀ hn (by simp)
   have : n * n ^ s < n ^ 2 * n ^ s := mul_lt_mul_of_pos_right this (by positivity)
-  grind -ring -linarith only [Nat.pow_add_one] -- in `4.25.0`, a plain `grind` worked
+  lia [Nat.pow_add_one]
 
 private lemma Stirling.le_log_factorial_stirling' {n : Nat} (hn : n ≠ 0) :
     Real.log (n.factorial) > n * Real.log n - n + (1 : Real) / 2 * Real.log n := by
@@ -48,12 +48,11 @@ instance : Nonempty (RectSpin m n) := .intro (RectSpin.fromRect default)
 
 public theorem theorem2_1 (m n : PNat) :
     Fintype.card (Spin m n) ≤ (Fintype.card (RectSpin m n) + 1) ^ k m n := by
-  apply Nat.le_trans ?_ (List.card_le_of_length_le _ _)
   let := List.finite_length_le (RectSpin m n) (k m n) |>.fintype
-  rw [Set.Finite.toFinset_eq_toFinset, Set.toFinset_card]
+  grw [← List.card_le_of_length_le, Set.Finite.toFinset_eq_toFinset, Set.toFinset_card]
   refine Fintype.card_le_of_surjective (fun x => (x.1.map RectSpin.toSpin).prod) fun b => ?_
   have ⟨a, ha⟩ := every_board_has_solution b⁻¹
-  use ⟨a, Set.mem_setOf_eq ▸ Finset.le_sup ?_⟩, (inv_inv b ▸ ha.1)
+  use ⟨a, Set.mem_ofPred_eq ▸ Finset.le_sup ?_⟩, (inv_inv b ▸ ha.1)
   simpa using .intro b⁻¹ ha
 
 public theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
@@ -78,7 +77,7 @@ public theorem theorem2_2 {m n : PNat} (hmn : m.val * n > 1) :
   grw [Spin.card_eq, ← Nat.clog_le_iff_le_pow Nat.AtLeastTwo.one_lt, this,
     ← Real.natCeil_logb_natCast, Nat.ceil_le] at bound
   grw [← bound]
-  simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le, ]
+  simp only [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, one_div, ge_iff_le]
   conv_rhs => rw [← Real.log_div_log, Real.log_mul (by positivity) (by positivity)]
 
   have : Real.log (m * n) ≠ 0 := Real.log_pos (mod_cast hmn) |>.ne'
@@ -112,6 +111,8 @@ theorem corollary_2 : ∀ ε > 0, ∃ N₀ : Nat, ∀ {m n : PNat}, N₀ < m * n
   use max N₁ 1, fun hN => ⟨?_, ?_⟩
   · linarith [theorem2_2 <| hN.trans_le' <| by simp, hN₁ <| mod_cast hN.trans_le' <| by simp]
   · grw [k_upper_bound, Nat.sub_le, mul_assoc]; norm_cast
+
+attribute [local implicit_reducible] PNat
 
 -- It is *not* true that `k(m, n)` grows asymptotically like `(1 / 2 + ε) * N` for any `ε > 0`.
 example (h : ∀ ε > 0, ∃ N₀ : Nat, ∀ {m n : PNat}, N₀ < m * n →
