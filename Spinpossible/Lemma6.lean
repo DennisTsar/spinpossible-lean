@@ -95,67 +95,58 @@ theorem uniq_s1s2s1_of_whole {m n} (s1 s2 : RectSpin m n) (hl : s1 ∈ SpinSet m
     grind [Point.IsInside, Rectangle.Contains, SpinSet, RectSpinSet]
   · exact fun a b ha hb => RectSpin.toSpin_injective (ha.1 ▸ hb.1)
 
+private def movePast (a b : RectSpin m n) (ha : a ∈ SpinSet m n m n) : RectSpin m n :=
+  Fintype.chooseX _ (uniq_s1s2s1_of_whole a b ha)
+
+private theorem movePast_spec (a b : RectSpin m n) (ha : a ∈ SpinSet m n m n) :
+    (movePast a b ha).toSpin * a.toSpin = a.toSpin * b.toSpin := by
+  let x := Fintype.chooseX _ (uniq_s1s2s1_of_whole a b ha)
+  rw [movePast, ← x.2.1, mul_assoc, spin_is_own_inverse, mul_one]
+
+private theorem movePast_shape (a b : RectSpin m n) (ha : a ∈ SpinSet m n m n) :
+  SameShape (movePast a b ha).r b.r := Fintype.chooseX _ (uniq_s1s2s1_of_whole a b ha) |>.2.2
+
 def shiftWholeToEnd (l : List (RectSpin m n)) (i : Nat) (hi : i < l.length)
     (hl : l[i] ∈ SpinSet m n m n) : List (RectSpin m n) :=
-  if hi' : i = l.length - 1 then l else
-  haveI : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
-  let +nondep x := Fintype.chooseX _ (uniq_s1s2s1_of_whole l[i] l[i+1] hl)
-  let l' := l.take i ++ x.1 :: l[i] :: l.drop (i + 2)
-  shiftWholeToEnd l' (i + 1) (by grind -ac) (by grind -ac)
-  termination_by l.length - i
-  decreasing_by grind -ac -- about 20x faster than default
-
-theorem swte_prod_eq (l' : List (RectSpin m n)) (i' : Nat) (hi' : i' < l'.length)
-    (hl' : l'[i'] ∈ SpinSet m n m n) :
-    ((shiftWholeToEnd l' i' hi' hl').map RectSpin.toSpin).prod =
-    (l'.map RectSpin.toSpin).prod := by
-  fun_induction shiftWholeToEnd with
-  | case1 => rfl
-  | case2 l i _ _ _ x l2 h2 =>
-    have : i + 1 < l.length := by omega -- `get_elem_tactic` is a bit too slow without this
-    suffices l[i].toSpin * l[i + 1] = x.1 * l[i] by
-      rw [h2, show l = l.take i ++ [l[i], l[i+1]] ++ l.drop (i + 2) by simp]
-      simp [- List.append_assoc, this, l2, mul_assoc]
-    simp_rw [← x.2.1, mul_assoc, spin_is_own_inverse, mul_one]
+  l.take i ++ (l.drop (i + 1)).map (fun b => movePast l[i] b hl) ++ [l[i]]
 
 theorem swte_length (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
-    (shiftWholeToEnd l i hi hl).length = l.length := by
-  fun_induction shiftWholeToEnd <;> grind -ac
-
-lemma List.take_something {l1 l2 : List α} (h : l1.take n = l2.take n) (m : Nat) (hmn : m ≤ n) :
-  l1.take m = l2.take m := by grind [show take m l1 = take m (take (n + 1) l1) by grind]
+  (shiftWholeToEnd l i hi hl).length = l.length := by grind [shiftWholeToEnd]
 
 theorem swte_eq_beg (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
-    (shiftWholeToEnd l i hi hl).take i = l.take i := by
-  fun_induction shiftWholeToEnd with
-  | case1 => rfl
-  | case2 => grind -ac [List.take_left', List.take_something]
+  (shiftWholeToEnd l i hi hl).take i = l.take i := by grind [shiftWholeToEnd]
 
 theorem swte_last (l : List (RectSpin m n)) (i : Nat)
     (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
     (shiftWholeToEnd l i hi hl).getLast (by grind [swte_length]) = l[i] := by
-  fun_induction shiftWholeToEnd <;> unfold shiftWholeToEnd
-  · grind
-  · rename_i l i _ _ h1 x l2 h2
-    simp [h1, l2, x, h2]
-    grind
+  simp [shiftWholeToEnd]
+
+private theorem movePast_list_prod (a : RectSpin m n)
+    (ha : a ∈ SpinSet m n m n) (xs : List (RectSpin m n)) :
+    ((xs.map (fun b => movePast a b ha)).map RectSpin.toSpin).prod *
+      a.toSpin = a.toSpin * (xs.map RectSpin.toSpin).prod := by
+  induction xs with
+  | nil => simp
+  | cons b bs ih =>
+      simp only [List.map_cons, List.prod_cons]
+      rw [mul_assoc, ih, ← mul_assoc, movePast_spec, mul_assoc]
+
+theorem swte_prod_eq (l : List (RectSpin m n)) (i : Nat)
+    (hi : i < l.length) (hl : l[i] ∈ SpinSet m n m n) :
+    ((shiftWholeToEnd l i hi hl).map RectSpin.toSpin).prod =
+      (l.map RectSpin.toSpin).prod := by
+  have : l = l.take i ++ l[i] :: l.drop (i + 1) := by
+    nth_rw 1 [← List.take_append_drop i l, List.getElem_cons_drop hi]
+  grind [shiftWholeToEnd, movePast_list_prod]
 
 theorem swte_sameShape (l : List (RectSpin m n)) (i j : Nat)
     (hi : i < l.length) (hj : i ≤ j ∧ j < l.length - 1) (hl : l[i] ∈ SpinSet m n m n) :
-    SameShape ((shiftWholeToEnd l i hi hl)[j]'(by grind [swte_length])).r l[j+1].r := by
-  generalize_proofs ha
-  fun_induction shiftWholeToEnd with
-  | case1 => omega
-  | case2 l i _ _ _ x l2 h2 =>
-    by_cases hj' : j = i
-    · have := swte_eq_beg l2 (i + 1) (by grind) (by lia)
-      have := congr($this[j]'(by clear * - this hj'; grind -ac))
-      grind -ac only [List.getElem_append, List.getElem_take, List.length_take, min_def,
-        List.getElem_cons]
-    · convert h2 (by grind -ac) ha (by clear * - hj; grind -ac) using 2
-      grind -ac
+    SameShape ((shiftWholeToEnd l i hi hl)[j]'(by lia [swte_length])).r l[j + 1].r := by
+  have : (shiftWholeToEnd l i hi hl)[j]'(by lia [swte_length]) = movePast l[i] l[j + 1] hl := by
+    grind [shiftWholeToEnd]
+  exact this ▸ movePast_shape _ _ hl
 
 -- Original: "If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = sᵢ⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i ≤ j ≤ k`."
 -- Corrected (I think?): If `sᵢ ∈ Sₘₓₙ`, then `b` can be written as `b = s₁⋯sᵢ₋₁tᵢ₊₁⋯tₖsᵢ`, with each `tⱼ` a spin of the same type as `sⱼ`, for `i < j ≤ k`.
@@ -168,5 +159,5 @@ public theorem lemma6_2 (l : List (RectSpin m n)) :
   intro i hi hl
   use shiftWholeToEnd l i (by omega) hl
   refine ⟨swte_prod_eq .., swte_length .., swte_eq_beg .., ?_, ?_⟩
-  · grind [swte_last, List.getLast?_eq_some_getLast]
+  · lia [swte_last, List.getLast?_eq_some_getLast]
   · lia [swte_sameShape]

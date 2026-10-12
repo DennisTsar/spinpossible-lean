@@ -15,3 +15,6 @@ lemma Nat.mod_succ_of_not_dvd {a b : Nat} (h : ¬b ∣ a + 1) (hb : 0 < b) :
     (a + 1) % b = a % b + 1 := by
   have := mod_succ_le_of_not_dvd h hb
   rw [add_mod, one_mod_eq_one.mpr (by omega), mod_eq_of_lt this]
+
+lemma List.take_something {l1 l2 : List α} (h : l1.take n = l2.take n) (m : Nat) (hmn : m ≤ n) :
+  l1.take m = l2.take m := by grind [show take m l1 = take m (take (n + 1) l1) by grind]
